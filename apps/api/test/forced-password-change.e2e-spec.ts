@@ -74,7 +74,7 @@ describe.skipIf(!hasDb)('Forced password change (e2e)', () => {
   };
 
   it('a never-set password restricts the session until it is changed', async () => {
-    const { email } = await createUser('registered_nurse', null);
+    const { email } = await createUser('senior_care_worker', null);
 
     const session = await login(email);
     expect(session.mustChangePassword).toBe(true);
@@ -107,7 +107,7 @@ describe.skipIf(!hasDb)('Forced password change (e2e)', () => {
   });
 
   it('a password older than the max age is restricted the same way', async () => {
-    const { email } = await createUser('registered_nurse', new Date(Date.now() - 100 * 24 * 60 * 60_000));
+    const { email } = await createUser('senior_care_worker', new Date(Date.now() - 100 * 24 * 60 * 60_000));
     const session = await login(email);
     expect(session.mustChangePassword).toBe(true);
     await expectRestricted(session.accessToken);

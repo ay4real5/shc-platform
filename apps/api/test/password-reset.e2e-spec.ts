@@ -52,7 +52,7 @@ describe.skipIf(!hasDb)('Forgot / reset password (e2e)', () => {
     prisma = app.get(PrismaService);
     resets = app.get(PasswordResetService);
     agencyId = (await prisma.agency.create({ data: { name: `Reset Test ${randomUUID()}`, timezone: 'UTC' } })).id;
-    const role = await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: 'home_health_aide' } });
+    const role = await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: 'care_worker' } });
     userId = (
       await prisma.user.create({
         data: {

@@ -1,7 +1,8 @@
 import { useId } from 'react';
+import { PRODUCT_NAME, PRODUCT_TAGLINE } from '@/lib/brand';
 
 /**
- * The Primordial Health mark (D-103): a teal tile with a rounded "P" whose bowl is a leaf, and a coral spark — care
+ * The SHC mark (D-103 design system): a teal tile with a flowing white "S" and a coral spark — care
  * that grows. Pure SVG, so it is crisp everywhere; the same drawing is in public/logo.svg, app/icon.svg and the
  * mobile app icon.
  */
@@ -24,9 +25,8 @@ export function LogoMark({ className = 'h-9 w-9', title }: { className?: string;
         </linearGradient>
       </defs>
       <rect width="48" height="48" rx="13" fill={`url(#${tile})`} />
-      {/* The P: stem and a leaf-shaped bowl. */}
-      <path d="M16.5 36V13.5h9a8.25 8.25 0 0 1 0 16.5h-9" fill="none" stroke="#fff" strokeWidth="4.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M21.5 25.2c1.6-3.9 4.4-5.6 8-5.7-.5 3.7-3 6-8 5.7Z" fill="#ccf7ee" />
+      {/* A flowing "S". */}
+      <path d="M31 15.8c-1.8-1.7-4.2-2.6-7-2.6-4.3 0-7.4 2.3-7.4 5.7 0 7.5 15 4.4 15 11.6 0 3.6-3.4 6.2-8.1 6.2-3.1 0-5.9-1.1-7.8-3" fill="none" stroke="#fff" strokeWidth="4.4" strokeLinecap="round" strokeLinejoin="round" />
       {/* The coral spark. */}
       <circle cx="37.5" cy="10.5" r="3.6" fill={`url(#${spark})`} />
       <circle cx="37.5" cy="10.5" r="5.6" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
@@ -41,9 +41,9 @@ export function Logo({ tone = 'light', tagline = true }: { tone?: 'light' | 'dar
       <LogoMark className="h-10 w-10 drop-shadow-[0_6px_14px_rgb(15_118_110_/_0.35)]" />
       <span className="leading-tight">
         <span className={`block font-display text-[17px] font-extrabold tracking-tight ${tone === 'dark' ? 'text-white' : 'text-ink'}`}>
-          Primordial<span className="text-accent-400">.</span>Health
+          {PRODUCT_NAME}<span className="text-accent-400">.</span>
         </span>
-        {tagline && <span className={`block text-xs ${tone === 'dark' ? 'text-brand-200' : 'text-brand-700'}`}>Care, beautifully organised</span>}
+        {tagline && <span className={`block text-xs ${tone === 'dark' ? 'text-brand-200' : 'text-brand-700'}`}>{PRODUCT_TAGLINE}</span>}
       </span>
     </span>
   );

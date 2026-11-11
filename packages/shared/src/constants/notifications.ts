@@ -1,27 +1,11 @@
-/** Notification types (DESIGN.md §13.2). Titles and bodies must never contain PHI (§13.3). */
+/** Notification types. Titles and bodies must never contain personal details — the app loads those after sign-in. */
 export const NOTIFICATION_TYPES = [
-  'shift_reminder',
-  'shift_assigned',
-  'shift_unassigned',
-  'shift_cancelled',
-  'shift_updated',
-  'open_shift',
-  'swap_requested',
-  'swap_decided',
-  'missed_visit',
-  'late_arrival',
   'credential_expiry',
-  'auth_limit',
-  'claim_status',
   'message_received',
   'document_signature',
-  'payroll_ready',
   'time_off_decided',
-  'evv_correction_decided',
-  /** A submitted visit note may describe a reportable incident (D-096) — for people who handle incidents. */
-  'incident_flagged',
-  /** A new referral arrived through the public intake form (D-098) — for people who manage referrals. */
-  'referral_received',
+  /** A new job application arrived (S1-04) — for people who manage recruitment. */
+  'application_received',
   'system',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -38,28 +22,14 @@ export type DeliveryChannel = 'push' | 'sms' | 'email';
 
 /**
  * Which outside channels a type uses when the person hasn't chosen (DESIGN.md §13.2; types added since follow the
- * closest listed one). Texts are kept for what can't wait: a new shift and a missed visit.
+ * closest listed one). Texts are kept for what can't wait.
  */
 export const DEFAULT_DELIVERY_CHANNELS: Record<NotificationType, readonly DeliveryChannel[]> = {
-  shift_reminder: ['push'],
-  shift_assigned: ['push', 'sms'],
-  shift_unassigned: ['push'],
-  shift_cancelled: ['push'],
-  shift_updated: ['push'],
-  open_shift: ['push'],
-  swap_requested: ['push'],
-  swap_decided: ['push'],
-  missed_visit: ['push', 'sms'],
-  late_arrival: [],
   credential_expiry: ['email'],
-  auth_limit: ['email'],
-  claim_status: [],
   message_received: ['push'],
-  document_signature: ['push', 'email'],
-  payroll_ready: ['email'],
+  // "Please sign your contract" is what holds a new starter back, so it is texted as well.
+  document_signature: ['push', 'sms'],
   time_off_decided: ['push'],
-  evv_correction_decided: ['push'],
-  incident_flagged: ['push', 'email'],
-  referral_received: ['push', 'email'],
+  application_received: ['push', 'email'],
   system: ['email'],
 };

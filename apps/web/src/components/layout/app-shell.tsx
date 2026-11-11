@@ -6,13 +6,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { Logo, LogoMark } from '@/components/brand/logo';
-import { humanize } from '@/lib/labels';
-import { AssistantPanel } from './assistant-panel';
+import { roleLabel } from '@/lib/labels';
 import { MessagesBadge } from './messages-badge';
 import { NAV_GROUPS, NAVIGATION } from './navigation';
 import { NotificationBell } from './notification-bell';
 
-/** The Primordial Health mark (D-103). Sizes come from the h-/w- classes; text sizes are ignored. */
+/** The SHC mark. Sizes come from the h-/w- classes; text sizes are ignored. */
 export function BrandMark({ className = 'h-9 w-9' }: { className?: string }) {
   return <LogoMark className={className.replaceAll(/text-\S+/g, '')} />;
 }
@@ -26,18 +25,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const mustSetUp2fa = Boolean(user?.is2faRequired && !user.is2faEnabled);
   const mustChangePassword = Boolean(user?.mustChangePassword);
-  // Patients and families have their own portal (D-058) and no access to staff pages.
-  const isPortalUser = Boolean(user?.roles.includes('portal_user'));
   useEffect(() => {
     if (status === 'anonymous') router.replace('/login');
     // A forced password change comes before everything else — the API refuses all other routes (P4-09).
     else if (status === 'authenticated' && mustChangePassword) router.replace('/change-password?required=1');
-    else if (status === 'authenticated' && isPortalUser) router.replace('/portal');
     // Admins must use 2FA (D-045); the API refuses everything else until it's on.
     else if (status === 'authenticated' && mustSetUp2fa) router.replace('/setup-two-factor');
-  }, [status, mustChangePassword, mustSetUp2fa, isPortalUser, router]);
+  }, [status, mustChangePassword, mustSetUp2fa, router]);
 
-  if (status !== 'authenticated' || !user || mustChangePassword || mustSetUp2fa || isPortalUser) {
+  if (status !== 'authenticated' || !user || mustChangePassword || mustSetUp2fa) {
     return (
       <div className="flex min-h-screen items-center justify-center gap-3 text-sm text-slate-500" aria-live="polite">
         <BrandMark className="h-8 w-8 animate-pulse text-sm" />
@@ -53,7 +49,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     .filter((href) => (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)))
     .sort((a, b) => b.length - a.length)[0];
   const initials = `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase();
-  const role = humanize(user.roles.find((r) => r !== 'portal_user') ?? '');
+  const role = roleLabel(user.roles[0] ?? '');
 
   const nav = (label: string, onNavigate?: () => void) => (
     <nav className="flex flex-col gap-5 px-3" aria-label={label}>
@@ -147,7 +143,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {menuOpen ? <X aria-hidden className="h-5 w-5" /> : <Menu aria-hidden className="h-5 w-5" />}
           </button>
           <span className="flex items-center gap-2 font-display font-bold text-ink md:hidden">
-            <BrandMark className="h-7 w-7" /> Primordial<span className="-ml-2 text-accent-500">.</span>Health
+            <BrandMark className="h-7 w-7" /> SHC<span className="-ml-2 text-accent-500">.</span>
           </span>
           <div className="ml-auto flex items-center gap-3">
             <NotificationBell />
@@ -165,7 +161,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
-      <AssistantPanel />
     </div>
   );
 }

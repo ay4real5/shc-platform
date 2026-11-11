@@ -29,23 +29,3 @@ export class NotificationsGateway implements OnGatewayInit, OnGatewayConnection 
     if (user) await socket.join(userRoom(user.userId));
   }
 }
-
-/**
- * `/live-monitor` — supervisors (`evv:read`); each joins `agency:{id}` and receives visit events (clock-in/out,
- * geofence, late, no-show, missed). Clients refetch `GET /evv/live` for the full picture after an event.
- */
-@WebSocketGateway({ namespace: '/live-monitor' })
-export class LiveMonitorGateway implements OnGatewayInit, OnGatewayConnection {
-  @WebSocketServer() server!: Namespace;
-
-  constructor(private readonly auth: RealtimeAuthService) {}
-
-  afterInit(server: Namespace): void {
-    server.use(this.auth.middleware('evv:read'));
-  }
-
-  async handleConnection(socket: Socket): Promise<void> {
-    const user = socketUser(socket);
-    if (user) await socket.join(agencyRoom(user.agencyId));
-  }
-}

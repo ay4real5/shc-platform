@@ -35,10 +35,10 @@ describe.skipIf(!hasDb)('Time off (e2e)', () => {
     prisma = app.get(PrismaService);
     agencyId = (await prisma.agency.create({ data: { name: `Time Off ${randomUUID()}`, timezone: 'UTC' } })).id;
     otherAgencyId = (await prisma.agency.create({ data: { name: `Time Off Other ${randomUUID()}`, timezone: 'UTC' } })).id;
-    supervisor = await seedUser(agencyId, 'supervisor', 'RN');
-    aide = await seedUser(agencyId, 'home_health_aide', 'HHA');
-    nurse = await seedUser(agencyId, 'registered_nurse', 'RN');
-    outsider = await seedUser(otherAgencyId, 'supervisor', 'RN');
+    supervisor = await seedUser(agencyId, 'care_coordinator', 'nurse');
+    aide = await seedUser(agencyId, 'care_worker', 'care_worker');
+    nurse = await seedUser(agencyId, 'senior_care_worker', 'nurse');
+    outsider = await seedUser(otherAgencyId, 'care_coordinator', 'nurse');
   });
 
   afterAll(async () => {

@@ -49,40 +49,40 @@ const CREATED_ID = randomUUID();
 /** Test-only routes shaped like the real patient endpoints will be. */
 @Controller('audit-probe/patients')
 class AuditProbeController {
-  @Permissions('patients:read')
+  @Permissions('staff:read')
   @Get()
   list(@Query() query: SearchQueryDto) {
     return Paginated.of([{ lastName: 'Smith' }, { lastName: 'Jones' }], 2, query);
   }
 
-  @Permissions('patients:read')
+  @Permissions('staff:read')
   @Get(':id')
   get(@Param('id') id: string) {
     if (id === '00000000-0000-4000-8000-000000000000') throw new NotFoundException('Patient not found');
     return { id, lastName: 'Smith', diagnosis: 'diabetes' };
   }
 
-  @Permissions('patients:create')
+  @Permissions('staff:create')
   @Post()
   create(@Body() _dto: CreateFakePatientDto) {
     return { id: CREATED_ID };
   }
 
-  @Permissions('patients:update')
+  @Permissions('staff:update')
   @Audit({ action: 'DISCHARGE_PATIENT' })
   @Post(':id/discharge')
   discharge(@Param('id') id: string) {
     return { id, status: 'discharged' };
   }
 
-  @Permissions('patients:read')
+  @Permissions('staff:read')
   @SkipAudit()
   @Get('-/poll')
   poll() {
     return { changed: false };
   }
 
-  @Permissions('billing:read')
+  @Permissions('pay:read')
   @Get('-/billing')
   billing() {
     return 'billing';
@@ -117,7 +117,7 @@ describe.skipIf(!hasDb)('Audit trail (e2e)', () => {
     prisma = app.get(PrismaService);
     agencyId = (await prisma.agency.create({ data: { name: `Audit Test ${randomUUID()}` } })).id;
 
-    const officeStaff = await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: 'office_staff' } });
+    const officeStaff = await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: 'care_coordinator' } });
     const email = `audit-${randomUUID()}@example.test`;
     userId = (
       await prisma.user.create({
@@ -191,7 +191,7 @@ describe.skipIf(!hasDb)('Audit trail (e2e)', () => {
   it('records denied access with the missing permission', async () => {
     await http().get('/api/v1/audit-probe/patients/-/billing').set(auth).expect(403);
     const [entry] = await entries('ACCESS_DENIED');
-    expect(entry!.details).toMatchObject({ missing: ['billing:read'] });
+    expect(entry!.details).toMatchObject({ missing: ['pay:read'] });
   });
 
   it('skips @SkipAudit routes and does not audit anonymous requests', async () => {

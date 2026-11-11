@@ -32,7 +32,6 @@ describe.skipIf(!hasDb)('Notification delivery: push / SMS / email outbox (e2e)'
   let delivery: NotificationDeliveryService;
   let agencyId: string;
   let aideId: string;
-  let patientUserId: string;
   let auth: { Authorization: string };
   const http = () => request(app.getHttpServer());
   const TOKEN = `ExponentPushToken[${randomUUID().replaceAll('-', '').slice(0, 22)}]`;
@@ -61,25 +60,12 @@ describe.skipIf(!hasDb)('Notification delivery: push / SMS / email outbox (e2e)'
         data: {
           agencyId,
           email: aideEmail,
-          phone: '(555) 010-0199',
+          phone: '07700 900199',
           passwordHash: await app.get(PasswordService).hash(PASSWORD),
           passwordChangedAt: new Date(),
           firstName: 'Dee',
           lastName: 'Livery',
-          userRoles: { create: { roleId: await role('home_health_aide') } },
-        },
-      })
-    ).id;
-    patientUserId = (
-      await prisma.user.create({
-        data: {
-          agencyId,
-          email: `deliv-portal-${randomUUID()}@example.test`,
-          phone: '555-010-0198',
-          passwordHash: 'x',
-          firstName: 'Pat',
-          lastName: 'Portal',
-          userRoles: { create: { roleId: await role('portal_user') } },
+          userRoles: { create: { roleId: await role('care_worker') } },
         },
       })
     ).id;
@@ -103,29 +89,27 @@ describe.skipIf(!hasDb)('Notification delivery: push / SMS / email outbox (e2e)'
     const channels = (await http().get('/api/v1/notifications/channels').set(auth).expect(200)).body.data;
     expect(channels).toEqual({ push: true, sms: true, email: false });
     const prefs = (await http().get('/api/v1/notifications/preferences').set(auth).expect(200)).body.data;
-    expect(prefs.find((p: { type: string }) => p.type === 'shift_assigned')).toMatchObject({ push: true, sms: true, email: false });
+    expect(prefs.find((p: { type: string }) => p.type === 'document_signature')).toMatchObject({ push: true, sms: true, email: false });
   });
 
-  it('a new shift is queued for push and SMS (type defaults) — never for a patient — and the job sends it', async () => {
-    await notifications.notify({ agencyId, userIds: [aideId, patientUserId], type: 'shift_assigned', title: 'New shift assigned', data: { visitId: 'v-1' } });
+  it('a signing request is queued for push and SMS (type defaults) and the job sends it', async () => {
+    await notifications.notify({ agencyId, userIds: [aideId], type: 'document_signature', title: 'Please sign your contract', data: { documentId: 'd-1' } });
     const queued = await deliveriesFor(aideId);
     expect(queued.map((d) => [d.channel, d.status])).toEqual([
       ['push', 'pending'],
       ['sms', 'pending'],
     ]);
-    expect(await deliveriesFor(patientUserId)).toEqual([]); // in-app only
-    expect(await prisma.notification.count({ where: { userId: patientUserId } })).toBe(1);
 
     const result = await delivery.run();
     expect(result).toMatchObject({ sent: 2, failed: 0 });
-    expect(push.send).toHaveBeenCalledWith([TOKEN], expect.objectContaining({ title: 'New shift assigned', data: { visitId: 'v-1' } }));
-    expect(sms.send).toHaveBeenCalledWith('+15550100199', expect.objectContaining({ type: 'shift_assigned' }));
+    expect(push.send).toHaveBeenCalledWith([TOKEN], expect.objectContaining({ title: 'Please sign your contract', data: { documentId: 'd-1' } }));
+    expect(sms.send).toHaveBeenCalledWith('+447700900199', expect.objectContaining({ type: 'document_signature' }));
     const sent = await deliveriesFor(aideId);
     expect(sent.map((d) => [d.channel, d.status, d.providerMessageId])).toEqual([
       ['push', 'sent', 'push-1'],
       ['sms', 'sent', 'SM1'],
     ]);
-    const n = await prisma.notification.findFirstOrThrow({ where: { userId: aideId, type: 'shift_assigned' } });
+    const n = await prisma.notification.findFirstOrThrow({ where: { userId: aideId, type: 'document_signature' } });
     expect(n).toMatchObject({ sentViaPush: true, sentViaSms: true, sentViaEmail: false, channels: ['in_app', 'push', 'sms'] });
     expect((await delivery.run()).sent).toBe(0); // nothing sent twice
   });
@@ -133,13 +117,13 @@ describe.skipIf(!hasDb)('Notification delivery: push / SMS / email outbox (e2e)'
   it('retries with backoff, then gives up; a phone Expo says is gone is removed', async () => {
     sms.send.mockResolvedValue({ ok: false, retry: true, error: 'twilio 503' });
     push.send.mockResolvedValue({ ok: false, retry: false, error: 'expo DeviceNotRegistered', deadTokens: [TOKEN] });
-    await notifications.notify({ agencyId, userIds: [aideId], type: 'missed_visit', title: 'Missed visit' });
+    await notifications.notify({ agencyId, userIds: [aideId], type: 'document_signature', title: 'Missed visit' });
     const now = new Date();
     const first = await delivery.run(now);
     expect(first).toMatchObject({ retried: 1, failed: 1 });
     expect(await prisma.pushDevice.count({ where: { token: TOKEN } })).toBe(0);
     const pending = await prisma.notificationDelivery.findFirstOrThrow({
-      where: { channel: 'sms', notification: { userId: aideId, type: 'missed_visit' } },
+      where: { channel: 'sms', notification: { userId: aideId, type: 'document_signature' } },
     });
     expect(pending).toMatchObject({ status: 'pending', attempts: 1, lastError: 'twilio 503' });
     expect(pending.nextAttemptAt.getTime() - now.getTime()).toBe(60_000);
@@ -159,13 +143,13 @@ describe.skipIf(!hasDb)('Notification delivery: push / SMS / email outbox (e2e)'
 
   it('someone who wants a text but not the in-app alert gets the text only', async () => {
     await prisma.notificationPreference.create({
-      data: { userId: aideId, notificationType: 'shift_cancelled', channelInApp: false, channelSms: true },
+      data: { userId: aideId, notificationType: 'time_off_decided', channelInApp: false, channelSms: true },
     });
-    await notifications.notify({ agencyId, userIds: [aideId], type: 'shift_cancelled', title: 'Shift cancelled' });
-    const row = await prisma.notification.findFirstOrThrow({ where: { userId: aideId, type: 'shift_cancelled' } });
+    await notifications.notify({ agencyId, userIds: [aideId], type: 'time_off_decided', title: 'Shift cancelled' });
+    const row = await prisma.notification.findFirstOrThrow({ where: { userId: aideId, type: 'time_off_decided' } });
     expect(row.channels).toEqual(['sms']);
     const inbox = (await http().get('/api/v1/notifications?limit=50').set(auth).expect(200)).body.data;
-    expect(inbox.map((x: { type: string }) => x.type)).not.toContain('shift_cancelled');
+    expect(inbox.map((x: { type: string }) => x.type)).not.toContain('time_off_decided');
     expect((await delivery.run()).sent).toBe(1);
   });
 
@@ -173,8 +157,8 @@ describe.skipIf(!hasDb)('Notification delivery: push / SMS / email outbox (e2e)'
     push.enabled = false;
     sms.enabled = false;
     try {
-      await notifications.notify({ agencyId, userIds: [aideId], type: 'open_shift', title: 'Open shift' });
-      const row = await prisma.notification.findFirstOrThrow({ where: { userId: aideId, type: 'open_shift' } });
+      await notifications.notify({ agencyId, userIds: [aideId], type: 'message_received', title: 'Open shift' });
+      const row = await prisma.notification.findFirstOrThrow({ where: { userId: aideId, type: 'message_received' } });
       expect(row.channels).toEqual(['in_app']);
       expect(await prisma.notificationDelivery.count({ where: { notificationId: row.id } })).toBe(0);
     } finally {

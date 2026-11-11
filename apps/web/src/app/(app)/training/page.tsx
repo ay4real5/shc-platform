@@ -223,7 +223,7 @@ function CourseDetail({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-/** Primordial Academy (D-102): short courses with a quiz; passing can record a credential. */
+/** Academy (D-102): short courses with a quiz; passing can record a credential. */
 export default function TrainingPage() {
   const { request, can } = useAuth();
   const [mode, setMode] = useState<'list' | 'new' | string>('list');
@@ -237,8 +237,8 @@ export default function TrainingPage() {
   return (
     <div className="flex max-w-5xl flex-col gap-6">
       <PageHeader
-        title="Primordial Academy"
-        subtitle="Short training courses with a quiz. Caregivers take them in the app; passing can record a credential that counts towards onboarding."
+        title="Academy"
+        subtitle="Short training courses with a quiz. Staff take them in the app; passing can record a credential that counts towards onboarding."
         actions={mode === 'list' ? <Button onClick={() => setMode('new')}>New course</Button> : null}
       />
       {mode === 'new' && (

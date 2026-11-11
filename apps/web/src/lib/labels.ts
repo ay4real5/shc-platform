@@ -1,20 +1,23 @@
-import { EVV_FLAG_LABELS, type EvvFlag } from '@alora/shared';
+import { DISCIPLINE_LABELS, type Discipline } from '@alora/shared';
 
 /** Human-readable labels for codes the API returns. */
 
 const ROLE_LABELS: Record<string, string> = {
   super_admin: 'Super admin',
-  agency_admin: 'Agency admin',
-  supervisor: 'Clinical supervisor',
-  registered_nurse: 'Registered nurse (RN)',
-  licensed_nurse: 'Licensed nurse (LPN/LVN)',
-  therapist: 'Therapist (PT/OT/ST)',
-  home_health_aide: 'Home health aide',
-  billing_staff: 'Billing staff',
-  office_staff: 'Office staff',
-  medical_social_worker: 'Medical social worker',
-  portal_user: 'Patient portal user',
+  agency_admin: 'Company admin',
+  registered_manager: 'Registered manager',
+  care_coordinator: 'Care coordinator',
+  recruiter: 'Recruiter',
+  team_leader: 'Team leader',
+  senior_care_worker: 'Senior care worker',
+  care_worker: 'Care worker',
+  support_worker: 'Support worker',
 };
+
+/** A staff member's job role ('care_worker' → 'Care worker'). */
+export function disciplineLabel(code: string): string {
+  return DISCIPLINE_LABELS[code as Discipline] ?? humanize(code);
+}
 
 export function roleLabel(name: string): string {
   return ROLE_LABELS[name] ?? name;
@@ -39,10 +42,6 @@ export function formatTime(hhmm: string): string {
   return `${((h! + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${suffix}`;
 }
 
-/** EVV flag code → plain words ("Clocked in away from the home"). */
-export function flagLabel(flag: string): string {
-  return EVV_FLAG_LABELS[flag as EvvFlag] ?? flag;
-}
 
 /** An ISO instant → local clock time ("4:05 PM"), or a dash. */
 export function clockTime(value: string | null | undefined): string {

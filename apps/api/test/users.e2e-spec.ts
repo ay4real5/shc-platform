@@ -81,7 +81,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
   describe('create', () => {
     it('creates a user who must change the starting password at first login', async () => {
       const admin = await seedUser(['agency_admin']);
-      const body = newUserBody(['registered_nurse']);
+      const body = newUserBody(['senior_care_worker']);
       const res = await http().post('/api/v1/users').set(admin.auth).send(body).expect(201);
 
       expect(res.body.data).toMatchObject({
@@ -89,7 +89,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
         firstName: 'Nora',
         isActive: true,
         is2faEnabled: false,
-        roles: [{ name: 'registered_nurse' }],
+        roles: [{ name: 'senior_care_worker' }],
       });
       expect(res.body.data).not.toHaveProperty('passwordHash');
       expect(res.body.data).not.toHaveProperty('twoFaSecret');
@@ -126,7 +126,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
       await prisma.rolePermission.createMany({ data: perms.map((p) => ({ roleId: hr.id, permissionId: p.id })) });
       const hrUser = await seedUser([hr.id]);
 
-      const denied = await http().post('/api/v1/users').set(hrUser.auth).send(newUserBody(['billing_staff'])).expect(403);
+      const denied = await http().post('/api/v1/users').set(hrUser.auth).send(newUserBody(['recruiter'])).expect(403);
       expect(denied.body.error.message).toMatch(/permissions you do not have/);
       await http().post('/api/v1/users').set(hrUser.auth).send(newUserBody(['agency_admin'])).expect(403);
 
@@ -190,7 +190,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
 
     it('updates details and roles; new roles take effect immediately', async () => {
       const admin = await seedUser(['agency_admin']);
-      const target = await seedUser(['home_health_aide']);
+      const target = await seedUser(['care_worker']);
       await http().get('/api/v1/users').set(target.auth).expect(403); // aides can't list users
 
       const res = await http()
@@ -199,12 +199,12 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
         .send({ lastName: 'Renamed', roleIds: [roleIds.office_staff, roleIds.agency_admin] })
         .expect(200);
       expect(res.body.data.lastName).toBe('Renamed');
-      expect(res.body.data.roles.map((r: { name: string }) => r.name)).toEqual(['agency_admin', 'office_staff']);
+      expect(res.body.data.roles.map((r: { name: string }) => r.name)).toEqual(['agency_admin', 'care_coordinator']);
       await http().get('/api/v1/users').set(target.auth).expect(200);
     });
 
     it('refuses callers without user permissions', async () => {
-      const supervisor = await seedUser(['supervisor']);
+      const supervisor = await seedUser(['care_coordinator']);
       await http().get('/api/v1/users').set(supervisor.auth).expect(403);
       await http().post('/api/v1/users').set(supervisor.auth).send(newUserBody([])).expect(403);
     });
@@ -213,7 +213,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
   describe('account actions', () => {
     it('deactivation ends sessions and blocks login; reactivation restores it', async () => {
       const admin = await seedUser(['agency_admin']);
-      const target = await seedUser(['registered_nurse']);
+      const target = await seedUser(['senior_care_worker']);
       const { refreshToken } = (
         await http().post('/api/v1/auth/login').send({ email: target.email, password: PASSWORD })
       ).body.data;
@@ -229,7 +229,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
 
     it('unlocks a locked account', async () => {
       const admin = await seedUser(['agency_admin']);
-      const target = await seedUser(['registered_nurse']);
+      const target = await seedUser(['senior_care_worker']);
       await prisma.user.update({ where: { id: target.id }, data: { lockedUntil: new Date(Date.now() + 3_600_000) } });
       await http().post('/api/v1/auth/login').send({ email: target.email, password: PASSWORD }).expect(401);
 
@@ -240,7 +240,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
 
     it("resets a user's 2FA so they can log in with their password again", async () => {
       const admin = await seedUser(['agency_admin']);
-      const target = await seedUser(['registered_nurse']);
+      const target = await seedUser(['senior_care_worker']);
       await prisma.user.update({ where: { id: target.id }, data: { is2faEnabled: true, twoFaSecret: 'x' } });
       const before = await http().post('/api/v1/auth/login').send({ email: target.email, password: PASSWORD });
       expect(before.body.data.requires2FA).toBe(true);
@@ -253,7 +253,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
 
     it("shows a user's activity from the audit trail", async () => {
       const admin = await seedUser(['agency_admin']);
-      const target = await seedUser(['registered_nurse']); // seeding logged them in once
+      const target = await seedUser(['senior_care_worker']); // seeding logged them in once
       const res = await http().get(`/api/v1/users/${target.id}/activity`).set(admin.auth).expect(200);
       expect(res.body.data.map((e: { action: string }) => e.action)).toContain('LOGIN_SUCCESS');
       expect(typeof res.body.data[0].id).toBe('string');

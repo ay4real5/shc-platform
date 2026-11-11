@@ -10,7 +10,7 @@ import { ErrorAlert, PageHeader, Pager, StatusBadge } from '@/components/ui/data
 import { SelectField } from '@/components/ui/form-controls';
 import { Field } from '@/components/ui/field';
 import { useAuth } from '@/lib/auth/auth-provider';
-import { humanize } from '@/lib/labels';
+import { disciplineLabel, humanize } from '@/lib/labels';
 import type { StaffSummary } from '@/lib/types/people';
 
 export default function StaffPage() {
@@ -18,7 +18,6 @@ export default function StaffPage() {
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
   const [discipline, setDiscipline] = useState('');
-  const [zip, setZip] = useState('');
   const [active, setActive] = useState('true');
   const [page, setPage] = useState(1);
 
@@ -31,13 +30,12 @@ export default function StaffPage() {
   }, [search]);
 
   const staff = useQuery({
-    queryKey: ['staff', { debounced, discipline, zip, active, page }],
+    queryKey: ['staff', { debounced, discipline, active, page }],
     placeholderData: keepPreviousData,
     queryFn: () => {
       const params = new URLSearchParams({ page: String(page), limit: '25' });
       if (debounced) params.set('search', debounced);
       if (discipline) params.set('discipline', discipline);
-      if (/^\d{5}$/.test(zip)) params.set('zip', zip);
       if (active) params.set('isActive', active);
       return request<StaffSummary[]>(`/staff?${params}`);
     },
@@ -47,14 +45,9 @@ export default function StaffPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Staff"
-        subtitle="Caregivers and clinicians: disciplines, credentials, availability and time off."
+        subtitle="Care and support workers, office staff: job roles, checks, availability and holidays."
         actions={
           <>
-            {can('staff:update') && can('reports:read') && (
-              <ButtonLink href="/staff/care-scores" variant="secondary">
-                Care Scores
-              </ButtonLink>
-            )}
             <ButtonLink href="/staff/onboarding" variant="secondary">
               Onboarding
             </ButtonLink>
@@ -75,15 +68,14 @@ export default function StaffPage() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Name, email or employee ID"
           />
-          <SelectField label="Discipline" value={discipline} onChange={(e) => { setDiscipline(e.target.value); setPage(1); }}>
+          <SelectField label="Job role" value={discipline} onChange={(e) => { setDiscipline(e.target.value); setPage(1); }}>
             <option value="">All</option>
             {DISCIPLINES.map((d) => (
               <option key={d} value={d}>
-                {d}
+                {disciplineLabel(d)}
               </option>
             ))}
           </SelectField>
-          <Field label="Serves ZIP" value={zip} maxLength={5} inputMode="numeric" className="w-28" onChange={(e) => { setZip(e.target.value); setPage(1); }} />
           <SelectField label="Status" value={active} onChange={(e) => { setActive(e.target.value); setPage(1); }}>
             <option value="true">Active</option>
             <option value="false">Former</option>
@@ -95,7 +87,7 @@ export default function StaffPage() {
           <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="py-2 pr-4 font-medium">Name</th>
-              <th className="py-2 pr-4 font-medium">Discipline</th>
+              <th className="py-2 pr-4 font-medium">Job role</th>
               <th className="py-2 pr-4 font-medium">Employee ID</th>
               <th className="py-2 pr-4 font-medium">Type</th>
               <th className="py-2 pr-4 font-medium">Languages</th>
@@ -110,7 +102,7 @@ export default function StaffPage() {
                     {s.lastName}, {s.firstName}
                   </Link>
                 </td>
-                <td className="py-2 pr-4 text-slate-700">{s.discipline}</td>
+                <td className="py-2 pr-4 text-slate-700">{disciplineLabel(s.discipline)}</td>
                 <td className="py-2 pr-4 font-mono text-slate-700">{s.employeeId ?? '—'}</td>
                 <td className="py-2 pr-4 text-slate-700">{humanize(s.employmentType)}</td>
                 <td className="py-2 pr-4 text-slate-700">{s.languages.join(', ') || '—'}</td>

@@ -11,19 +11,18 @@ describe('ROLE_DEFAULT_PERMISSIONS', () => {
     }
   });
 
-  it('keeps the separations the design asks for', () => {
+  it('keeps the separations a care provider needs', () => {
     const can = (role: keyof typeof ROLE_DEFAULT_PERMISSIONS, p: string) =>
       (ROLE_DEFAULT_PERMISSIONS[role] as readonly string[]).includes(p);
 
-    expect(can('billing_staff', 'visit_notes:create')).toBe(false); // no clinical notes for billing
-    expect(can('office_staff', 'billing:read')).toBe(false); // no billing for office staff
-    expect(can('licensed_nurse', 'care_plans:update')).toBe(false); // LPNs can't write care plans
-    expect(can('registered_nurse', 'care_plans:update')).toBe(true);
-    expect(can('home_health_aide', 'visit_notes:sign')).toBe(false);
-    expect(can('supervisor', 'billing:read')).toBe(false);
-    expect(can('registered_nurse', 'patients:read_all')).toBe(false); // field staff: assigned patients only
-    expect(can('office_staff', 'patients:read_all')).toBe(true);
-    expect(ROLE_DEFAULT_PERMISSIONS.portal_user).toEqual([]);
+    expect(can('care_worker', 'staff:read')).toBe(false); // care workers don't see other people's records
+    expect(can('care_worker', 'time_off:request')).toBe(true);
+    expect(can('recruiter', 'staff:update')).toBe(false);
+    expect(can('recruiter', 'recruitment:manage')).toBe(true);
+    expect(can('team_leader', 'time_off:approve')).toBe(true);
+    expect(can('care_coordinator', 'settings:update')).toBe(false);
+    expect(can('registered_manager', 'settings:update')).toBe(false);
+    expect(can('registered_manager', 'audit_logs:read')).toBe(true);
     expect(ROLE_DEFAULT_PERMISSIONS.agency_admin).toEqual(PERMISSIONS);
   });
 });

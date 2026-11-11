@@ -5,8 +5,7 @@ import { IsBoolean, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 
 import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
-import { PHONE, trimmed, upperTrimmed, US_STATE, US_ZIP } from '../../common/validators/fields.js';
-import { IsNpi } from '../../common/validators/is-npi.js';
+import { PHONE, trimmed, UK_POSTCODE, upperTrimmed } from '../../common/validators/fields.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../database/prisma.service.js';
 
@@ -17,15 +16,6 @@ export class UpdateAgencyDto {
   @IsNotEmpty()
   @MaxLength(255)
   name?: string;
-
-  @IsOptional()
-  @IsNpi()
-  npi?: string;
-
-  /** Employer Identification Number, 9 digits (with or without the dash). */
-  @IsOptional()
-  @Matches(/^\d{2}-?\d{7}$/, { message: 'taxId must be an EIN like 12-3456789' })
-  taxId?: string;
 
   @IsOptional()
   @Matches(PHONE)
@@ -49,17 +39,13 @@ export class UpdateAgencyDto {
   @MaxLength(100)
   city?: string;
 
+  /** UK postcode (stored in the `zip` column). */
   @IsOptional()
   @Transform(upperTrimmed)
-  @Matches(US_STATE)
-  state?: string;
-
-  /** ZIP+4 is needed for electronic claims. */
-  @IsOptional()
-  @Matches(US_ZIP)
+  @Matches(UK_POSTCODE, { message: 'zip must be a UK postcode, e.g. M1 1AA' })
   zip?: string;
 
-  /** Show caregivers recognition badges in the app (D-097). Off by default. */
+  /** Show staff recognition badges in the app (D-097). Off by default. */
   @IsOptional()
   @IsBoolean()
   recognitionBadges?: boolean;
@@ -68,13 +54,10 @@ export class UpdateAgencyDto {
 export interface AgencyView {
   id: string;
   name: string;
-  npi: string | null;
-  taxId: string | null;
   phone: string | null;
   addressLine1: string | null;
   addressLine2: string | null;
   city: string | null;
-  state: string | null;
   zip: string | null;
   timezone: string;
   recognitionBadges: boolean;
@@ -83,13 +66,10 @@ export interface AgencyView {
 const SELECT = {
   id: true,
   name: true,
-  npi: true,
-  taxId: true,
   phone: true,
   addressLine1: true,
   addressLine2: true,
   city: true,
-  state: true,
   zip: true,
   timezone: true,
   settings: true,
@@ -107,7 +87,7 @@ function view({ settings, ...agency }: Prisma.AgencyGetPayload<{ select: typeof 
 }
 
 /**
- * The caller's agency profile (DECISIONS D-053): name, NPI, EIN, address — what claims are billed under. The timezone
+ * The caller's company profile: name, phone, address and postcode. The timezone
  * is not editable here (it changes what "today" means for every date already recorded).
  */
 @Injectable()

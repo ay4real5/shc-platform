@@ -1,23 +1,32 @@
-/** Clinical disciplines (DESIGN.md §5.3 staff_profiles.discipline). */
+/** Job roles in a UK care provider (staff_profiles.discipline; DECISIONS S-002). */
 export const DISCIPLINES = [
-  'RN', // registered nurse
-  'LPN', // licensed practical/vocational nurse
-  'PT', // physical therapist
-  'PTA', // physical therapist assistant
-  'OT', // occupational therapist
-  'COTA', // certified occupational therapy assistant
-  'SLP', // speech-language pathologist
-  'MSW', // medical social worker
-  'HHA', // home health aide
-  'CNA', // certified nursing assistant
-  'PCA', // personal care aide
+  'care_worker',
+  'senior_care_worker',
+  'support_worker',
+  'team_leader',
+  'nurse',
+  'care_coordinator',
+  'manager',
+  'office',
 ] as const;
 export type Discipline = (typeof DISCIPLINES)[number];
 
-export const EMPLOYMENT_TYPES = ['full_time', 'part_time', 'per_diem', 'contractor'] as const;
+export const DISCIPLINE_LABELS: Record<Discipline, string> = {
+  care_worker: 'Care worker',
+  senior_care_worker: 'Senior care worker',
+  support_worker: 'Support worker',
+  team_leader: 'Team leader',
+  nurse: 'Nurse',
+  care_coordinator: 'Care coordinator',
+  manager: 'Manager',
+  office: 'Office',
+};
+
+/** UK contract types. Bank staff work as and when needed. */
+export const EMPLOYMENT_TYPES = ['full_time', 'part_time', 'zero_hours', 'bank', 'contractor'] as const;
 export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number];
 
-export const TIME_OFF_TYPES = ['vacation', 'sick', 'personal', 'bereavement', 'other'] as const;
+export const TIME_OFF_TYPES = ['annual_leave', 'sickness', 'compassionate', 'unpaid', 'other'] as const;
 export type TimeOffType = (typeof TIME_OFF_TYPES)[number];
 
 export const TIME_OFF_STATUSES = ['pending', 'approved', 'denied', 'cancelled'] as const;
@@ -33,3 +42,7 @@ export function credentialState(expiryDate: string | null, alertDaysBefore: numb
   alertFrom.setUTCDate(alertFrom.getUTCDate() - alertDaysBefore);
   return today >= alertFrom.toISOString().slice(0, 10) ? 'expiring_soon' : 'valid';
 }
+
+/** Recorded only when the person chooses to give it. */
+export const GENDERS = ['female', 'male', 'other', 'unknown'] as const;
+export type Gender = (typeof GENDERS)[number];

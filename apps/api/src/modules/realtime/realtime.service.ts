@@ -1,19 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  agencyRoom,
-  LiveMonitorGateway,
-  NotificationsGateway,
-  userRoom,
-} from './realtime.gateways.js';
-
-/** Live-monitor events (DESIGN.md §8.1). Sent only to `evv:read` holders in the agency. */
-export type MonitorEvent =
-  | 'visit:clock-in'
-  | 'visit:clock-out'
-  | 'visit:geofence-violation'
-  | 'visit:late'
-  | 'visit:noshow'
-  | 'visit:missed';
+import { NotificationsGateway, userRoom } from './realtime.gateways.js';
 
 /**
  * The one place that pushes to sockets. Emitting never throws: a failed push must not fail the request that caused
@@ -23,20 +9,11 @@ export type MonitorEvent =
 export class RealtimeService {
   private readonly logger = new Logger(RealtimeService.name);
 
-  constructor(
-    private readonly notifications: NotificationsGateway,
-    private readonly monitor: LiveMonitorGateway,
-  ) {}
+  constructor(private readonly notifications: NotificationsGateway) {}
 
   /** Per-user pushes. `message:new` carries IDs only; the client fetches the text (D-057). */
   toUser(userId: string, event: 'notification:new' | 'message:new', payload: unknown): void {
     this.safely(() => this.notifications.server?.to(userRoom(userId)).emit(event, payload));
-  }
-
-  toMonitor(agencyId: string, event: MonitorEvent, payload: Record<string, unknown>): void {
-    this.safely(() =>
-      this.monitor.server?.to(agencyRoom(agencyId)).emit(event, { ...payload, at: new Date() }),
-    );
   }
 
   private safely(send: () => unknown): void {

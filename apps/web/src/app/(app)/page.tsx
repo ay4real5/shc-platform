@@ -2,9 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Bell, CalendarDays, CalendarPlus, HeartPulse, ShieldAlert, Sparkles, UserPlus, type LucideIcon } from 'lucide-react';
+import { Bell, ClipboardCheck, GraduationCap, ShieldAlert, UserPlus, Users, type LucideIcon } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
-import { askPrimordial, CommandCenter } from '@/components/dashboard/command-center';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { useAgencyToday } from '@/lib/use-agency-today';
@@ -75,24 +74,18 @@ export default function DashboardPage() {
   const { user, can, request } = useAuth();
   const today = useAgencyToday();
   const greeting = useGreeting();
-  const assistant = useQuery({
-    queryKey: ['assistant', 'status'],
-    queryFn: async () => (await request<{ enabled: boolean }>('/assistant/status')).data,
-    enabled: can('assistant:use'),
-    staleTime: 5 * 60_000,
-  });
   const chip =
     'inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur transition-all hover:-translate-y-0.5 hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-white';
 
-  const visitsToday = useQuery({
-    queryKey: ['dashboard', 'visits-today', today],
-    enabled: can('visits:read'),
-    queryFn: async () => (await request<unknown[]>(`/schedule/visits?from=${today}&to=${today}&limit=1`)).meta?.total,
+  const activeStaff = useQuery({
+    queryKey: ['dashboard', 'active-staff'],
+    enabled: can('staff:read'),
+    queryFn: async () => (await request<unknown[]>('/staff?isActive=true&limit=1')).meta?.total,
   });
-  const activePatients = useQuery({
-    queryKey: ['dashboard', 'active-patients'],
-    enabled: can('patients:read'),
-    queryFn: async () => (await request<unknown[]>('/patients?status=active&limit=1')).meta?.total,
+  const notReady = useQuery({
+    queryKey: ['dashboard', 'not-ready'],
+    enabled: can('staff:read'),
+    queryFn: async () => (await request<{ ready: boolean }[]>('/staff/onboarding')).data.filter((s) => !s.ready).length,
   });
   const credentialAlerts = useQuery({
     queryKey: ['dashboard', 'credential-alerts'],
@@ -112,54 +105,47 @@ export default function DashboardPage() {
         <div aria-hidden className="absolute -right-2 -top-2 h-28 w-28 rounded-full border border-accent-300/30" />
         <div aria-hidden className="absolute right-12 top-12 h-4 w-4 rounded-full bg-accent-400 shadow-[0_0_24px_rgb(249_115_98_/_0.9)]" />
         <p className="relative inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-brand-100 ring-1 ring-white/15">
-          {new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}
+          {new Date(`${today}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })}
         </p>
         <h1 className="relative mt-3 font-display text-3xl font-extrabold tracking-tight md:text-[40px] md:leading-tight">
           {greeting}, <span className="bg-gradient-to-r from-brand-100 to-accent-300 bg-clip-text text-transparent">{user?.firstName}</span>
         </h1>
-        <p className="relative mt-2 max-w-xl text-brand-100">Here is today at a glance, and what needs your attention first.</p>
+        <p className="relative mt-2 max-w-xl text-brand-100">Who is ready to work, what is expiring, and what needs your attention first.</p>
         <div className="relative mt-6 flex flex-wrap gap-2">
-          {can('visits:create') && (
-            <Link href="/schedule/new" className={chip}>
-              <CalendarPlus aria-hidden className="h-4 w-4" /> New visit
+          {can('staff:create') && (
+            <Link href="/staff/new" className={chip}>
+              <UserPlus aria-hidden className="h-4 w-4" /> Add staff member
             </Link>
           )}
-          {can('referrals:manage') && (
-            <Link href="/referrals/new" className={chip}>
-              <UserPlus aria-hidden className="h-4 w-4" /> Add referral
+          {can('staff:read') && (
+            <Link href="/staff/onboarding" className={chip}>
+              <ClipboardCheck aria-hidden className="h-4 w-4" /> Onboarding
             </Link>
           )}
-          {assistant.data?.enabled && (
-            <button
-              type="button"
-              onClick={() => askPrimordial('What should I worry about today?')}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-accent-300 to-accent-400 px-4 py-2 text-sm font-semibold text-accent-900 shadow-lg shadow-accent-700/30 transition-all hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-white"
-            >
-              <Sparkles aria-hidden className="h-4 w-4" /> Ask Primordial
-            </button>
+          {can('training:manage') && (
+            <Link href="/training" className={chip}>
+              <GraduationCap aria-hidden className="h-4 w-4" /> Academy
+            </Link>
           )}
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {can('visits:read') && (
-          <StatCard label="Visits today" value={visitsToday.data} loading={visitsToday.isLoading} href="/schedule" icon={CalendarDays} tone="brand" />
-        )}
-        {can('patients:read') && (
-          <StatCard label="Active patients" value={activePatients.data} loading={activePatients.isLoading} href="/patients" icon={HeartPulse} tone="accent" />
-        )}
         {can('staff:read') && (
-          <StatCard
-            label="Credentials expired or expiring (30 days)"
-            value={credentialAlerts.data}
-            loading={credentialAlerts.isLoading}
-            href="/staff/credentials"
-            icon={ShieldAlert}
-            tone="amber"
-          />
+          <>
+            <StatCard label="Active staff" value={activeStaff.data} loading={activeStaff.isLoading} href="/staff" icon={Users} tone="brand" />
+            <StatCard label="Not yet ready to work" value={notReady.data} loading={notReady.isLoading} href="/staff/onboarding" icon={ClipboardCheck} tone="accent" />
+            <StatCard
+              label="Checks expired or expiring (30 days)"
+              value={credentialAlerts.data}
+              loading={credentialAlerts.isLoading}
+              href="/staff/credentials"
+              icon={ShieldAlert}
+              tone="amber"
+            />
+          </>
         )}
         <StatCard label="Unread notifications" value={unread.data} loading={unread.isLoading} icon={Bell} tone="sky" />
       </div>
-      <CommandCenter />
     </div>
   );
 }

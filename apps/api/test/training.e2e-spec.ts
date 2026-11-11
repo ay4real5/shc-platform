@@ -19,7 +19,7 @@ const COURSE = {
   title: 'Infection control basics',
   summary: 'Hand hygiene and gloves',
   content: 'Wash your hands for 20 seconds.\n\nChange gloves between tasks.',
-  disciplines: ['HHA'],
+  disciplines: ['care_worker'],
   passPercent: 75,
   credentialType: 'Infection Control',
   validityMonths: 12,
@@ -47,9 +47,9 @@ describe.skipIf(!hasDb)('Primordial Academy (e2e)', () => {
     await app.init();
     prisma = app.get(PrismaService);
     agencyId = (await prisma.agency.create({ data: { name: `Academy ${randomUUID()}`, timezone: 'UTC' } })).id;
-    supervisor = await seedUser('supervisor');
-    aide = await seedUser('home_health_aide', 'HHA');
-    nurse = await seedUser('registered_nurse', 'RN');
+    supervisor = await seedUser('care_coordinator');
+    aide = await seedUser('care_worker', 'care_worker');
+    nurse = await seedUser('senior_care_worker', 'nurse');
   });
 
   afterAll(async () => {
@@ -85,7 +85,7 @@ describe.skipIf(!hasDb)('Primordial Academy (e2e)', () => {
     expect(course).toMatchObject({ credentialType: 'infection_control', questions: expect.arrayContaining([expect.objectContaining({ correctIndex: 1 })]) });
     await http().post(api('/training/courses')).set(aide.auth).send(COURSE).expect(403);
 
-    // The aide sees it (HHA); the nurse doesn't (RN).
+    // The care worker sees it; the nurse doesn't.
     const mine = (await http().get(api('/training/my')).set(aide.auth).expect(200)).body.data;
     expect(mine).toEqual([expect.objectContaining({ id: course.id, status: 'not_started', questions: 4, grantsCredential: true })]);
     expect((await http().get(api('/training/my')).set(nurse.auth).expect(200)).body.data).toEqual([]);

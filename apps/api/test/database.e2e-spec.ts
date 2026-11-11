@@ -23,7 +23,7 @@ describe.skipIf(!hasDb)('database schema (e2e)', () => {
 
   async function staff(email = `db-${randomUUID()}@example.test`) {
     const user = await prisma.user.create({ data: { agencyId, email, passwordHash: 'x', firstName: 'Test', lastName: 'Staff' } });
-    return prisma.staffProfile.create({ data: { agencyId, userId: user.id, discipline: 'HHA' } });
+    return prisma.staffProfile.create({ data: { agencyId, userId: user.id, discipline: 'care_worker' } });
   }
 
   it('applies database defaults (uuid, timestamps, status)', async () => {

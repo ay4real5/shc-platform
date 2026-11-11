@@ -7,12 +7,12 @@ import { Card } from '@/components/ui/card';
 import { ErrorAlert } from '@/components/ui/data-display';
 import { Field } from '@/components/ui/field';
 import { SelectField, TextAreaField } from '@/components/ui/form-controls';
-import { humanize } from '@/lib/labels';
+import { disciplineLabel, humanize } from '@/lib/labels';
 import type { StaffCandidate, StaffDetail } from '@/lib/types/people';
 
-const TEXT = ['employeeId', 'discipline', 'employmentType', 'hireDate', 'addressLine1', 'city', 'state', 'zip', 'notes', 'taxFilingStatus', 'gender'] as const;
-const MONEY = ['hourlyRate', 'perVisitRate', 'overtimeRate', 'mileageRate'] as const;
-const LISTS = ['serviceAreaZipCodes', 'skills', 'languages'] as const;
+const TEXT = ['employeeId', 'discipline', 'employmentType', 'hireDate', 'addressLine1', 'city', 'zip', 'notes', 'gender'] as const;
+const MONEY = ['hourlyRate', 'overtimeRate', 'mileageRate'] as const;
+const LISTS = ['skills', 'languages'] as const;
 
 /**
  * Create (with `candidates`) or edit (with `staff`) a staff profile. Pay fields appear only when the user may see
@@ -52,18 +52,6 @@ export function StaffForm({
       if (raw === null) continue;
       body[key] = String(raw).split(',').map((v) => v.trim()).filter(Boolean);
     }
-    // Write-only like the SSN: blank keeps the code on file.
-    const ivrCode = String(form.get('ivrCode') ?? '').trim();
-    if (ivrCode) body.ivrCode = ivrCode;
-    const ssn = String(form.get('ssn') ?? '').trim();
-    if (ssn) body.ssn = ssn;
-    const maxPatients = String(form.get('maxPatients') ?? '').trim();
-    if (maxPatients) body.maxPatients = Number(maxPatients);
-    for (const key of ['latitude', 'longitude'] as const) {
-      const value = String(form.get(key) ?? '').trim();
-      if (value) body[key] = Number(value);
-      else if (staff?.[key] !== null && staff?.[key] !== undefined) body[key] = null;
-    }
 
     setBusy(true);
     setError(null);
@@ -95,13 +83,13 @@ export function StaffForm({
             ))}
           </SelectField>
         )}
-        <SelectField label="Discipline" name="discipline" defaultValue={v('discipline')} required>
+        <SelectField label="Job role" name="discipline" defaultValue={v('discipline')} required>
           <option value="" disabled>
             Choose…
           </option>
           {DISCIPLINES.map((d) => (
             <option key={d} value={d}>
-              {d}
+              {disciplineLabel(d)}
             </option>
           ))}
         </SelectField>
@@ -112,74 +100,30 @@ export function StaffForm({
             </option>
           ))}
         </SelectField>
-        <Field
-          label="Employee ID"
-          name="employeeId"
-          defaultValue={v('employeeId')}
-          hint="Letters and digits; goes on Virginia Medicaid claims (never the SSN)."
-        />
-        <Field
-          label="Phone check-in code"
-          name="ivrCode"
-          inputMode="numeric"
-          autoComplete="off"
-          pattern="[0-9]{4,8}"
-          placeholder={staff?.hasPhoneCheckInCode ? 'Set — enter a new one to change it' : '4 to 8 digits'}
-          hint="Keyed in when clocking in or out by phone from the patient's home line."
-        />
-        <Field label="Hire date" name="hireDate" type="date" defaultValue={v('hireDate')} />
-        <Field label="Max patients" name="maxPatients" type="number" min={1} defaultValue={staff?.maxPatients ?? ''} />
+        <Field label="Employee number" name="employeeId" defaultValue={v('employeeId')} hint="Your own reference, e.g. payroll number." />
+        <Field label="Start date" name="hireDate" type="date" defaultValue={v('hireDate')} />
       </Card>
 
       <Card className="grid gap-4 p-5 sm:grid-cols-2">
-        <h2 className="text-base font-semibold text-slate-900 sm:col-span-2">Skills and coverage</h2>
-        <Field
-          label="Service area ZIP codes"
-          name="serviceAreaZipCodes"
-          defaultValue={staff?.serviceAreaZipCodes.join(', ') ?? ''}
-          hint="Comma-separated 5-digit ZIPs."
-          className="sm:col-span-2"
-        />
-        <Field label="Skills" name="skills" defaultValue={staff?.skills.join(', ') ?? ''} hint="Comma-separated." />
+        <h2 className="text-base font-semibold text-slate-900 sm:col-span-2">Skills and contact</h2>
+        <Field label="Skills" name="skills" defaultValue={staff?.skills.join(', ') ?? ''} hint="Comma-separated, e.g. dementia care, PEG feeding." />
         <Field label="Languages" name="languages" defaultValue={staff?.languages.join(', ') ?? ''} hint="Comma-separated." />
         <Field label="Home address" name="addressLine1" defaultValue={v('addressLine1')} />
-        <Field label="City" name="city" defaultValue={v('city')} />
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="State" name="state" maxLength={2} defaultValue={v('state')} />
-          <Field label="ZIP" name="zip" defaultValue={v('zip')} />
-        </div>
+        <Field label="Town or city" name="city" defaultValue={v('city')} />
+        <Field label="Postcode" name="zip" defaultValue={v('zip')} />
         <SelectField label="Gender (optional)" name="gender" defaultValue={v('gender')}>
           <option value="">Not recorded</option>
           <option value="female">Female</option>
           <option value="male">Male</option>
         </SelectField>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Home latitude" name="latitude" type="number" step="any" min={-90} max={90} defaultValue={staff?.latitude ?? ''} hint="For distance to patients." />
-          <Field label="Home longitude" name="longitude" type="number" step="any" min={-180} max={180} defaultValue={staff?.longitude ?? ''} />
-        </div>
       </Card>
 
       {showPay && (
         <Card className="grid gap-4 p-5 sm:grid-cols-2">
-          <h2 className="text-base font-semibold text-slate-900 sm:col-span-2">Pay (visible to payroll only)</h2>
-          <Field label="Hourly rate ($)" name="hourlyRate" type="number" step="0.01" min={0} defaultValue={staff?.pay?.hourlyRate ?? ''} />
-          <Field label="Per-visit rate ($)" name="perVisitRate" type="number" step="0.01" min={0} defaultValue={staff?.pay?.perVisitRate ?? ''} />
-          <Field label="Overtime rate ($)" name="overtimeRate" type="number" step="0.01" min={0} defaultValue={staff?.pay?.overtimeRate ?? ''} />
-          <Field label="Mileage rate ($/mile)" name="mileageRate" type="number" step="0.0001" min={0} defaultValue={staff?.pay?.mileageRate ?? ''} />
-          <SelectField label="Tax filing status" name="taxFilingStatus" defaultValue={staff?.pay?.taxFilingStatus ?? ''}>
-            <option value="">Not recorded</option>
-            <option value="single">Single</option>
-            <option value="married">Married</option>
-            <option value="married_separately">Married filing separately</option>
-            <option value="head_of_household">Head of household</option>
-          </SelectField>
-          <Field
-            label="Social Security number"
-            name="ssn"
-            autoComplete="off"
-            placeholder={staff?.pay?.ssnLast4 ? `On file: •••-••-${staff.pay.ssnLast4}` : '123-45-6789'}
-            hint="Stored encrypted. Leave blank to keep the number on file."
-          />
+          <h2 className="text-base font-semibold text-slate-900 sm:col-span-2">Pay (only people who can see pay rates)</h2>
+          <Field label="Hourly rate (£)" name="hourlyRate" type="number" step="0.01" min={0} defaultValue={staff?.pay?.hourlyRate ?? ''} />
+          <Field label="Overtime rate (£)" name="overtimeRate" type="number" step="0.01" min={0} defaultValue={staff?.pay?.overtimeRate ?? ''} />
+          <Field label="Mileage rate (£ per mile)" name="mileageRate" type="number" step="0.01" min={0} defaultValue={staff?.pay?.mileageRate ?? ''} hint="HMRC approved rate is 45p for the first 10,000 miles." />
         </Card>
       )}
 

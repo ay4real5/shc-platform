@@ -37,7 +37,7 @@ describe.skipIf(!hasDb)('Notifications (e2e)', () => {
     await app.init();
     prisma = app.get(PrismaService);
     agencyId = (await prisma.agency.create({ data: { name: `Notifications Test ${randomUUID()}` } })).id;
-    office = await seedUser('office_staff');
+    office = await seedUser('care_coordinator');
     admin = await seedUser('agency_admin');
   });
 
@@ -68,8 +68,8 @@ describe.skipIf(!hasDb)('Notifications (e2e)', () => {
   }
 
   async function caregiver() {
-    const user = await seedUser('home_health_aide');
-    const staff = await prisma.staffProfile.create({ data: { userId: user.id, agencyId, discipline: 'HHA' } });
+    const user = await seedUser('care_worker');
+    const staff = await prisma.staffProfile.create({ data: { userId: user.id, agencyId, discipline: 'care_worker' } });
     return { ...user, staffId: staff.id };
   }
 

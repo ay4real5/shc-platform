@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
 import { SelectField } from '@/components/ui/form-controls';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { disciplineLabel } from '@/lib/labels';
 import type { ExpiringCredential } from '@/lib/types/people';
 
 /** Agency-wide list of expired and soon-expiring credentials for active staff, soonest first. */
@@ -45,7 +46,7 @@ export default function CredentialsAttentionPage() {
                   <Link href={`/staff/${c.staff.id}`} className="font-medium text-brand-800 hover:underline">
                     {c.staff.lastName}, {c.staff.firstName}
                   </Link>{' '}
-                  <span className="text-slate-500">({c.staff.discipline})</span>
+                  <span className="text-slate-500">({disciplineLabel(c.staff.discipline)})</span>
                 </td>
                 <td className="py-2 pr-4 text-slate-700">{c.credentialName}</td>
                 <td className="py-2 pr-4 text-slate-700">{formatDate(c.expiryDate)}</td>

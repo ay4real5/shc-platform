@@ -28,7 +28,7 @@ const SETTINGS: Partial<EnvironmentVariables> = {
 const config = (overrides: Partial<EnvironmentVariables> = {}) =>
   ({ get: (key: keyof EnvironmentVariables) => ({ ...SETTINGS, ...overrides })[key] }) as unknown as ConfigService<EnvironmentVariables, true>;
 
-const MESSAGE: DeliveryMessage = { notificationId: 'n1', type: 'shift_assigned', title: 'New shift assigned', body: 'Tomorrow at 9:00.', data: { visitId: 'v1' } };
+const MESSAGE: DeliveryMessage = { notificationId: 'n1', type: 'document_signature', title: 'Please sign your contract', body: 'Open the app to sign.', data: { documentId: 'd1' } };
 
 function fakeFetch(status: number, json: unknown, headers: Record<string, string> = {}) {
   return vi.fn<FetchLike>(async () => new Response(JSON.stringify(json), { status, headers }));
@@ -36,15 +36,15 @@ function fakeFetch(status: number, json: unknown, headers: Record<string, string
 
 describe('plannedChannels', () => {
   const base: DeliveryFacts = {
-    type: 'shift_assigned',
+    type: 'document_signature',
     preference: null,
     available: { push: true, sms: true, email: true },
     recipient: { isActive: true, isPortalUser: false, hasPhone: true, hasEmail: true, pushDevices: 1 },
   };
 
   it('follows the type defaults, the person’s choices, what is connected and how they can be reached', () => {
-    expect(plannedChannels(base)).toEqual(['push', 'sms']); // DESIGN §13.2: shift_assigned → push, sms
-    expect(plannedChannels({ ...base, type: 'payroll_ready' })).toEqual(['email']);
+    expect(plannedChannels(base)).toEqual(['push', 'sms']); // document_signature → push, sms
+    expect(plannedChannels({ ...base, type: 'credential_expiry' })).toEqual(['email']);
     expect(plannedChannels({ ...base, preference: { channelSms: false, channelEmail: true } })).toEqual(['push', 'email']);
     expect(plannedChannels({ ...base, available: { push: true, sms: false, email: true } })).toEqual(['push']);
     expect(plannedChannels({ ...base, recipient: { ...base.recipient, pushDevices: 0, hasPhone: false } })).toEqual([]);
@@ -56,8 +56,8 @@ describe('plannedChannels', () => {
   });
 
   it('a saved choice beats the default', () => {
-    expect(effectiveChannel('late_arrival', 'push', null)).toBe(false);
-    expect(effectiveChannel('late_arrival', 'push', { channelPush: true })).toBe(true);
+    expect(effectiveChannel('credential_expiry', 'push', null)).toBe(false);
+    expect(effectiveChannel('credential_expiry', 'push', { channelPush: true })).toBe(true);
   });
 });
 
@@ -114,9 +114,11 @@ describe('senders', () => {
   });
 
   it('phone numbers become E.164 or nothing', () => {
-    expect(toE164('(555) 010-0100')).toBe('+15550100100');
-    expect(toE164('1-555-010-0100')).toBe('+15550100100');
+    expect(toE164('07700 900100')).toBe('+447700900100');
+    expect(toE164('0161 496 0000')).toBe('+441614960000');
+    expect(toE164('44 7700 900100')).toBe('+447700900100');
     expect(toE164('+44 20 7946 0000')).toBe('+442079460000');
+    expect(toE164('(555) 010-0100')).toBeNull(); // a US number without +1 isn't guessed
     expect(toE164('0100')).toBeNull();
     expect(toE164(null)).toBeNull();
   });

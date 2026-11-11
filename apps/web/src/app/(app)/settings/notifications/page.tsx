@@ -17,27 +17,12 @@ interface Preference {
 
 /** Plain-language names; unknown types fall back to the code with spaces. */
 const LABELS: Partial<Record<NotificationType, string>> = {
-  shift_reminder: 'Visit reminders',
-  shift_assigned: 'A visit is assigned to me',
-  shift_unassigned: 'A visit is taken off my schedule',
-  shift_cancelled: 'A visit is cancelled',
-  shift_updated: 'A visit time or details change',
-  open_shift: 'Open shifts I could take',
-  swap_requested: 'Someone asks to swap a shift',
-  swap_decided: 'My swap request is decided',
-  missed_visit: 'Missed visits',
-  late_arrival: 'Late arrivals',
-  credential_expiry: 'Licences and certifications expiring',
-  auth_limit: 'Authorizations running out',
-  claim_status: 'Claim status changes',
-  message_received: 'Urgent and patient-portal messages',
+  credential_expiry: 'Checks and certificates expiring (Right to Work, DBS, training)',
+  message_received: 'Urgent messages',
   document_signature: 'Documents to sign',
-  payroll_ready: 'My pay stub is ready',
-  time_off_decided: 'My time-off request is decided',
-  evv_correction_decided: 'My EVV correction is decided',
-  incident_flagged: 'A visit note may describe an incident',
-  referral_received: 'A new referral arrived from the intake form',
-  system: 'Security and serious-incident alerts',
+  time_off_decided: 'My holiday or time-off request is decided',
+  application_received: 'A new job application arrives',
+  system: 'Security alerts',
 };
 
 const CHANNELS: { key: NotificationChannel; label: string }[] = [

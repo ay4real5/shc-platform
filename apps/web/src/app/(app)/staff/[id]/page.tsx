@@ -4,12 +4,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { AvailabilityEditor, CredentialsPanel, TimeOffPanel } from '@/components/staff/staff-panels';
 import { Button, ButtonLink } from '@/components/ui/button';
-import { CareScoreCard } from '@/components/workforce/care-score';
 import { OnboardingCard } from '@/components/staff/onboarding-card';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
 import { useAuth } from '@/lib/auth/auth-provider';
-import { humanize } from '@/lib/labels';
+import { disciplineLabel, humanize } from '@/lib/labels';
 import type { StaffDetail } from '@/lib/types/people';
 
 export default function StaffMemberPage() {
@@ -36,7 +35,7 @@ export default function StaffMemberPage() {
             {s.firstName} {s.lastName} <StatusBadge status={s.isActive ? 'active' : 'inactive'} />
           </span>
         }
-        subtitle={`${s.discipline} · ${humanize(s.employmentType)}${s.employeeId ? ` · ${s.employeeId}` : ''}`}
+        subtitle={`${disciplineLabel(s.discipline)} · ${humanize(s.employmentType)}${s.employeeId ? ` · ${s.employeeId}` : ''}`}
         actions={
           <>
             {canEdit && (
@@ -63,10 +62,8 @@ export default function StaffMemberPage() {
           items={[
             ['Email', s.email],
             ['Phone', s.phone],
-            ['Hired', formatDate(s.hireDate)],
+            ['Started', formatDate(s.hireDate)],
             ['Employment ended', formatDate(s.terminationDate)],
-            ['Serves ZIPs', s.serviceAreaZipCodes.join(', ')],
-            ['Max patients', s.maxPatients],
             ['Skills', s.skills.join(', ')],
             ['Languages', s.languages.join(', ')],
             ['Home', [s.addressLine1, s.city, s.state, s.zip].filter(Boolean).join(', ')],
@@ -75,8 +72,6 @@ export default function StaffMemberPage() {
       </Card>
 
       {s.isActive && <OnboardingCard staffId={s.id} />}
-
-      <CareScoreCard staffId={s.id} />
 
       {s.pay && (
         <Card className="p-5">
@@ -88,7 +83,6 @@ export default function StaffMemberPage() {
               ['Overtime', s.pay.overtimeRate && `$${s.pay.overtimeRate}`],
               ['Mileage', s.pay.mileageRate && `$${s.pay.mileageRate}/mile`],
               ['Tax filing status', s.pay.taxFilingStatus && humanize(s.pay.taxFilingStatus)],
-              ['SSN', s.pay.ssnLast4 && `•••-••-${s.pay.ssnLast4}`],
             ]}
           />
         </Card>

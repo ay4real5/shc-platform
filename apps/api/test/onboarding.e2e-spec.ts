@@ -34,8 +34,8 @@ describe.skipIf(!hasDb)('Onboarding checklist (e2e)', () => {
     prisma = app.get(PrismaService);
     agencyId = (await prisma.agency.create({ data: { name: `Onboarding ${randomUUID()}`, timezone: 'UTC' } })).id;
     admin = await seedUser('agency_admin');
-    office = await seedUser('office_staff');
-    aide = await seedUser('home_health_aide', 'HHA'); // signs in below, so "signed in" is done
+    office = await seedUser('care_coordinator');
+    aide = await seedUser('care_worker', 'care_worker'); // signs in below, so "signed in" is done
   });
 
   afterAll(async () => {

@@ -18,14 +18,14 @@ interface AuditEntry {
   details: { outcome?: string; status?: number; route?: string } | null;
   ipAddress: string | null;
 }
-interface HipaaCheck {
+interface SecurityCheck {
   area: string;
   item: string;
   ok: boolean;
   detail: string;
 }
 
-/** Audit log search and the HIPAA safeguards checklist (D-062). Administrators only. */
+/** Audit log search and the UK GDPR security checklist (S-001). Administrators only. */
 export default function AuditLogPage() {
   const { request, can } = useAuth();
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -38,9 +38,9 @@ export default function AuditLogPage() {
     queryFn: () => request<AuditEntry[]>(`/compliance/audit-logs?${new URLSearchParams({ page: String(page), limit: '50', ...filters })}`),
   });
   const checklist = useQuery({
-    queryKey: ['compliance', 'hipaa'],
+    queryKey: ['compliance', 'security'],
     enabled: allowed,
-    queryFn: async () => (await request<HipaaCheck[]>('/compliance/hipaa-checklist')).data,
+    queryFn: async () => (await request<SecurityCheck[]>('/compliance/security-checklist')).data,
   });
   if (!allowed) return <PageHeader title="Audit log" subtitle="Only administrators can see the audit log." />;
 
@@ -60,9 +60,9 @@ export default function AuditLogPage() {
     <div className="flex flex-col gap-6">
       <PageHeader title="Audit log" subtitle="Who looked at or changed what, and when. Searching is itself recorded." />
       <Card className="flex flex-col gap-3 p-5">
-        <h2 className="text-base font-semibold text-slate-900">HIPAA safeguards</h2>
+        <h2 className="text-base font-semibold text-slate-900">Data protection safeguards (UK GDPR)</h2>
         <ErrorAlert error={checklist.error} />
-        <ul aria-label="HIPAA safeguards" className="flex flex-col gap-1 text-sm">
+        <ul aria-label="Data protection safeguards" className="flex flex-col gap-1 text-sm">
           {checklist.data?.map((c) => (
             <li key={c.item} className="flex gap-2">
               <span aria-label={c.ok ? 'OK' : 'Needs attention'} className={c.ok ? 'text-emerald-700' : 'text-amber-700'}>
@@ -79,7 +79,7 @@ export default function AuditLogPage() {
       <Card className="flex flex-col gap-4 p-5">
         <form onSubmit={search} className="flex flex-wrap items-end gap-3">
           <Field label="Action" name="action" placeholder="e.g. VIEW_PATIENTS" className="w-48" />
-          <Field label="Record type" name="resourceType" placeholder="e.g. patients" className="w-40" />
+          <Field label="Record type" name="resourceType" placeholder="e.g. staff" className="w-40" />
           <Field label="Record ID" name="resourceId" className="w-72" />
           <Field label="From" name="from" type="date" />
           <Field label="To" name="to" type="date" />

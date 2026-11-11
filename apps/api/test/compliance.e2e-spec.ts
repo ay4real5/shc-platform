@@ -42,9 +42,9 @@ describe.skipIf(!hasDb)('Compliance (e2e)', () => {
     prisma = app.get(PrismaService);
     agencyId = (await prisma.agency.create({ data: { name: `Compliance Test ${randomUUID()}`, timezone: 'UTC' } })).id;
     ({ auth: admin } = await seedUser('agency_admin'));
-    ({ auth: supervisor } = await seedUser('supervisor'));
-    ({ auth: office, id: officeId } = await seedUser('office_staff'));
-    ({ auth: aide, id: aideUserId } = await seedUser('home_health_aide', true));
+    ({ auth: supervisor } = await seedUser('care_coordinator'));
+    ({ auth: office, id: officeId } = await seedUser('care_coordinator'));
+    ({ auth: aide, id: aideUserId } = await seedUser('care_worker', true));
   });
 
   afterAll(async () => {
@@ -67,7 +67,7 @@ describe.skipIf(!hasDb)('Compliance (e2e)', () => {
         firstName: 'Cora',
         lastName: roleName,
         userRoles: { create: { roleId: role.id } },
-        ...(withProfile ? { staffProfile: { create: { agencyId, discipline: 'HHA' } } } : {}),
+        ...(withProfile ? { staffProfile: { create: { agencyId, discipline: 'care_worker' } } } : {}),
       },
     });
     return { id: user.id, auth: { Authorization: `Bearer ${await loginForTests(http(), email, PASSWORD)}` } };
@@ -116,7 +116,7 @@ describe.skipIf(!hasDb)('Compliance (e2e)', () => {
   /** Everyone with staff:update gets credential alerts: office staff, supervisor, admin. */
   async function managersOtherThan(excludeId: string): Promise<string[]> {
     const users = await prisma.user.findMany({
-      where: { agencyId, id: { not: excludeId }, userRoles: { some: { role: { name: { in: ['supervisor', 'agency_admin'] } } } } },
+      where: { agencyId, id: { not: excludeId }, userRoles: { some: { role: { name: { in: ['care_coordinator', 'agency_admin'] } } } } },
       select: { id: true },
     });
     return users.map((u) => u.id);

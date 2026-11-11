@@ -34,8 +34,8 @@ describe.skipIf(!hasDb)('Custom roles (e2e)', () => {
     agencyId = (await prisma.agency.create({ data: { name: `Roles ${randomUUID()}`, timezone: 'UTC' } })).id;
     otherAgencyId = (await prisma.agency.create({ data: { name: `Roles other ${randomUUID()}`, timezone: 'UTC' } })).id;
     admin = await seedUser('agency_admin');
-    supervisor = await seedUser('supervisor');
-    staffer = await seedUser('office_staff');
+    supervisor = await seedUser('care_coordinator');
+    staffer = await seedUser('care_coordinator');
   });
 
   afterAll(async () => {
@@ -88,7 +88,7 @@ describe.skipIf(!hasDb)('Custom roles (e2e)', () => {
 
     // In use → can't delete; free → can.
     await http().delete(api(`/roles/${role.id}`)).set(admin.auth).expect(409);
-    await http().patch(api(`/users/${staffer.id}`)).set(admin.auth).send({ roleIds: [(await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: 'office_staff' } })).id] }).expect(200);
+    await http().patch(api(`/users/${staffer.id}`)).set(admin.auth).send({ roleIds: [(await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: 'care_coordinator' } })).id] }).expect(200);
     await http().delete(api(`/roles/${role.id}`)).set(admin.auth).expect(204);
   });
 
@@ -106,9 +106,9 @@ describe.skipIf(!hasDb)('Custom roles (e2e)', () => {
     await http().delete(api(`/roles/${wide.id}`)).set(miniUser.auth).expect(403);
 
     // Built-in roles are fixed; their names are reserved.
-    const builtIn = await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: 'office_staff' } });
+    const builtIn = await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: 'care_coordinator' } });
     await http().patch(api(`/roles/${builtIn.id}`)).set(admin.auth).send({ description: 'x' }).expect(403);
-    await http().post(api('/roles')).set(admin.auth).send({ name: 'office_staff', permissions: ['documents:read'] }).expect(409);
+    await http().post(api('/roles')).set(admin.auth).send({ name: 'care_coordinator', permissions: ['documents:read'] }).expect(409);
     await http().post(api('/roles')).set(admin.auth).send({ name: 'readers', permissions: ['documents:read'] }).expect(409);
     await http().post(api('/roles')).set(admin.auth).send({ name: 'Bad Name', permissions: ['documents:read'] }).expect(400);
     await http().post(api('/roles')).set(admin.auth).send({ name: 'unknown_perm', permissions: ['nope:read'] }).expect(400);

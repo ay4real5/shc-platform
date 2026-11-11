@@ -265,7 +265,7 @@ describe.skipIf(!hasDb)('Two-factor authentication (e2e)', () => {
     });
 
     it('other roles are not forced', async () => {
-      const { email } = await userWithRole('office_staff');
+      const { email } = await userWithRole('care_coordinator');
       const session = (await login(email).expect(200)).body.data;
       expect(session.mustEnable2fa).toBe(false);
       await http().get('/api/v1/notifications').set({ Authorization: `Bearer ${session.accessToken}` }).expect(200);

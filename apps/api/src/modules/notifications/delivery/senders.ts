@@ -43,13 +43,16 @@ abstract class Sender {
   abstract get enabled(): boolean;
 }
 
-/** E.164 for a stored phone number: 10 US digits → +1…; "+<8–15 digits>" kept; anything else → null. */
+/**
+ * E.164 for a stored UK phone number (S-002): "07700 900123" → +447700900123, "0161 496 0000" → +441614960000,
+ * "44 7700 900123" → +447700900123; "+<8–15 digits>" kept as is; anything else → null.
+ */
 export function toE164(phone: string | null | undefined): string | null {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, '');
   if (phone.trim().startsWith('+')) return digits.length >= 8 && digits.length <= 15 && digits[0] !== '0' ? `+${digits}` : null;
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  if (digits.length === 11 && digits.startsWith('0')) return `+44${digits.slice(1)}`;
+  if (digits.length === 12 && digits.startsWith('44')) return `+${digits}`;
   return null;
 }
 

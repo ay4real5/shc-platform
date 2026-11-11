@@ -2,169 +2,52 @@ import { PERMISSIONS, type Permission } from './permissions.js';
 import type { Role } from './roles.js';
 
 /**
- * What each built-in role may do (DESIGN.md §7.2). These roles are synced into the database on every API
- * start and cannot be edited there; agencies make custom roles for anything different (DECISIONS D-022).
+ * What each built-in role may do (DECISIONS S-002). These roles are synced into the database on every API start and
+ * cannot be edited there; companies make custom roles for anything different (D-022, D-099).
  *
- * Permissions answer "may this role do X at all?". Narrower rules — e.g. a nurse only sees their assigned
- * patients, a caregiver only clocks in to their own visits — are enforced per record by each module.
+ * Permissions answer "may this role do X at all?". Narrower rules (e.g. staff only see their own documents) are
+ * enforced per record by each module.
  */
 
-const CLINICAL_BASE: Permission[] = [
-  'patients:read',
-  'physicians:read',
-  'visits:read',
-  'visit_notes:create',
-  'visit_notes:update',
-  'visit_notes:sign',
-  'vitals:create',
-  'documents:read',
-  'documents:create',
-  'messages:use',
-  /** Anyone who sees an incident reports it (D-062); reviewing them needs compliance:read. */
-  'compliance:create',
-];
+/** Every member of staff: their own holiday requests and secure messaging. */
+const STAFF_BASE: Permission[] = ['time_off:request', 'messages:use'];
 
 export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
-  /** Platform owner. Cross-agency powers come later; within an agency, everything. */
+  /** Platform owner. Cross-company powers come later; within a company, everything. */
   super_admin: PERMISSIONS,
 
+  /** The company's administrator (owner/director). */
   agency_admin: PERMISSIONS,
 
-  /** Clinical supervisor: all clinical and scheduling work, approvals, live monitoring. No billing/payroll. */
-  supervisor: [
-    'assistant:use',
-    'messages:use',
-    'messages:portal',
-    'medications:manage',
-    'authorizations:read',
-    'authorizations:manage',
-    'patients:create',
-    'patients:read',
-    'patients:read_all',
-    'patients:update',
-    'physicians:create',
-    'physicians:read',
-    'physicians:update',
-    'care_plans:create',
-    'care_plans:update',
-    'assessments:create',
-    'assessments:update',
-    'assessments:approve',
-    'orders:create',
-    'orders:update',
-    'staff:read',
-    'staff:update',
-    'time_off:approve',
-    'visits:create',
-    'visits:read',
-    'visits:read_all',
-    'visits:update',
-    'visits:assign',
-    'visits:approve',
-    'visit_notes:create',
-    'visit_notes:update',
-    'visit_notes:sign',
-    'vitals:create',
-    'evv:read',
-    'evv:update',
-    'evv:approve',
-    'documents:create',
-    'documents:read',
-    'documents:sign',
-    'documents:send',
-    'notifications:create',
-    'reports:read',
-    'compliance:create',
-    'compliance:read',
-    'compliance:update',
-    'referrals:read',
-    'referrals:manage',
-    'training:manage',
-  ],
+  /** The CQC-registered manager: everything except company settings and deleting user accounts. */
+  registered_manager: PERMISSIONS.filter((p) => p !== 'settings:update' && p !== 'users:delete'),
 
-  registered_nurse: [
-    'medications:manage',
-    ...CLINICAL_BASE,
-    'care_plans:create',
-    'care_plans:update',
-    'assessments:create',
-    'assessments:update',
-    'orders:create',
-    'orders:update',
-    'documents:sign',
-  ],
-
-  /** LPN/LVN: like an RN but cannot write care plans or physician orders. */
-  licensed_nurse: [...CLINICAL_BASE, 'assessments:create', 'assessments:update', 'documents:sign', 'medications:manage'],
-
-  therapist: [...CLINICAL_BASE, 'assessments:create', 'assessments:update', 'documents:sign'],
-
-  /** HHA/CNA: visit documentation (activity notes, vitals, task checklists). No signing. */
-  home_health_aide: [
-    'patients:read',
-    'visits:read',
-    'visit_notes:create',
-    'visit_notes:update',
-    'vitals:create',
-    'messages:use',
-    'compliance:create',
-  ],
-
-  medical_social_worker: [...CLINICAL_BASE, 'assessments:create', 'assessments:update'],
-
-  /** Billing: full billing and claims, patient demographics, no clinical notes. */
-  billing_staff: [
-    'assistant:use',
-    'messages:use',
-    'authorizations:read',
-    'authorizations:manage',
-    'patients:read',
-    'patients:read_all',
-    'physicians:read',
-    'visits:read',
-    'visits:read_all',
-    'evv:read',
-    'billing:create',
-    'billing:read',
-    'billing:update',
-    'billing:submit',
-    'billing:void',
-    'billing:send',
-    'reports:read',
-  ],
-
-  /** Office coordinator: scheduling, basic patient info, staff management. No billing, no clinical notes. */
-  office_staff: [
-    'assistant:use',
-    'messages:use',
-    'messages:portal',
-    'authorizations:read',
-    'authorizations:manage',
-    'patients:create',
-    'patients:read',
-    'patients:read_all',
-    'physicians:create',
-    'physicians:read',
-    'physicians:update',
-    'patients:update',
+  /** Office coordinator: runs recruitment, onboarding, staff records, training and holidays. */
+  care_coordinator: [
+    ...STAFF_BASE,
+    'users:read',
     'staff:create',
     'staff:read',
     'staff:update',
-    'visits:create',
-    'visits:read',
-    'visits:read_all',
-    'visits:update',
-    'visits:assign',
-    'evv:read',
+    'time_off:approve',
     'documents:create',
     'documents:read',
+    'documents:sign',
     'notifications:create',
-    'compliance:create',
-    'referrals:read',
-    'referrals:manage',
     'training:manage',
+    'recruitment:read',
+    'recruitment:manage',
+    'compliance:read',
+    'reports:read',
   ],
 
-  /** Patients/family: only the /portal endpoints, which have their own own-data guard (P3-14). */
-  portal_user: [],
+  /** Recruitment only: jobs, applicants, interviews, offers. */
+  recruiter: [...STAFF_BASE, 'recruitment:read', 'recruitment:manage', 'staff:read', 'documents:create', 'documents:read'],
+
+  /** Leads a team or a supported-living service: sees their people, approves holidays. */
+  team_leader: [...STAFF_BASE, 'staff:read', 'time_off:approve', 'documents:read', 'compliance:read'],
+
+  senior_care_worker: STAFF_BASE,
+  care_worker: STAFF_BASE,
+  support_worker: STAFF_BASE,
 };

@@ -156,7 +156,7 @@ export class TimeOffService {
   }
 
   private async isApprover(caller: AuthUser): Promise<boolean> {
-    return (await this.permissions.forUser(caller)).permissions.has('visits:approve');
+    return (await this.permissions.forUser(caller)).permissions.has('time_off:approve');
   }
 
   private async ownStaffId(caller: AuthUser): Promise<string | null> {

@@ -72,17 +72,17 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
     expect(expiring.body.data.some((c: { state: string }) => c.state === 'expired')).toBe(true);
 
     // Demo messages decrypt through the API; the office has an unread reply.
-    const hha = await login('hha@demo.shc.test');
+    const hha = await login('care.worker@demo.shc.test');
     const conversations = (await http().get('/api/v1/messages/conversations').set(hha).expect(200)).body.data;
     expect(conversations).toHaveLength(1);
-    const office = await login('office.staff@demo.shc.test');
+    const office = await login('care.coordinator@demo.shc.test');
     const unread = await http().get('/api/v1/messages/unread-count').set(office).expect(200);
     expect(unread.body.data.unread).toBe(3); // the aide's reply + the supervisor's and nurse's team messages
     expect(conversations[0].lastMessage.content).toBe('Yes, I can come in on Thursday morning.');
 
-    await login('supervisor@demo.shc.test');
-    await login('rn@demo.shc.test');
+    await login('recruiter@demo.shc.test');
+    await login('team.leader@demo.shc.test');
     // Admins have 2FA on; nobody else is forced.
-    expect(await prisma.user.count({ where: { agencyId: DEMO_AGENCY_ID, is2faEnabled: true } })).toBe(2);
+    expect(await prisma.user.count({ where: { agencyId: DEMO_AGENCY_ID, is2faEnabled: true } })).toBe(3); // super admin, company admin, registered manager
   });
 });

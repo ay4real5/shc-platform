@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader } from '@/components/ui/data-display';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { disciplineLabel } from '@/lib/labels';
 
 interface Row {
   staffId: string;
@@ -19,7 +20,7 @@ interface Row {
   missing: string[];
 }
 
-/** Who is ready to work and what's left for the rest (D-101), plus the credentials each discipline needs. */
+/** Who is ready to work and what's left for the rest (D-101), plus the checks each job role needs. */
 export default function OnboardingPage() {
   const { request, can } = useAuth();
   const queryClient = useQueryClient();
@@ -65,7 +66,7 @@ export default function OnboardingPage() {
           {rows.map((r) => (
             <li key={r.staffId} className="flex flex-wrap items-center gap-3 py-2 text-sm">
               <Link href={`/staff/${r.staffId}`} className="w-56 font-medium text-brand-800 hover:underline">
-                {r.name} <span className="font-normal text-slate-500">({r.discipline})</span>
+                {r.name} <span className="font-normal text-slate-500">({disciplineLabel(r.discipline)})</span>
               </Link>
               <ReadinessBar percent={r.percent} />
               {r.missing.length > 0 && <span className="text-slate-600">Missing: {r.missing.join(', ')}</span>}
@@ -75,7 +76,7 @@ export default function OnboardingPage() {
       </Card>
 
       <Card className="flex flex-col gap-3 p-4">
-        <h2 className="text-base font-semibold text-slate-900">Required credentials by discipline</h2>
+        <h2 className="text-base font-semibold text-slate-900">Required checks by job role</h2>
         <p className="text-sm text-slate-600">
           Credential types, comma-separated, matched against each person&apos;s Credentials (the type field; case and spaces don&apos;t matter).
         </p>
@@ -85,7 +86,7 @@ export default function OnboardingPage() {
           <form key={JSON.stringify(requirements.data)} onSubmit={submit} className="grid gap-3 sm:grid-cols-2">
             {DISCIPLINES.map((d) => (
               <label key={d} className="flex flex-col gap-1 text-sm text-slate-800">
-                <span className="font-medium">{d}</span>
+                <span className="font-medium">{disciplineLabel(d)}</span>
                 <input
                   name={d}
                   defaultValue={requirements.data[d]?.join(', ') ?? ''}

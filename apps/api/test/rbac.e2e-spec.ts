@@ -24,13 +24,13 @@ const noThrottle = {
 /** Test-only routes guarded by specific permissions. */
 @Controller('rbac-probe')
 class RbacProbeController {
-  @Permissions('billing:read')
+  @Permissions('recruitment:manage')
   @Get('billing')
   billing() {
     return 'billing ok';
   }
 
-  @Permissions('visit_notes:create', 'visit_notes:sign')
+  @Permissions('staff:read', 'time_off:approve')
   @Get('sign-notes')
   signNotes() {
     return 'notes ok';
@@ -43,7 +43,7 @@ class RbacProbeController {
 
   /** Misconfiguration: public route with a permission. Must still refuse anonymous callers. */
   @Public()
-  @Permissions('patients:read')
+  @Permissions('staff:read')
   @Get('public-with-permission')
   misconfigured() {
     return 'should never be reached anonymously';
@@ -119,11 +119,11 @@ describe.skipIf(!hasDb)('RBAC (e2e)', () => {
   });
 
   it('is idempotent and repairs drift in built-in roles', async () => {
-    const aide = await systemRoleId('home_health_aide');
+    const aide = await systemRoleId('care_worker');
     const billingRead = await prisma.permission.findUniqueOrThrow({
-      where: { resource_action: { resource: 'billing', action: 'read' } },
+      where: { resource_action: { resource: 'recruitment', action: 'manage' } },
     });
-    // Someone grants an aide billing access directly in the database...
+    // Someone grants a care worker recruitment access directly in the database...
     await prisma.rolePermission.create({ data: { roleId: aide, permissionId: billingRead.id } });
     await app.get(RbacSyncService).sync();
     await app.get(RbacSyncService).sync();
@@ -133,8 +133,8 @@ describe.skipIf(!hasDb)('RBAC (e2e)', () => {
   });
 
   it('allows a role with the permission and refuses one without it', async () => {
-    const biller = await userWithRoles([await systemRoleId('billing_staff')]);
-    const nurse = await userWithRoles([await systemRoleId('registered_nurse')]);
+    const biller = await userWithRoles([await systemRoleId('recruiter')]);
+    const nurse = await userWithRoles([await systemRoleId('senior_care_worker')]);
 
     expect((await http().get('/api/v1/rbac-probe/billing').set(biller.auth).expect(200)).body.data).toBe('billing ok');
     const denied = await http().get('/api/v1/rbac-probe/billing').set(nurse.auth).expect(403);
@@ -142,14 +142,14 @@ describe.skipIf(!hasDb)('RBAC (e2e)', () => {
   });
 
   it('requires every listed permission', async () => {
-    const aide = await userWithRoles([await systemRoleId('home_health_aide')]); // can create notes, not sign
-    const rn = await userWithRoles([await systemRoleId('registered_nurse')]);
+    const aide = await userWithRoles([await systemRoleId('care_worker')]); // neither permission
+    const rn = await userWithRoles([await systemRoleId('team_leader')]); // both
     await http().get('/api/v1/rbac-probe/sign-notes').set(aide.auth).expect(403);
     await http().get('/api/v1/rbac-probe/sign-notes').set(rn.auth).expect(200);
   });
 
   it('combines permissions across several roles', async () => {
-    const both = await userWithRoles([await systemRoleId('home_health_aide'), await systemRoleId('billing_staff')]);
+    const both = await userWithRoles([await systemRoleId('care_worker'), await systemRoleId('recruiter')]);
     await http().get('/api/v1/rbac-probe/billing').set(both.auth).expect(200);
   });
 
@@ -167,7 +167,7 @@ describe.skipIf(!hasDb)('RBAC (e2e)', () => {
   it("ignores another agency's custom role even if linked to the user", async () => {
     const foreignRole = await prisma.role.create({ data: { agencyId: otherAgencyId, name: `billing-${randomUUID()}` } });
     const billingRead = await prisma.permission.findUniqueOrThrow({
-      where: { resource_action: { resource: 'billing', action: 'read' } },
+      where: { resource_action: { resource: 'recruitment', action: 'manage' } },
     });
     await prisma.rolePermission.create({ data: { roleId: foreignRole.id, permissionId: billingRead.id } });
 
@@ -178,7 +178,7 @@ describe.skipIf(!hasDb)('RBAC (e2e)', () => {
   it("honours the user's own agency's custom roles, and /auth/me reports what is enforced", async () => {
     const custom = await prisma.role.create({ data: { agencyId, name: `billing-lite-${randomUUID()}` } });
     const billingRead = await prisma.permission.findUniqueOrThrow({
-      where: { resource_action: { resource: 'billing', action: 'read' } },
+      where: { resource_action: { resource: 'recruitment', action: 'manage' } },
     });
     await prisma.rolePermission.create({ data: { roleId: custom.id, permissionId: billingRead.id } });
 
@@ -186,7 +186,7 @@ describe.skipIf(!hasDb)('RBAC (e2e)', () => {
     await http().get('/api/v1/rbac-probe/billing').set(user.auth).expect(200);
     const me = (await http().get('/api/v1/auth/me').set(user.auth).expect(200)).body.data;
     expect(me.roles).toEqual([custom.name]);
-    expect(me.permissions).toEqual(['billing:read']);
+    expect(me.permissions).toEqual(['recruitment:manage']);
   });
 
   it("lists assignable roles: built-in plus own custom roles, never another agency's", async () => {
@@ -198,9 +198,9 @@ describe.skipIf(!hasDb)('RBAC (e2e)', () => {
     expect(roles.filter((r) => r.isSystem)).toHaveLength(ROLES.length);
     expect(roles.map((r) => r.id)).toContain(own.id);
     expect(roles.map((r) => r.id)).not.toContain(foreign.id);
-    expect(roles.find((r) => r.name === 'billing_staff')!.permissions).toContain('billing:read');
+    expect(roles.find((r) => r.name === 'recruiter')!.permissions).toContain('recruitment:manage');
 
-    const nurse = await userWithRoles([await systemRoleId('registered_nurse')]);
+    const nurse = await userWithRoles([await systemRoleId('senior_care_worker')]);
     await http().get('/api/v1/roles').set(nurse.auth).expect(403);
   });
 
@@ -208,7 +208,7 @@ describe.skipIf(!hasDb)('RBAC (e2e)', () => {
     const user = await userWithRoles([]);
     await http().get('/api/v1/rbac-probe/billing').set(user.auth).expect(403);
 
-    await prisma.userRole.create({ data: { userId: user.id, roleId: await systemRoleId('billing_staff') } });
+    await prisma.userRole.create({ data: { userId: user.id, roleId: await systemRoleId('recruiter') } });
     app.get(PermissionsService).invalidate();
     await http().get('/api/v1/rbac-probe/billing').set(user.auth).expect(200);
   });

@@ -47,7 +47,7 @@ describe.skipIf(!hasDb)('Real-time (e2e)', () => {
         data: { name: `Realtime Test ${randomUUID()}`, timezone: 'UTC' },
       })
     ).id;
-    supervisor = await seedUser('supervisor');
+    supervisor = await seedUser('care_coordinator');
   });
 
   afterEach(() => {
@@ -81,9 +81,9 @@ describe.skipIf(!hasDb)('Real-time (e2e)', () => {
   }
 
   async function caregiver() {
-    const user = await seedUser('home_health_aide');
+    const user = await seedUser('care_worker');
     const staff = await prisma.staffProfile.create({
-      data: { userId: user.id, agencyId, discipline: 'HHA' },
+      data: { userId: user.id, agencyId, discipline: 'care_worker' },
     });
     return { ...user, staffId: staff.id };
   }

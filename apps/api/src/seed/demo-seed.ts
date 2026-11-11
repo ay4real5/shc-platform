@@ -63,11 +63,12 @@ const LAST = ['Ashworth', 'Bramley', 'Carver', 'Dalton', 'Ellison', 'Fenwick', '
 
 /** Staff to create: discipline, how many, their login role. */
 const STAFF_PLAN: { discipline: Discipline; count: number; role: string }[] = [
-  { discipline: 'RN', count: 1, role: 'registered_nurse' },
-  { discipline: 'CNA', count: 3, role: 'home_health_aide' },
-  { discipline: 'HHA', count: 8, role: 'home_health_aide' },
+  { discipline: 'team_leader', count: 1, role: 'team_leader' },
+  { discipline: 'senior_care_worker', count: 1, role: 'senior_care_worker' },
+  { discipline: 'care_worker', count: 6, role: 'care_worker' },
+  { discipline: 'support_worker', count: 4, role: 'support_worker' },
 ];
-const OFFICE_ROLES = ['super_admin', 'agency_admin', 'supervisor', 'office_staff'];
+const OFFICE_ROLES = ['super_admin', 'agency_admin', 'registered_manager', 'care_coordinator', 'recruiter'];
 
 export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): Promise<SeedSummary> {
   if (options.appEnv === 'production') {
@@ -130,7 +131,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       staffNo++;
       const first = rand.pick(FIRST);
       const last = rand.pick(LAST);
-      const loginEmail = i === 0 ? `${plan.discipline.toLowerCase()}@${DEMO_EMAIL_DOMAIN}` : `${first}.${last}.${staffNo}@${DEMO_EMAIL_DOMAIN}`.toLowerCase();
+      const loginEmail = i === 0 ? `${plan.discipline.replaceAll('_', '.')}@${DEMO_EMAIL_DOMAIN}` : `${first}.${last}.${staffNo}@${DEMO_EMAIL_DOMAIN}`.toLowerCase();
       const userId = await makeUser(plan.role, loginEmail, first, last);
       if (i === 0) logins.push({ role: `${plan.role} (${plan.discipline})`, email: loginEmail });
 
@@ -140,9 +141,9 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
           agencyId: DEMO_AGENCY_ID,
           employeeId: `D${String(staffNo).padStart(4, '0')}`,
           discipline: plan.discipline,
-          employmentType: rand.pick(['full_time', 'full_time', 'part_time', 'per_diem']),
+          employmentType: rand.pick(['full_time', 'full_time', 'part_time', 'zero_hours', 'bank']),
           hireDate: toDate(addDays(today, -rand.int(30, 1500))),
-          hourlyRate: plan.discipline === 'RN' ? 22 + rand.int(0, 6) : 12 + rand.int(0, 3),
+          hourlyRate: plan.discipline === 'care_worker' || plan.discipline === 'support_worker' ? 12.6 + rand.int(0, 2) : 14 + rand.int(0, 3),
           city: 'Manchester',
           zip: rand.pick(['M1 2AB', 'M4 5CD', 'M14 6EF', 'M20 7GH']),
           languages: rand.next() < 0.3 ? ['English', 'Yoruba'] : ['English'],
@@ -177,7 +178,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
 async function seedMessages(prisma: PrismaClient, encrypt: (text: string, messageId: string) => Uint8Array<ArrayBuffer>): Promise<number> {
   const byEmail = async (local: string) =>
     (await prisma.user.findFirstOrThrow({ where: { agencyId: DEMO_AGENCY_ID, email: `${local}@${DEMO_EMAIL_DOMAIN}` } })).id;
-  const [office, supervisor, rn, hha] = await Promise.all(['office.staff', 'supervisor', 'rn', 'hha'].map(byEmail));
+  const [office, supervisor, rn, hha] = await Promise.all(['care.coordinator', 'registered.manager', 'team.leader', 'care.worker'].map(byEmail));
   const threads: { subject?: string; people: string[]; lines: [string, string][] }[] = [
     {
       people: [office!, hha!],

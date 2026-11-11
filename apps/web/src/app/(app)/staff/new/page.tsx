@@ -28,7 +28,7 @@ export default function NewStaffPage() {
       )}
       <StaffForm
         candidates={candidates.data}
-        showPay={can('payroll:read')}
+        showPay={can('pay:read')}
         submitLabel="Create staff profile"
         onSubmit={async (body) => {
           const { data } = await request<StaffDetail>('/staff', { method: 'POST', body });

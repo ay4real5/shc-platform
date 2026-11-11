@@ -12,20 +12,20 @@ import { TimeOffService } from './time-off.service.js';
 export class TimeOffController {
   constructor(private readonly timeOff: TimeOffService) {}
 
-  @Permissions('visits:read')
+  @Permissions('time_off:request')
   @Get()
   list(@CurrentUser() caller: AuthUser, @Query() query: ListTimeOffQueryDto) {
     return this.timeOff.list(caller, query);
   }
 
-  @Permissions('visits:read')
+  @Permissions('time_off:request')
   @Audit({ action: 'REQUEST_TIME_OFF', resourceType: 'staff_time_off' })
   @Post()
   request(@CurrentUser() caller: AuthUser, @Body() dto: RequestTimeOffDto) {
     return this.timeOff.request(caller, dto);
   }
 
-  @Permissions('visits:read')
+  @Permissions('time_off:request')
   @Audit({ action: 'CANCEL_TIME_OFF', resourceType: 'staff_time_off' })
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
@@ -33,7 +33,7 @@ export class TimeOffController {
     return this.timeOff.cancel(caller, id);
   }
 
-  @Permissions('visits:approve')
+  @Permissions('time_off:approve')
   @Audit({ action: 'DECIDE_TIME_OFF', resourceType: 'staff_time_off' })
   @Patch(':id')
   decide(@CurrentUser() caller: AuthUser, @Param('id', new ParseUUIDPipe()) id: string, @Body() dto: DecideTimeOffDto) {

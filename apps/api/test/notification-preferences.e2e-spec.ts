@@ -36,7 +36,7 @@ describe.skipIf(!hasDb)('Notification preferences (e2e)', () => {
     await app.init();
     prisma = app.get(PrismaService);
     agencyId = (await prisma.agency.create({ data: { name: `Prefs Test ${randomUUID()}`, timezone: 'UTC' } })).id;
-    const role = await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: 'home_health_aide' } });
+    const role = await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: 'care_worker' } });
     const make = async () => {
       const email = `prefs-${randomUUID()}@example.test`;
       const u = await prisma.user.create({
@@ -60,28 +60,28 @@ describe.skipIf(!hasDb)('Notification preferences (e2e)', () => {
   it('lists every type: in-app on by default, outside channels per type (DESIGN §13.2); system alerts are mandatory', async () => {
     const prefs = (await http().get(base).set(auth).expect(200)).body.data;
     expect(prefs).toHaveLength(NOTIFICATION_TYPES.length);
-    expect(prefs.find((p: { type: string }) => p.type === 'shift_assigned')).toEqual({ type: 'shift_assigned', mandatory: false, inApp: true, push: true, sms: true, email: false });
+    expect(prefs.find((p: { type: string }) => p.type === 'document_signature')).toEqual({ type: 'document_signature', mandatory: false, inApp: true, push: true, sms: true, email: false });
     expect(prefs.find((p: { type: string }) => p.type === 'payroll_ready')).toMatchObject({ push: false, sms: false, email: true });
     expect(prefs.find((p: { type: string }) => p.type === 'system')).toMatchObject({ mandatory: true, inApp: true });
   });
 
   it('changes only the channels sent, and refuses to mute mandatory or unknown types', async () => {
-    const prefs = (await http().put(`${base}/shift_assigned`).set(auth).send({ inApp: false, sms: false }).expect(200)).body.data;
-    expect(prefs.find((p: { type: string }) => p.type === 'shift_assigned')).toMatchObject({ inApp: false, sms: false, push: true, email: false });
-    const again = (await http().put(`${base}/shift_assigned`).set(auth).send({ push: false }).expect(200)).body.data;
-    expect(again.find((p: { type: string }) => p.type === 'shift_assigned')).toMatchObject({ inApp: false, sms: false, push: false });
+    const prefs = (await http().put(`${base}/document_signature`).set(auth).send({ inApp: false, sms: false }).expect(200)).body.data;
+    expect(prefs.find((p: { type: string }) => p.type === 'document_signature')).toMatchObject({ inApp: false, sms: false, push: true, email: false });
+    const again = (await http().put(`${base}/document_signature`).set(auth).send({ push: false }).expect(200)).body.data;
+    expect(again.find((p: { type: string }) => p.type === 'document_signature')).toMatchObject({ inApp: false, sms: false, push: false });
     await http().put(`${base}/system`).set(auth).send({ inApp: false }).expect(400);
     await http().put(`${base}/not_a_type`).set(auth).send({ inApp: false }).expect(400);
-    await http().put(`${base}/shift_assigned`).set(auth).send({ inApp: 'nope' }).expect(400);
+    await http().put(`${base}/document_signature`).set(auth).send({ inApp: 'nope' }).expect(400);
   });
 
   it('muted alerts are not delivered in the app; others and mandatory ones still are', async () => {
     const notifications = app.get(NotificationsService);
-    await notifications.notify({ agencyId, userIds: [userId, otherId], type: 'shift_assigned', title: 'New shift' });
-    await notifications.notify({ agencyId, userIds: [userId], type: 'shift_cancelled', title: 'Shift cancelled' });
+    await notifications.notify({ agencyId, userIds: [userId, otherId], type: 'document_signature', title: 'New shift' });
+    await notifications.notify({ agencyId, userIds: [userId], type: 'time_off_decided', title: 'Shift cancelled' });
     await notifications.notify({ agencyId, userIds: [userId], type: 'system', title: 'Serious incident' });
     const mine = await prisma.notification.findMany({ where: { userId }, select: { type: true } });
-    expect(mine.map((n) => n.type).sort()).toEqual(['shift_cancelled', 'system']);
-    expect(await prisma.notification.count({ where: { userId: otherId, type: 'shift_assigned' } })).toBe(1); // only the caller muted it
+    expect(mine.map((n) => n.type).sort()).toEqual(['system', 'time_off_decided']);
+    expect(await prisma.notification.count({ where: { userId: otherId, type: 'document_signature' } })).toBe(1); // only the caller muted it
   });
 });

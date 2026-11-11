@@ -30,7 +30,6 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
   let aide: Person;
   let billing: Person;
   let outsider: Person;
-  let portalUserId: string;
   let inactiveId: string;
   const http = () => request(app.getHttpServer());
 
@@ -44,13 +43,12 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
     prisma = app.get(PrismaService);
     agencyId = (await prisma.agency.create({ data: { name: `Msg Test ${randomUUID()}`, timezone: 'UTC' } })).id;
     otherAgencyId = (await prisma.agency.create({ data: { name: `Msg Other ${randomUUID()}`, timezone: 'UTC' } })).id;
-    office = await seedUser(agencyId, 'office_staff', 'Olive');
-    nurse = await seedUser(agencyId, 'registered_nurse', 'Nia');
-    aide = await seedUser(agencyId, 'home_health_aide', 'Abe');
-    billing = await seedUser(agencyId, 'billing_staff', 'Bea');
-    outsider = await seedUser(otherAgencyId, 'office_staff', 'Oscar');
-    portalUserId = (await seedUser(agencyId, 'portal_user', 'Pat', false)).id;
-    inactiveId = (await seedUser(agencyId, 'office_staff', 'Ina', false)).id;
+    office = await seedUser(agencyId, 'care_coordinator', 'Olive');
+    nurse = await seedUser(agencyId, 'senior_care_worker', 'Nia');
+    aide = await seedUser(agencyId, 'care_worker', 'Abe');
+    billing = await seedUser(agencyId, 'recruiter', 'Bea');
+    outsider = await seedUser(otherAgencyId, 'care_coordinator', 'Oscar');
+    inactiveId = (await seedUser(agencyId, 'care_coordinator', 'Ina', false)).id;
     await prisma.user.update({ where: { id: inactiveId }, data: { isActive: false } });
   });
 
@@ -93,7 +91,6 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
     const ids = res.body.data.map((c: { id: string }) => c.id);
     expect(ids).toEqual(expect.arrayContaining([nurse.id, aide.id, billing.id]));
     expect(ids).not.toContain(office.id);
-    expect(ids).not.toContain(portalUserId);
     expect(ids).not.toContain(inactiveId);
     expect(ids).not.toContain(outsider.id);
     const search = await http().get('/api/v1/messages/contacts?search=nia').set(office.auth).expect(200);
@@ -144,7 +141,6 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
   });
 
   it('refuses people who can’t be messaged', async () => {
-    await start(office, { participantIds: [portalUserId], content: 'x' }).expect(400);
     await start(office, { participantIds: [inactiveId], content: 'x' }).expect(400);
     await start(office, { participantIds: [outsider.id], content: 'x' }).expect(400);
     await start(office, { participantIds: [office.id], content: 'x' }).expect(400);
@@ -224,10 +220,5 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
     const library = (await http().get('/api/v1/documents?limit=100').set(office.auth).expect(200)).body.data;
     expect(library.map((d: { id: string }) => d.id)).not.toContain(photo.id);
     await http().get(`/api/v1/documents/${photo.id}/download`).set(office.auth).expect(404);
-  });
-
-  it('portal users have no staff messaging', async () => {
-    const portal = await seedUser(agencyId, 'portal_user', 'Polly');
-    await http().get('/api/v1/messages/conversations').set(portal.auth).expect(403);
   });
 });

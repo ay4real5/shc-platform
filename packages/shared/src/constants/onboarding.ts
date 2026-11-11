@@ -1,30 +1,34 @@
 import type { Discipline } from './staff.js';
 
 /**
- * Credentials each discipline needs before working (D-101). Agencies can change this in Settings → Agency; these are
- * the defaults. Values are credential types as entered on a staff member's credentials (compared lower-case).
+ * Checks each job role needs on file before working (D-101, S-002) — the credential side of CQC Regulation 19 /
+ * Schedule 3. Companies can change this per role; these are the defaults. Values are credential types as entered on a
+ * staff member's credentials (compared lower-case).
  */
+const CARE: string[] = ['right_to_work', 'dbs_enhanced', 'care_certificate'];
+const OFFICE: string[] = ['right_to_work', 'dbs_enhanced'];
 export const DEFAULT_REQUIRED_CREDENTIALS: Record<Discipline, string[]> = {
-  RN: ['license', 'cpr', 'tb_test', 'background_check'],
-  LPN: ['license', 'cpr', 'tb_test', 'background_check'],
-  PT: ['license', 'cpr', 'background_check'],
-  PTA: ['license', 'cpr', 'background_check'],
-  OT: ['license', 'cpr', 'background_check'],
-  COTA: ['license', 'cpr', 'background_check'],
-  SLP: ['license', 'cpr', 'background_check'],
-  MSW: ['license', 'background_check'],
-  HHA: ['hha_certificate', 'cpr', 'tb_test', 'background_check'],
-  CNA: ['cna_certificate', 'cpr', 'tb_test', 'background_check'],
-  PCA: ['cpr', 'tb_test', 'background_check'],
+  care_worker: CARE,
+  senior_care_worker: [...CARE, 'medication_training'],
+  support_worker: CARE,
+  team_leader: [...CARE, 'medication_training'],
+  nurse: ['right_to_work', 'dbs_enhanced', 'nmc_registration'],
+  care_coordinator: OFFICE,
+  manager: OFFICE,
+  office: ['right_to_work'],
 };
 
 export const CREDENTIAL_TYPE_LABELS: Record<string, string> = {
-  license: 'Professional license',
-  cpr: 'CPR / BLS',
-  tb_test: 'TB test',
-  background_check: 'Background check',
-  hha_certificate: 'HHA certificate',
-  cna_certificate: 'CNA certificate',
+  right_to_work: 'Right to Work check',
+  dbs_enhanced: 'Enhanced DBS (adult barred list)',
+  care_certificate: 'Care Certificate',
+  medication_training: 'Medication training',
+  nmc_registration: 'NMC registration',
+  moving_handling: 'Moving & handling',
+  safeguarding: 'Safeguarding adults',
+  first_aid: 'First aid',
+  driving_licence: 'Driving licence',
+  car_insurance: 'Car insurance (business use)',
 };
 
 export function credentialTypeLabel(type: string): string {

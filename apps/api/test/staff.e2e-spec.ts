@@ -39,7 +39,7 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
     agencyId = (await prisma.agency.create({ data: { name: `Staff Test ${randomUUID()}` } })).id;
     otherAgencyId = (await prisma.agency.create({ data: { name: `Staff Other ${randomUUID()}` } })).id;
     admin = await seedUser('agency_admin');
-    office = await seedUser('office_staff');
+    office = await seedUser('care_coordinator');
   });
 
   afterAll(async () => {
@@ -72,14 +72,14 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
 
   /** A field worker with a staff profile created through the API by the admin. */
   async function caregiver(overrides: Record<string, unknown> = {}) {
-    const user = await seedUser('home_health_aide');
+    const user = await seedUser('care_worker');
     const profile = (
       await http()
         .post('/api/v1/staff')
         .set(admin.auth)
         .send({
           userId: user.id,
-          discipline: 'HHA',
+          discipline: 'care_worker',
           employeeId: `E-${randomUUID().slice(0, 6)}`,
           hourlyRate: 21.5,
           mileageRate: 0.67,
@@ -97,7 +97,7 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
   describe('profiles', () => {
     it('creates a profile; pay and SSN (last 4) are visible to payroll and to the person only', async () => {
       const cg = await caregiver();
-      expect(cg.profile).toMatchObject({ discipline: 'HHA', isActive: true, firstName: 'Casey' });
+      expect(cg.profile).toMatchObject({ discipline: 'care_worker', isActive: true, firstName: 'Casey' });
       expect(cg.profile.pay).toMatchObject({ hourlyRate: '21.50', mileageRate: '0.6700', ssnLast4: '7801' });
       expect(JSON.stringify(cg.profile)).not.toContain('234-56-7801');
 
@@ -110,17 +110,17 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
     });
 
     it('refuses a user from another agency, a second profile, or a duplicate employee id', async () => {
-      const outsider = await seedUser('home_health_aide', otherAgencyId);
-      await http().post('/api/v1/staff').set(admin.auth).send({ userId: outsider.id, discipline: 'HHA' }).expect(400);
+      const outsider = await seedUser('care_worker', otherAgencyId);
+      await http().post('/api/v1/staff').set(admin.auth).send({ userId: outsider.id, discipline: 'care_worker' }).expect(400);
 
       const cg = await caregiver();
-      await http().post('/api/v1/staff').set(admin.auth).send({ userId: cg.id, discipline: 'HHA' }).expect(409);
+      await http().post('/api/v1/staff').set(admin.auth).send({ userId: cg.id, discipline: 'care_worker' }).expect(409);
 
-      const other = await seedUser('home_health_aide');
+      const other = await seedUser('care_worker');
       const dup = await http()
         .post('/api/v1/staff')
         .set(admin.auth)
-        .send({ userId: other.id, discipline: 'HHA', employeeId: cg.profile.employeeId })
+        .send({ userId: other.id, discipline: 'care_worker', employeeId: cg.profile.employeeId })
         .expect(409);
       expect(dup.body.error.message).toMatch(/employee ID/);
     });
@@ -155,8 +155,8 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
 
   it('lists users who can still get a staff profile (active, no profile yet)', async () => {
     const withProfile = await caregiver();
-    const without = await seedUser('office_staff');
-    const inactive = await seedUser('office_staff');
+    const without = await seedUser('care_coordinator');
+    const inactive = await seedUser('care_coordinator');
     await prisma.user.update({ where: { id: inactive.id }, data: { isActive: false } });
 
     const ids = (await http().get('/api/v1/staff/candidates').set(office.auth).expect(200)).body.data.map(

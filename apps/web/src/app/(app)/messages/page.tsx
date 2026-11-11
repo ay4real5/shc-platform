@@ -1,7 +1,6 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
 import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { MessageAttachment, type MessageDocument } from '@/components/messages/message-attachment';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,6 @@ interface Conversation {
   id: string;
   type: 'direct' | 'group' | 'portal';
   subject: string | null;
-  patient: Person | null;
   participants: (Person & { left: boolean })[];
   lastMessage: Message | null;
   lastMessageAt: string | null;
@@ -55,7 +53,6 @@ export default function MessagesPage() {
   });
 
   const title = (c: Conversation) =>
-    (c.type === 'portal' && c.patient ? `Portal · ${name(c.patient)}` : null) ??
     c.subject ??
     (c.participants
       .filter((p) => p.id !== user?.id)
@@ -67,7 +64,7 @@ export default function MessagesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Messages"
-        subtitle="Secure messages with your team. Don't use text messages or personal email for patient information."
+        subtitle="Secure messages with your team. Keep staff and applicant details out of personal texts and email."
         actions={<Button onClick={() => setSelected('new')}>New message</Button>}
       />
       <ErrorAlert error={conversations.error} />
@@ -191,15 +188,6 @@ function ConversationPane({
           {conversation && (
             <p className="text-xs text-slate-600">
               {conversation.participants.map((p) => `${name(p)}${p.left ? ' (left)' : ''}`).join(', ')}
-              {conversation.patient && (
-                <>
-                  {' '}
-                  · About{' '}
-                  <Link className="underline" href={`/patients/${conversation.patient.id}`}>
-                    {name(conversation.patient)}
-                  </Link>
-                </>
-              )}
             </p>
           )}
         </div>
@@ -209,11 +197,6 @@ function ConversationPane({
           </Button>
         )}
       </div>
-      {conversation?.type === 'portal' && (
-        <p className="border-b border-sky-100 bg-sky-50 px-5 py-2 text-xs text-sky-900">
-          Patient portal: the patient&apos;s family member reads your replies here. Keep it to what they need to know.
-        </p>
-      )}
       <ErrorAlert error={messages.error ?? send.error ?? leave.error} />
       <ol aria-label="Messages" className="flex flex-1 flex-col-reverse gap-3 overflow-y-auto px-5 py-4" style={{ maxHeight: '32rem' }}>
         {messages.data?.map((m) => {

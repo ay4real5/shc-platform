@@ -9,9 +9,9 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 const jakarta = Plus_Jakarta_Sans({ variable: '--font-jakarta', subsets: ['latin'], display: 'swap', weight: ['500', '600', '700', '800'] });
 
 export const metadata: Metadata = {
-  title: 'Primordial Health',
-  description: 'Home health agency management',
-  // Staff dashboard with patient data — keep it out of search engines.
+  title: 'SHC',
+  description: 'Recruitment, onboarding and staff management for UK care providers',
+  // Staff records and applicant data — keep it out of search engines.
   robots: { index: false, follow: false },
 };
 

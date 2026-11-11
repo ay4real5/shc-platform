@@ -7,7 +7,8 @@ describe('permissions', () => {
   });
 
   it('recognises valid and invalid permission strings', () => {
-    expect(isPermission('patients:read')).toBe(true);
-    expect(isPermission('read:patients')).toBe(false);
+    expect(isPermission('staff:read')).toBe(true);
+    expect(isPermission('read:staff')).toBe(false);
+    expect(isPermission('patients:read')).toBe(false);
   });
 });

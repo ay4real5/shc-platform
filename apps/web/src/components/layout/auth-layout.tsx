@@ -1,31 +1,31 @@
-import { CalendarCheck2, FileCheck2, HeartHandshake, ShieldCheck, Sparkles } from 'lucide-react';
+import { ClipboardCheck, HeartHandshake, ShieldCheck, Sparkles, UserPlus } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Logo } from '@/components/brand/logo';
 
 const POINTS = [
-  { icon: CalendarCheck2, text: 'Schedules, visits and EVV in one place' },
-  { icon: Sparkles, text: 'AI that drafts notes and spots what needs attention' },
-  { icon: FileCheck2, text: 'Clean claims, built for Virginia Medicaid' },
-  { icon: ShieldCheck, text: 'HIPAA-minded: encrypted, audited, secure' },
+  { icon: UserPlus, text: 'Recruitment: careers page to signed contract' },
+  { icon: ClipboardCheck, text: 'CQC-ready staff files: Right to Work, DBS, references' },
+  { icon: Sparkles, text: 'Expiry alerts before anything lapses' },
+  { icon: ShieldCheck, text: 'UK hosted, UK GDPR compliant, encrypted and audited' },
 ];
 
 /** Signed-out pages (sign in, password reset, 2FA setup): brand panel on the left, the form on the right (D-103). */
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <main className="grid min-h-screen lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-      <section aria-label="Primordial Health" className="bg-mesh relative hidden overflow-hidden p-12 text-white lg:flex lg:flex-col">
+      <section aria-label="SHC" className="bg-mesh relative hidden overflow-hidden p-12 text-white lg:flex lg:flex-col">
         {/* Floating glass card: a glimpse of the product. */}
         <div aria-hidden className="absolute right-10 top-28 w-64 rotate-3 rounded-3xl border border-white/15 bg-white/10 p-4 shadow-2xl backdrop-blur-md">
           <div className="flex items-center gap-2 text-xs text-brand-100">
-            <HeartHandshake className="h-4 w-4 text-accent-300" /> Today
+            <HeartHandshake className="h-4 w-4 text-accent-300" /> New starters
           </div>
           <p className="mt-2 font-display text-3xl font-extrabold">
-            18 <span className="text-base font-semibold text-brand-200">visits</span>
+            92% <span className="text-base font-semibold text-brand-200">ready</span>
           </p>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15">
             <div className="h-full w-4/5 rounded-full bg-gradient-to-r from-brand-300 to-accent-400" />
           </div>
-          <p className="mt-2 text-xs text-brand-100">All covered · 3 notes to review</p>
+          <p className="mt-2 text-xs text-brand-100">3 new starters · 1 reference to chase</p>
         </div>
 
         <div className="relative">
@@ -33,11 +33,11 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         </div>
         <div className="relative mt-auto max-w-md">
           <p className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight">
-            Care at home,
+            Your care team,
             <br />
-            <span className="bg-gradient-to-r from-brand-200 via-brand-100 to-accent-300 bg-clip-text text-transparent">run beautifully.</span>
+            <span className="bg-gradient-to-r from-brand-200 via-brand-100 to-accent-300 bg-clip-text text-transparent">ready to care.</span>
           </p>
-          <p className="mt-4 text-brand-100">Everything your agency needs, from the first call to the last claim.</p>
+          <p className="mt-4 text-brand-100">Recruitment, onboarding and compliance in one place, so every carer starts ready and stays compliant.</p>
           <ul className="mt-8 flex flex-col gap-3.5">
             {POINTS.map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-3 text-sm text-brand-50">

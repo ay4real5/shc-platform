@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { useLiveSocket } from '@/lib/realtime';
-import type { AppNotification } from '@/lib/types/evv';
+import type { AppNotification } from '@/lib/types/notifications';
 import { Bell } from 'lucide-react';
 
 /**

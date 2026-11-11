@@ -331,7 +331,7 @@ export class StaffService {
 
   private async toDetail(caller: AuthUser, profile: Profile): Promise<StaffDetail> {
     const access = await this.permissions.forUser(caller);
-    const showPay = profile.userId === caller.userId || access.permissions.has('payroll:read');
+    const showPay = profile.userId === caller.userId || access.permissions.has('pay:read');
     const ssn = showPay && profile.ssnEncrypted ? this.crypto.decrypt(profile.ssnEncrypted, PhiContext.StaffSsn) : null;
     return {
       ...toSummary(profile),
