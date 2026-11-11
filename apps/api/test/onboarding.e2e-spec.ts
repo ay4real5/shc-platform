@@ -66,49 +66,47 @@ describe.skipIf(!hasDb)('Onboarding checklist (e2e)', () => {
 
   it('lists what a new aide is missing, and fills up as the office completes it', async () => {
     const first = (await http().get(api(`/staff/${aide.staffId}/onboarding`)).set(office.auth).expect(200)).body.data;
-    // HHA defaults: 7 profile items + 4 credentials = 11 required; only "signed in" is done.
-    expect(first).toMatchObject({ percent: 9, ready: false });
+    // Care worker defaults: 6 profile items + 3 checks = 9 required; only "signed in" is done.
+    expect(first).toMatchObject({ percent: 11, ready: false });
     expect(first.items.filter((i: { done: boolean; required: boolean }) => i.required && !i.done).map((i: { key: string }) => i.key)).toEqual([
       'phone',
       'address',
       'hire_date',
       'pay_rate',
       'availability',
-      'service_area',
-      'credential:hha_certificate',
-      'credential:cpr',
-      'credential:tb_test',
-      'credential:background_check',
+      'credential:right_to_work',
+      'credential:dbs_enhanced',
+      'credential:care_certificate',
     ]);
 
-    await prisma.user.update({ where: { id: aide.id }, data: { phone: '804-555-0110' } });
+    await prisma.user.update({ where: { id: aide.id }, data: { phone: '07700 900110' } });
     await prisma.staffProfile.update({
       where: { id: aide.staffId! },
-      data: { addressLine1: '1 Main St', city: 'Richmond', zip: '23220', hireDate: toDate(today), hourlyRate: 18, serviceAreaZipCodes: ['23220'] },
+      data: { addressLine1: '1 Main Street', city: 'Manchester', zip: 'M1 1AA', hireDate: toDate(today), hourlyRate: 12.6 },
     });
     await prisma.staffAvailability.create({ data: { staffProfileId: aide.staffId!, dayOfWeek: 1, startTime: toTime('08:00'), endTime: toTime('16:00') } });
-    for (const t of ['HHA_Certificate', 'cpr', 'TB Test']) {
+    for (const t of ['Right_To_Work', 'Care Certificate']) {
       await prisma.staffCredential.create({ data: { staffProfileId: aide.staffId!, credentialType: t, credentialName: t } });
     }
-    await prisma.staffCredential.create({ data: { staffProfileId: aide.staffId!, credentialType: 'background_check', credentialName: 'Background', expiryDate: toDate(addDays(today, -1)) } });
+    await prisma.staffCredential.create({ data: { staffProfileId: aide.staffId!, credentialType: 'dbs_enhanced', credentialName: 'Enhanced DBS', expiryDate: toDate(addDays(today, -1)) } });
 
     const later = (await http().get(api(`/staff/${aide.staffId}/onboarding`)).set(office.auth).expect(200)).body.data;
-    expect(later.percent).toBe(91); // 10 of 11 — the background check is expired
-    expect(later.items.find((i: { key: string }) => i.key === 'credential:background_check')).toMatchObject({ done: false, detail: expect.stringContaining('expired') });
+    expect(later.percent).toBe(89); // 8 of 9 — the DBS check is expired
+    expect(later.items.find((i: { key: string }) => i.key === 'credential:dbs_enhanced')).toMatchObject({ done: false, detail: expect.stringContaining('expired') });
 
     // The aide sees their own; the overview lists people least ready first.
-    expect((await http().get(api('/staff/me/onboarding')).set(aide.auth).expect(200)).body.data.percent).toBe(91);
+    expect((await http().get(api('/staff/me/onboarding')).set(aide.auth).expect(200)).body.data.percent).toBe(89);
     const overview = (await http().get(api('/staff/onboarding')).set(office.auth).expect(200)).body.data;
-    expect(overview.find((s: { staffId: string }) => s.staffId === aide.staffId)).toMatchObject({ percent: 91, missing: ['Background check'] });
+    expect(overview.find((s: { staffId: string }) => s.staffId === aide.staffId)).toMatchObject({ percent: 89, missing: ['Enhanced DBS (adult barred list)'] });
   });
 
   it('lets admins change what each discipline needs', async () => {
     const req = (await http().get(api('/staff/onboarding/requirements')).set(office.auth).expect(200)).body.data;
-    expect(req.HHA).toEqual(['hha_certificate', 'cpr', 'tb_test', 'background_check']);
-    await http().put(api('/staff/onboarding/requirements')).set(office.auth).send({ requirements: { HHA: ['cpr'] } }).expect(403);
-    const saved = (await http().put(api('/staff/onboarding/requirements')).set(admin.auth).send({ requirements: { HHA: ['CPR', 'Hha Certificate'] } }).expect(200)).body.data;
-    expect(saved.HHA).toEqual(['cpr', 'hha_certificate']);
-    expect(saved.RN).toEqual(['license', 'cpr', 'tb_test', 'background_check']); // others keep defaults
+    expect(req.care_worker).toEqual(['right_to_work', 'dbs_enhanced', 'care_certificate']);
+    await http().put(api('/staff/onboarding/requirements')).set(office.auth).send({ requirements: { care_worker: ['right_to_work'] } }).expect(403);
+    const saved = (await http().put(api('/staff/onboarding/requirements')).set(admin.auth).send({ requirements: { care_worker: ['Right To Work', 'Care Certificate'] } }).expect(200)).body.data;
+    expect(saved.care_worker).toEqual(['right_to_work', 'care_certificate']);
+    expect(saved.nurse).toEqual(['right_to_work', 'dbs_enhanced', 'nmc_registration']); // others keep defaults
     expect((await http().get(api(`/staff/${aide.staffId}/onboarding`)).set(office.auth).expect(200)).body.data).toMatchObject({ percent: 100, ready: true });
     await http().put(api('/staff/onboarding/requirements')).set(admin.auth).send({ requirements: { XYZ: ['cpr'] } }).expect(400);
     await http().get(api(`/staff/${randomUUID()}/onboarding`)).set(office.auth).expect(404);

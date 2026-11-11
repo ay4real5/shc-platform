@@ -117,13 +117,15 @@ describe.skipIf(!hasDb)('Notification delivery: push / SMS / email outbox (e2e)'
   it('retries with backoff, then gives up; a phone Expo says is gone is removed', async () => {
     sms.send.mockResolvedValue({ ok: false, retry: true, error: 'twilio 503' });
     push.send.mockResolvedValue({ ok: false, retry: false, error: 'expo DeviceNotRegistered', deadTokens: [TOKEN] });
-    await notifications.notify({ agencyId, userIds: [aideId], type: 'document_signature', title: 'Missed visit' });
+    // A type of its own, so this test's deliveries aren't confused with the earlier signing request.
+    await prisma.notificationPreference.create({ data: { userId: aideId, notificationType: 'credential_expiry', channelPush: true, channelSms: true } });
+    await notifications.notify({ agencyId, userIds: [aideId], type: 'credential_expiry', title: 'Your DBS check is due' });
     const now = new Date();
     const first = await delivery.run(now);
     expect(first).toMatchObject({ retried: 1, failed: 1 });
     expect(await prisma.pushDevice.count({ where: { token: TOKEN } })).toBe(0);
     const pending = await prisma.notificationDelivery.findFirstOrThrow({
-      where: { channel: 'sms', notification: { userId: aideId, type: 'document_signature' } },
+      where: { channel: 'sms', notification: { userId: aideId, type: 'credential_expiry' } },
     });
     expect(pending).toMatchObject({ status: 'pending', attempts: 1, lastError: 'twilio 503' });
     expect(pending.nextAttemptAt.getTime() - now.getTime()).toBe(60_000);
@@ -145,7 +147,7 @@ describe.skipIf(!hasDb)('Notification delivery: push / SMS / email outbox (e2e)'
     await prisma.notificationPreference.create({
       data: { userId: aideId, notificationType: 'time_off_decided', channelInApp: false, channelSms: true },
     });
-    await notifications.notify({ agencyId, userIds: [aideId], type: 'time_off_decided', title: 'Shift cancelled' });
+    await notifications.notify({ agencyId, userIds: [aideId], type: 'time_off_decided', title: 'Time off approved' });
     const row = await prisma.notification.findFirstOrThrow({ where: { userId: aideId, type: 'time_off_decided' } });
     expect(row.channels).toEqual(['sms']);
     const inbox = (await http().get('/api/v1/notifications?limit=50').set(auth).expect(200)).body.data;
@@ -157,7 +159,7 @@ describe.skipIf(!hasDb)('Notification delivery: push / SMS / email outbox (e2e)'
     push.enabled = false;
     sms.enabled = false;
     try {
-      await notifications.notify({ agencyId, userIds: [aideId], type: 'message_received', title: 'Open shift' });
+      await notifications.notify({ agencyId, userIds: [aideId], type: 'message_received', title: 'New message' });
       const row = await prisma.notification.findFirstOrThrow({ where: { userId: aideId, type: 'message_received' } });
       expect(row.channels).toEqual(['in_app']);
       expect(await prisma.notificationDelivery.count({ where: { notificationId: row.id } })).toBe(0);

@@ -4,7 +4,7 @@ test('forgot password: from sign-in to a neutral answer; the reset page needs th
   await page.goto('/login');
   await page.getByRole('link', { name: 'Forgot your password?' }).click();
   await expect(page.getByRole('heading', { name: 'Forgot your password?' })).toBeVisible();
-  await page.getByLabel('Email').fill('nobody@demo.alora.test');
+  await page.getByLabel('Email').fill('nobody@demo.shc.test');
   await page.getByRole('button', { name: 'Send reset link' }).click();
   // Same answer whether or not the account exists; which one depends on whether email is connected (not in CI).
   await expect(page.getByRole('status')).toContainText(/If that address belongs to an Primordial Health account|isn’t set up for your agency/);

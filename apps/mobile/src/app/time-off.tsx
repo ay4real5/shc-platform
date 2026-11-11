@@ -6,9 +6,10 @@ import { Button, Card, ErrorText, Input, colors, styles } from '@/components/ui'
 import { errorMessage, useAuth } from '@/lib/auth-context';
 import { dateRange, shortDate, timeOffCancellable, timeOffError, type TimeOffEntry } from '@/lib/extras';
 import { humanize } from '@/lib/visits';
+import { TIME_OFF_TYPES } from '@alora/shared';
 
-/** The API's TIME_OFF_TYPES (staff module DTO — the shared list differs). */
-const TYPES = ['vacation', 'sick', 'personal', 'other'] as const;
+/** UK leave types, shared with the API. */
+const TYPES = TIME_OFF_TYPES;
 
 /**
  * Holiday and time-off requests (D-090): ask for days off, see decisions, cancel a request that is pending or
@@ -21,7 +22,7 @@ export default function TimeOffScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [type, setType] = useState<(typeof TYPES)[number]>('vacation');
+  const [type, setType] = useState<(typeof TYPES)[number]>('annual_leave');
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

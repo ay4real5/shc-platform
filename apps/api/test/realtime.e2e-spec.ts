@@ -120,12 +120,11 @@ describe.skipIf(!hasDb)('Real-time (e2e)', () => {
     });
 
   describe('sockets', () => {
-    it('refuses connections without a valid token, and the live monitor without evv:read', async () => {
+    it('refuses connections without a valid token', async () => {
       expect((await connect('/notifications')).refused).toBe('unauthorized');
       expect((await connect('/notifications', 'not-a-jwt')).refused).toBe('unauthorized');
-      const hha = await caregiver();
-      expect((await connect('/live-monitor', hha.token)).refused).toBe('forbidden');
-      expect((await connect('/live-monitor', supervisor.token)).refused).toBeUndefined();
+      const worker = await caregiver();
+      expect((await connect('/notifications', worker.token)).refused).toBeUndefined();
     });
 
     it('delivers a new notification only to its recipient', async () => {

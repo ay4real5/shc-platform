@@ -61,7 +61,7 @@ describe.skipIf(!hasDb)('Notification preferences (e2e)', () => {
     const prefs = (await http().get(base).set(auth).expect(200)).body.data;
     expect(prefs).toHaveLength(NOTIFICATION_TYPES.length);
     expect(prefs.find((p: { type: string }) => p.type === 'document_signature')).toEqual({ type: 'document_signature', mandatory: false, inApp: true, push: true, sms: true, email: false });
-    expect(prefs.find((p: { type: string }) => p.type === 'payroll_ready')).toMatchObject({ push: false, sms: false, email: true });
+    expect(prefs.find((p: { type: string }) => p.type === 'credential_expiry')).toMatchObject({ push: false, sms: false, email: true });
     expect(prefs.find((p: { type: string }) => p.type === 'system')).toMatchObject({ mandatory: true, inApp: true });
   });
 

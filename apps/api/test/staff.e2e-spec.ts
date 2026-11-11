@@ -26,6 +26,7 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
   let otherAgencyId: string;
   let admin: { id: string; auth: Auth };
   let office: { id: string; auth: Auth };
+  let recruiter: { id: string; auth: Auth };
   const http = () => request(app.getHttpServer());
 
   beforeAll(async () => {
@@ -40,6 +41,7 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
     otherAgencyId = (await prisma.agency.create({ data: { name: `Staff Other ${randomUUID()}` } })).id;
     admin = await seedUser('agency_admin');
     office = await seedUser('care_coordinator');
+    recruiter = await seedUser('recruiter');
   });
 
   afterAll(async () => {
@@ -238,7 +240,7 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
         await http()
           .post(`/api/v1/staff/${cg.profileId}/time-off`)
           .set(cg.auth)
-          .send({ startDate: '2026-12-20', endDate: '2026-12-27', type: 'vacation' })
+          .send({ startDate: '2026-12-20', endDate: '2026-12-27', type: 'annual_leave' })
           .expect(201)
       ).body.data;
       expect(request1.status).toBe('pending');
@@ -246,18 +248,18 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
       await http()
         .post(`/api/v1/staff/${cg.profileId}/time-off`)
         .set(cg.auth)
-        .send({ startDate: '2026-12-26', endDate: '2026-12-30', type: 'personal' })
+        .send({ startDate: '2026-12-26', endDate: '2026-12-30', type: 'other' })
         .expect(409);
       await http()
         .post(`/api/v1/staff/${cg.profileId}/time-off`)
         .set(cg.auth)
-        .send({ startDate: '2026-12-10', endDate: '2026-12-01', type: 'sick' })
+        .send({ startDate: '2026-12-10', endDate: '2026-12-01', type: 'sickness' })
         .expect(400);
 
       const decide = (who: Auth, id: string, status: string) =>
         http().patch(`/api/v1/staff/${cg.profileId}/time-off/${id}`).set(who).send({ status });
       await decide(cg.auth, request1.id, 'approved').expect(403); // can't approve own
-      await decide(office.auth, request1.id, 'approved').expect(403); // office staff lack time_off:approve
+      await decide(recruiter.auth, request1.id, 'approved').expect(403); // recruiters lack time_off:approve
       const approved = await decide(admin.auth, request1.id, 'approved').expect(200);
       expect(approved.body.data).toMatchObject({ status: 'approved', approvedById: admin.id });
       await decide(cg.auth, request1.id, 'cancelled').expect(409); // no longer pending
@@ -266,7 +268,7 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
         await http()
           .post(`/api/v1/staff/${cg.profileId}/time-off`)
           .set(cg.auth)
-          .send({ startDate: '2027-01-05', endDate: '2027-01-05', type: 'sick' })
+          .send({ startDate: '2027-01-05', endDate: '2027-01-05', type: 'sickness' })
       ).body.data;
       await decide(cg.auth, request2.id, 'cancelled').expect(200);
 

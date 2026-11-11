@@ -12,18 +12,18 @@ async function signIn(page: Page, email: string) {
 }
 
 test('an admin signs in, sees live numbers, navigates and signs out', async ({ page }) => {
-  await signIn(page, 'agency.admin@demo.alora.test');
+  await signIn(page, 'agency.admin@demo.shc.test');
   await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
 
-  const activePatients = page.getByRole('link', { name: /Active patients/ });
-  await expect(activePatients).toContainText('27'); // the demo agency has 27 active patients
+  const activeStaff = page.getByRole('link', { name: /Active staff/ });
+  await expect(activeStaff).toContainText('12'); // the demo company has 12 care staff
 
   const nav = page.getByRole('navigation', { name: 'Main' });
-  for (const item of ['Schedule', 'Patients', 'Staff', 'Physicians', 'Users']) {
+  for (const item of ['Staff', 'Onboarding', 'Academy', 'Compliance', 'Users']) {
     await expect(nav.getByRole('link', { name: item })).toBeVisible();
   }
-  await nav.getByRole('link', { name: 'Patients' }).click();
-  await expect(page).toHaveURL(/\/patients$/);
+  await nav.getByRole('link', { name: 'Staff' }).click();
+  await expect(page).toHaveURL(/\/staff$/);
 
   const reloaded = page.waitForEvent('load'); // sign-out is a full page load; don't race it
   await page.getByRole('button', { name: 'Sign out' }).click();
@@ -35,7 +35,7 @@ test('an admin signs in, sees live numbers, navigates and signs out', async ({ p
 });
 
 test('the session survives a page reload (refresh cookie), without storing tokens in the page', async ({ page }) => {
-  await signIn(page, 'office.staff@demo.alora.test');
+  await signIn(page, 'care.coordinator@demo.shc.test');
   await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
@@ -45,18 +45,18 @@ test('the session survives a page reload (refresh cookie), without storing token
   expect(stored).not.toContain('alora_rt'); // the refresh cookie is httpOnly
 });
 
-test('a caregiver only sees what their role allows', async ({ page }) => {
-  await signIn(page, 'hha@demo.alora.test');
+test('a care worker only sees what their role allows', async ({ page }) => {
+  await signIn(page, 'care.worker@demo.shc.test');
   await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
   const nav = page.getByRole('navigation', { name: 'Main' });
-  await expect(nav.getByRole('link', { name: 'Schedule' })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Messages' })).toBeVisible();
   await expect(nav.getByRole('link', { name: 'Users' })).toHaveCount(0);
   await expect(nav.getByRole('link', { name: 'Staff' })).toHaveCount(0);
 });
 
 test('a wrong password shows the generic error', async ({ page }) => {
   await page.goto('/login');
-  await page.getByLabel('Email').fill('agency.admin@demo.alora.test');
+  await page.getByLabel('Email').fill('agency.admin@demo.shc.test');
   await page.getByLabel('Password').fill('Wrong-Password-1!');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'Invalid email or password' })).toBeVisible();

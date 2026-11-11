@@ -15,7 +15,7 @@ async function signIn(page: Page, email: string) {
 const nav = (page: Page) => page.getByRole('navigation', { name: 'Main' });
 
 test('an admin adds a user, turns them into staff, and manages credentials, availability and time off', async ({ page }) => {
-  await signIn(page, 'agency.admin@demo.alora.test');
+  await signIn(page, 'agency.admin@demo.shc.test');
   const stamp = Date.now();
 
   // 1. Create the login.
@@ -23,9 +23,9 @@ test('an admin adds a user, turns them into staff, and manages credentials, avai
   await page.getByRole('link', { name: 'Add user' }).click();
   await page.getByLabel('First name').fill('Robin');
   await page.getByLabel('Last name').fill(`Newhire${stamp}`);
-  await page.getByLabel('Email').fill(`robin.${stamp}@demo.alora.test`);
+  await page.getByLabel('Email').fill(`robin.${stamp}@demo.shc.test`);
   await page.getByLabel('Starting password').fill('Starting-Pass-1!');
-  await page.getByLabel(/Home health aide/).check();
+  await page.getByLabel(/^Care worker/).check();
   await page.getByRole('button', { name: 'Add user' }).click();
   await expect(page.getByRole('heading', { name: new RegExp(`Robin Newhire${stamp}`) })).toBeVisible();
 
@@ -35,16 +35,15 @@ test('an admin adds a user, turns them into staff, and manages credentials, avai
   const person = page.getByLabel('Person');
   const value = await person.locator('option', { hasText: `Newhire${stamp}` }).getAttribute('value');
   await person.selectOption(value!);
-  await page.getByLabel('Discipline').selectOption('HHA');
-  await page.getByLabel('Service area ZIP codes').fill('62701, 62702');
-  await page.getByLabel('Hourly rate ($)').fill('21.50');
+  await page.getByLabel('Job role').selectOption('care_worker');
+  await page.getByLabel('Hourly rate (£)').fill('12.60');
   await page.getByRole('button', { name: 'Create staff profile' }).click();
   await expect(page.getByRole('heading', { name: new RegExp(`Robin Newhire${stamp}`) })).toBeVisible();
-  await expect(page.getByText('$21.50')).toBeVisible(); // admins hold payroll:read
+  await expect(page.getByText('£12.60')).toBeVisible(); // admins hold pay:read
 
   // 3. Credentials with computed state.
-  await page.getByLabel('Credential type').fill('cpr');
-  await page.getByLabel('Credential name').fill('CPR/BLS');
+  await page.getByLabel('Credential type').fill('first_aid');
+  await page.getByLabel('Credential name').fill('First aid');
   await page.getByLabel('Expiry date').fill('2020-01-01');
   await page.getByRole('button', { name: 'Add credential' }).click();
   await expect(page.getByText('expired', { exact: true })).toBeVisible();
@@ -66,8 +65,8 @@ test('an admin adds a user, turns them into staff, and manages credentials, avai
   await expect(page.getByText('approved', { exact: true })).toBeVisible();
 });
 
-test('office staff manage people but never see pay, and cannot open Users', async ({ page }) => {
-  await signIn(page, 'office.staff@demo.alora.test');
+test('team leaders see their people but never pay, and cannot open Users', async ({ page }) => {
+  await signIn(page, 'team.leader@demo.shc.test');
   await expect(nav(page).getByRole('link', { name: 'Users' })).toHaveCount(0);
   await nav(page).getByRole('link', { name: 'Staff' }).click();
   await page.getByRole('row').nth(1).getByRole('link').click();
@@ -75,23 +74,9 @@ test('office staff manage people but never see pay, and cannot open Users', asyn
   await expect(page.getByRole('heading', { name: 'Pay' })).toHaveCount(0);
 });
 
-test('physicians: a mistyped NPI is caught before saving; a valid one saves', async ({ page }) => {
-  await signIn(page, 'office.staff@demo.alora.test');
-  await nav(page).getByRole('link', { name: 'Physicians' }).click();
-  await page.getByRole('link', { name: 'Add physician' }).click();
-  await page.getByLabel('First name').fill('Alex');
-  await page.getByLabel('Last name').fill(`Doctor${Date.now()}`);
-  await page.getByLabel('NPI').fill('1234567890');
-  await expect(page.getByText('Not a valid NPI')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Add physician' })).toBeDisabled();
-  await page.getByLabel('NPI').fill('1234567893');
-  await page.getByRole('button', { name: 'Add physician' }).click();
-  await expect(page).toHaveURL(/\/physicians$/);
-});
-
-test('the credentials page lists the expired CPR card from the demo data', async ({ page }) => {
-  await signIn(page, 'supervisor@demo.alora.test');
-  await page.getByRole('link', { name: /Credentials expired or expiring/ }).click();
+test('the checks page lists the expired DBS check from the demo data', async ({ page }) => {
+  await signIn(page, 'care.coordinator@demo.shc.test');
+  await page.getByRole('link', { name: /Checks expired or expiring/ }).click();
   await expect(page.getByRole('heading', { name: 'Credentials needing attention' })).toBeVisible();
   await expect(page.getByText('expired', { exact: true }).first()).toBeVisible();
 });

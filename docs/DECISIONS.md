@@ -2001,3 +2001,30 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Still to do in later tasks: rename `@alora/*` packages and "agency" wording where it shows to users; replace US
   home-health roles, disciplines and permissions with UK care ones (S1-03).
 
+### S-002 — UK care roles, permissions, job roles and leave types
+2026-11-11 · Claude Code
+- **Built-in roles**:
+  - `super_admin` and `agency_admin` (shown as "Company admin"): all permissions.
+  - `registered_manager` (the CQC-registered manager): everything except `settings:update` and `users:delete`.
+  - `care_coordinator`: the office — staff, holidays, documents, training, recruitment.
+  - `recruiter`: recruitment, plus read access to staff.
+  - `team_leader`: reads staff records and approves holidays.
+  - `senior_care_worker`, `care_worker`, `support_worker`: their own holiday requests and messages.
+
+  Two-factor authentication is mandatory for super admin, company admin and registered manager.
+- **Permissions**: `users`, `settings`, `staff`, `time_off` (request/approve), `pay:read`, `documents`
+  (create/read/delete/sign), `notifications:create`, `messages:use`, `reports:read`, `compliance` (read/update),
+  `audit_logs:read`, `training:manage`, `recruitment` (read/manage). Everything clinical, billing and
+  visit-related is gone.
+- **Job roles** (`staff_profiles.discipline`): care_worker, senior_care_worker, support_worker, team_leader, nurse,
+  care_coordinator, manager, office.
+- **Contract types**: full_time, part_time, zero_hours, bank, contractor.
+- **Leave types**: annual_leave, sickness, compassionate, unpaid, other. The API's time-off DTO now uses the shared
+  list.
+- **Default onboarding checks (D-101)**: right_to_work, dbs_enhanced and care_certificate for care roles; plus
+  medication_training for seniors and team leaders, nmc_registration for nurses, and right_to_work + dbs_enhanced
+  for office roles. The service-area item was dropped from the checklist.
+- **Notification types**: credential_expiry, message_received, document_signature (push + **SMS**: signing is what
+  holds a new starter back), time_off_decided, application_received, system.
+- **UK phone numbers**: `toE164` turns 07…/01…/02… numbers into +44. US numbers without +1 are no longer guessed.
+

@@ -7,7 +7,6 @@ const all: OnboardingFacts = {
   hasHireDate: true,
   hasPayRate: true,
   hasAvailability: true,
-  hasServiceArea: true,
   hasPhoneCheckInCode: false,
   validCredentialTypes: ['right_to_work', 'care_certificate'],
   expiredCredentialTypes: [],
@@ -22,8 +21,8 @@ describe('onboardingChecklist', () => {
 
   it('counts missing and expired credentials and explains them', () => {
     const c = onboardingChecklist({ ...all, hasAvailability: false, expiredCredentialTypes: ['dbs_enhanced'] }, ['right_to_work', 'care_certificate', 'dbs_enhanced']);
-    // 10 required items, 8 done.
-    expect(c).toMatchObject({ percent: 80, ready: false });
+    // 9 required items (6 profile + 3 checks), 7 done.
+    expect(c).toMatchObject({ percent: 78, ready: false });
     expect(c.items.find((i) => i.key === 'credential:dbs_enhanced')).toMatchObject({ label: 'Enhanced DBS (adult barred list)', done: false, detail: expect.stringContaining('expired') });
     expect(c.items.find((i) => i.key === 'availability')?.detail).toContain('scheduling');
   });

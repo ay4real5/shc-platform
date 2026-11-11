@@ -49,12 +49,12 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
       await prisma.agency.create({ data: { name: `Docs Test ${randomUUID()}`, timezone: 'UTC' } })
     ).id;
     otherAgencyId = (await prisma.agency.create({ data: { name: `Docs Other ${randomUUID()}`, timezone: 'UTC' } })).id;
-    office = await seedUser('care_coordinator');
+    office = await seedUser('recruiter');
     admin = await seedUser('agency_admin');
     outsider = await seedUser('agency_admin', otherAgencyId);
     // A nurse with a staff file, who can sign documents.
     const role = await prisma.role.findFirstOrThrow({
-      where: { agencyId: null, name: 'senior_care_worker' },
+      where: { agencyId: null, name: 'care_coordinator' },
     });
     const email = `docs-rn-${randomUUID()}@example.test`;
     const nurse = await prisma.user.create({

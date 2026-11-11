@@ -118,10 +118,10 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
 
   describe('no privilege escalation', () => {
     it('cannot grant a role carrying permissions the caller lacks', async () => {
-      // A custom "HR" role that may create users but has nothing clinical or financial.
+      // A custom "HR" role that may create users and read staff, nothing else.
       const hr = await prisma.role.create({ data: { agencyId, name: `hr-${randomUUID()}` } });
       const perms = await prisma.permission.findMany({
-        where: { OR: [{ resource: 'users' }, { resource: 'patients', action: 'read' }] },
+        where: { OR: [{ resource: 'users' }, { resource: 'staff', action: 'read' }] },
       });
       await prisma.rolePermission.createMany({ data: perms.map((p) => ({ roleId: hr.id, permissionId: p.id })) });
       const hrUser = await seedUser([hr.id]);
@@ -132,7 +132,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
 
       // A role within the caller's own permissions is fine.
       const reader = await prisma.role.create({ data: { agencyId, name: `reader-${randomUUID()}` } });
-      const patientsRead = perms.find((p) => p.resource === 'patients')!;
+      const patientsRead = perms.find((p) => p.resource === 'staff')!;
       await prisma.rolePermission.create({ data: { roleId: reader.id, permissionId: patientsRead.id } });
       await http().post('/api/v1/users').set(hrUser.auth).send(newUserBody([reader.id])).expect(201);
     });
@@ -196,7 +196,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
       const res = await http()
         .patch(`/api/v1/users/${target.id}`)
         .set(admin.auth)
-        .send({ lastName: 'Renamed', roleIds: [roleIds.office_staff, roleIds.agency_admin] })
+        .send({ lastName: 'Renamed', roleIds: [roleIds.care_coordinator, roleIds.agency_admin] })
         .expect(200);
       expect(res.body.data.lastName).toBe('Renamed');
       expect(res.body.data.roles.map((r: { name: string }) => r.name)).toEqual(['agency_admin', 'care_coordinator']);
@@ -204,7 +204,7 @@ describe.skipIf(!hasDb)('Users (e2e)', () => {
     });
 
     it('refuses callers without user permissions', async () => {
-      const supervisor = await seedUser(['care_coordinator']);
+      const supervisor = await seedUser(['team_leader']);
       await http().get('/api/v1/users').set(supervisor.auth).expect(403);
       await http().post('/api/v1/users').set(supervisor.auth).send(newUserBody([])).expect(403);
     });

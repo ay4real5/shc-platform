@@ -42,7 +42,6 @@ export interface OnboardingFacts {
   hasHireDate: boolean;
   hasPayRate: boolean;
   hasAvailability: boolean;
-  hasServiceArea: boolean;
   hasPhoneCheckInCode: boolean;
   /** Credential types (lower-case) with an active, unexpired credential. */
   validCredentialTypes: string[];
@@ -86,7 +85,6 @@ export function onboardingChecklist(facts: OnboardingFacts, requiredCredentials:
     item('hire_date', 'Hire date', facts.hasHireDate, 'office'),
     item('pay_rate', 'Pay rate', facts.hasPayRate, 'office', 'Hourly or per-visit rate, for payroll.'),
     item('availability', 'Weekly availability', facts.hasAvailability, 'office', 'When they can work, for scheduling.'),
-    item('service_area', 'Service area ZIP codes', facts.hasServiceArea, 'office'),
     ...requiredCredentials.map((type) =>
       item(
         `credential:${type}`,

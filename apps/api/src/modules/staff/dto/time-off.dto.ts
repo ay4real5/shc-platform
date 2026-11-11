@@ -1,11 +1,11 @@
+import { TIME_OFF_STATUSES, TIME_OFF_TYPES } from '@alora/shared';
 import { Transform } from 'class-transformer';
 import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
 import { IsDateOnly } from '../../../common/validators/is-date-only.js';
 import { trimmed } from '../../../common/validators/fields.js';
 
-export const TIME_OFF_TYPES = ['vacation', 'sick', 'personal', 'other'] as const;
-export const TIME_OFF_STATUSES = ['pending', 'approved', 'denied', 'cancelled'] as const;
+export { TIME_OFF_STATUSES, TIME_OFF_TYPES };
 /** Longest single request; longer leave is arranged with the office. */
 export const MAX_TIME_OFF_DAYS = 60;
 

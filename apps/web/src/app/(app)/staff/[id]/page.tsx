@@ -78,10 +78,9 @@ export default function StaffMemberPage() {
           <h2 className="mb-4 text-base font-semibold text-slate-900">Pay</h2>
           <DetailList
             items={[
-              ['Hourly', s.pay.hourlyRate && `$${s.pay.hourlyRate}`],
-              ['Per visit', s.pay.perVisitRate && `$${s.pay.perVisitRate}`],
-              ['Overtime', s.pay.overtimeRate && `$${s.pay.overtimeRate}`],
-              ['Mileage', s.pay.mileageRate && `$${s.pay.mileageRate}/mile`],
+              ['Hourly', s.pay.hourlyRate && `£${s.pay.hourlyRate}`],
+              ['Overtime', s.pay.overtimeRate && `£${s.pay.overtimeRate}`],
+              ['Mileage', s.pay.mileageRate && `£${s.pay.mileageRate} per mile`],
               ['Tax filing status', s.pay.taxFilingStatus && humanize(s.pay.taxFilingStatus)],
             ]}
           />

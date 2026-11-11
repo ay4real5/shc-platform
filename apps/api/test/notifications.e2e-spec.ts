@@ -84,7 +84,7 @@ describe.skipIf(!hasDb)('Notifications (e2e)', () => {
       await http()
         .post(`/api/v1/staff/${cg.staffId}/time-off`)
         .set(cg.auth)
-        .send({ startDate: addDays(day, 10), endDate: addDays(day, 12), type: 'vacation' })
+        .send({ startDate: addDays(day, 10), endDate: addDays(day, 12), type: 'annual_leave' })
         .expect(201)
     ).body.data;
     await http().patch(`/api/v1/staff/${cg.staffId}/time-off/${request1.id}`).set(admin.auth).send({ status: 'approved' }).expect(200);

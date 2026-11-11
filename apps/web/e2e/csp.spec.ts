@@ -16,7 +16,7 @@ test('every page carries a nonce-based CSP, and the app runs without violating i
   const again = (await page.request.get('/login')).headers()['content-security-policy'];
   expect(again).not.toBe(csp);
 
-  await page.getByLabel('Email').fill('supervisor@demo.alora.test');
+  await page.getByLabel('Email').fill('care.coordinator@demo.shc.test');
   await page.getByLabel('Password').fill('Demo-Password-1!');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible({ timeout: 20_000 });

@@ -73,13 +73,13 @@ describe.skipIf(!hasDb)('Time off (e2e)', () => {
   const ask = (who: Person, body: Record<string, unknown>) => http().post('/api/v1/time-off').set(who.auth).send(body);
 
   it('staff request days off; the rules are enforced', async () => {
-    await ask(aide, { startDate: day(-1), endDate: day(1), type: 'vacation' }).expect(400); // starts in the past
-    await ask(aide, { startDate: day(5), endDate: day(4), type: 'vacation' }).expect(400); // ends before it starts
-    await ask(aide, { startDate: day(5), endDate: day(70), type: 'vacation' }).expect(400); // over 60 days
+    await ask(aide, { startDate: day(-1), endDate: day(1), type: 'annual_leave' }).expect(400); // starts in the past
+    await ask(aide, { startDate: day(5), endDate: day(4), type: 'annual_leave' }).expect(400); // ends before it starts
+    await ask(aide, { startDate: day(5), endDate: day(70), type: 'annual_leave' }).expect(400); // over 60 days
     await ask(aide, { startDate: day(5), endDate: day(6), type: 'holiday' }).expect(400); // unknown type
-    const res = await ask(aide, { startDate: day(5), endDate: day(7), type: 'vacation', notes: 'Family wedding' }).expect(201);
-    expect(res.body.data).toMatchObject({ status: 'pending', days: 3, type: 'vacation', staff: { id: aide.staffId } });
-    await ask(aide, { startDate: day(7), endDate: day(8), type: 'personal' }).expect(409); // overlaps
+    const res = await ask(aide, { startDate: day(5), endDate: day(7), type: 'annual_leave', notes: 'Family wedding' }).expect(201);
+    expect(res.body.data).toMatchObject({ status: 'pending', days: 3, type: 'annual_leave', staff: { id: aide.staffId } });
+    await ask(aide, { startDate: day(7), endDate: day(8), type: 'other' }).expect(409); // overlaps
 
     // Staff see only their own; other agencies see nothing.
     const mine = (await http().get('/api/v1/time-off').set(aide.auth).expect(200)).body.data;
@@ -89,7 +89,7 @@ describe.skipIf(!hasDb)('Time off (e2e)', () => {
   });
 
   it('supervisors see pending requests, decide them, and the requester is told', async () => {
-    const req = (await ask(nurse, { startDate: day(10), endDate: day(10), type: 'sick' }).expect(201)).body.data;
+    const req = (await ask(nurse, { startDate: day(10), endDate: day(10), type: 'sickness' }).expect(201)).body.data;
 
     await http().patch(`/api/v1/time-off/${req.id}`).set(aide.auth).send({ status: 'approved' }).expect(403); // no visits:approve
     await http().patch(`/api/v1/time-off/${req.id}`).set(outsider.auth).send({ status: 'approved' }).expect(404);
@@ -105,10 +105,10 @@ describe.skipIf(!hasDb)('Time off (e2e)', () => {
   });
 
   it('nobody decides their own request; requesters can withdraw until it starts', async () => {
-    const own = (await ask(supervisor, { startDate: day(20), endDate: day(21), type: 'personal' }).expect(201)).body.data;
+    const own = (await ask(supervisor, { startDate: day(20), endDate: day(21), type: 'other' }).expect(201)).body.data;
     await http().patch(`/api/v1/time-off/${own.id}`).set(supervisor.auth).send({ status: 'approved' }).expect(403);
 
-    const req = (await ask(aide, { startDate: day(30), endDate: day(30), type: 'personal' }).expect(201)).body.data;
+    const req = (await ask(aide, { startDate: day(30), endDate: day(30), type: 'other' }).expect(201)).body.data;
     await http().patch(`/api/v1/time-off/${req.id}`).set(supervisor.auth).send({ status: 'approved' }).expect(200);
     await http().post(`/api/v1/time-off/${req.id}/cancel`).set(nurse.auth).expect(404); // not theirs
     const cancelled = (await http().post(`/api/v1/time-off/${req.id}/cancel`).set(aide.auth).expect(200)).body.data;

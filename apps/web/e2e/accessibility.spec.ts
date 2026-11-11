@@ -43,38 +43,18 @@ test('signed-out pages have no WCAG A/AA violations', async ({ page }) => {
 
 test('office pages have no WCAG A/AA violations', async ({ page }) => {
   test.setTimeout(300_000);
-  await signIn(page, 'supervisor@demo.alora.test');
-  const patient = await firstRowLink(page, '/patients');
-  const evvRecord = await firstRowLink(page, '/evv');
+  await signIn(page, 'care.coordinator@demo.shc.test');
+  const staffMember = await firstRowLink(page, '/staff');
   const found = await scan(page, [
     ['/', /Welcome|Good (morning|afternoon|evening)/],
-    ['/patients', /Patients/],
-    [patient, /MRN|, /],
     ['/staff', /Staff/],
-    ['/schedule', /Schedule/],
-    ['/schedule/new', /Book a visit|New visit|Schedule/],
-    ['/evv', /EVV/],
-    [evvRecord, /EVV|Visit/],
-    ['/monitor', /Live monitor/],
+    [staffMember, /Onboarding|Credentials|Time off/],
+    ['/staff/onboarding', /Onboarding/],
+    ['/staff/credentials', /Credentials|Checks/],
+    ['/training', /Academy/],
     ['/messages', /Messages/],
-    ['/reports', /Reports/],
     ['/compliance', /Compliance/],
     ['/settings/notifications', /Notification settings/],
-  ]);
-  expect(found).toEqual({});
-});
-
-test('billing pages have no WCAG A/AA violations', async ({ page }) => {
-  test.setTimeout(300_000);
-  await signIn(page, 'billing.staff@demo.alora.test');
-  const found = await scan(page, [
-    ['/billing/ready', /Ready to bill/],
-    ['/billing/claims', /Claims/],
-    ['/billing/files', /Claim files/],
-    ['/billing/aging', /aging/i],
-    ['/billing/payments', /Payments|Remittance/],
-    ['/billing/invoices', /Invoices/],
-    ['/billing/setup', /Billing setup|Payers/],
   ]);
   expect(found).toEqual({});
 });
