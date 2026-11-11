@@ -1,0 +1,50 @@
+import { EVV_FLAG_LABELS, type EvvFlag } from '@alora/shared';
+
+/** Human-readable labels for codes the API returns. */
+
+const ROLE_LABELS: Record<string, string> = {
+  super_admin: 'Super admin',
+  agency_admin: 'Agency admin',
+  supervisor: 'Clinical supervisor',
+  registered_nurse: 'Registered nurse (RN)',
+  licensed_nurse: 'Licensed nurse (LPN/LVN)',
+  therapist: 'Therapist (PT/OT/ST)',
+  home_health_aide: 'Home health aide',
+  billing_staff: 'Billing staff',
+  office_staff: 'Office staff',
+  medical_social_worker: 'Medical social worker',
+  portal_user: 'Patient portal user',
+};
+
+export function roleLabel(name: string): string {
+  return ROLE_LABELS[name] ?? name;
+}
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+export function dayName(dayOfWeek: number): string {
+  return DAY_NAMES[dayOfWeek] ?? String(dayOfWeek);
+}
+
+/** 'shift_assigned' → 'Shift assigned'. */
+export function humanize(code: string): string {
+  const text = code.replaceAll('_', ' ').toLowerCase();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** "09:30" → "9:30 AM". */
+export function formatTime(hhmm: string): string {
+  const [h, m] = hhmm.split(':').map(Number);
+  const suffix = h! >= 12 ? 'PM' : 'AM';
+  return `${((h! + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${suffix}`;
+}
+
+/** EVV flag code → plain words ("Clocked in away from the home"). */
+export function flagLabel(flag: string): string {
+  return EVV_FLAG_LABELS[flag as EvvFlag] ?? flag;
+}
+
+/** An ISO instant → local clock time ("4:05 PM"), or a dash. */
+export function clockTime(value: string | null | undefined): string {
+  return value ? new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—';
+}

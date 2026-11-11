@@ -1,0 +1,1996 @@
+// Alora Health — database schema (source of truth, DECISIONS D-003).
+// Logical model: docs/DESIGN.md §5. Departures are listed in DECISIONS D-005 and D-013.
+// Table/column names stay snake_case (as in the design) via @@map/@map; Prisma fields are camelCase.
+// Status-like columns are plain strings, as in the design; allowed values are enforced in DTOs.
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  moduleFormat    = "esm"
+  // partialIndexes: unique system-role names (roles with agency_id NULL), DECISIONS D-022.
+  previewFeatures = ["partialIndexes", "relationJoins"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────── Agency & auth (§5.1) ───────────────────────────────
+
+model Agency {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                   String   @db.VarChar(255)
+  npi                    String?  @unique @db.VarChar(10)
+  taxId                  String?  @map("tax_id") @db.VarChar(20)
+  phone                  String?  @db.VarChar(20)
+  fax                    String?  @db.VarChar(20)
+  email                  String?  @db.VarChar(255)
+  addressLine1           String?  @map("address_line1") @db.VarChar(255)
+  addressLine2           String?  @map("address_line2") @db.VarChar(255)
+  city                   String?  @db.VarChar(100)
+  state                  String?  @db.VarChar(2)
+  zip                    String?  @db.VarChar(10)
+  timezone               String   @default("America/New_York") @db.VarChar(50)
+  /// Last EDI interchange control number used for outbound files (ISA13/GS06), advanced atomically (D-076).
+  ediControlNumber       Int      @default(0) @map("edi_control_number")
+  medicareProviderNumber String?  @map("medicare_provider_number") @db.VarChar(20)
+  medicaidProviderNumber String?  @map("medicaid_provider_number") @db.VarChar(20)
+  evvStateConfig         Json?    @map("evv_state_config")
+  /// Payroll (D-064): default mileage reimbursement per mile, and the day FLSA workweeks start (0 = Sunday).
+  payrollMileageRate     Decimal  @default(0.70) @map("payroll_mileage_rate") @db.Decimal(6, 4)
+  workweekStartDay       Int      @default(0) @map("workweek_start_day")
+  settings               Json     @default("{}")
+  isActive               Boolean  @default(true) @map("is_active")
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  users             User[]
+  roles             Role[]
+  patients          Patient[]
+  physicians        Physician[]
+  payers            Payer[]
+  staffProfiles     StaffProfile[]
+  visits            Visit[]
+  recurrenceRules   RecurrenceRule[]
+  documents         Document[]
+  evvRecords        EvvRecord[]
+  openShifts        OpenShift[]
+  serviceCodes      ServiceCode[]
+  claims            Claim[]
+  ediFiles          EdiFile[]
+  payments          Payment[]
+  swapRequests      ShiftSwapRequest[]
+  notifications     Notification[]
+  conversations     Conversation[]
+  messages          Message[]
+  invoices          Invoice[]
+  eligibilityChecks EligibilityCheck[]
+  incidentReports   IncidentReport[]
+  payPeriods        PayPeriod[]
+  referralSources   ReferralSource[]
+  referrals         Referral[]
+  trainingCourses   TrainingCourse[]
+
+  @@map("agencies")
+}
+
+model User {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  /// Stored lower-cased. Globally unique so login needs only email + password (DECISIONS D-020).
+  email               String    @unique @db.VarChar(255)
+  passwordHash        String    @map("password_hash") @db.VarChar(255)
+  firstName           String    @map("first_name") @db.VarChar(100)
+  lastName            String    @map("last_name") @db.VarChar(100)
+  phone               String?   @db.VarChar(20)
+  isActive            Boolean   @default(true) @map("is_active")
+  is2faEnabled        Boolean   @default(false) @map("is_2fa_enabled")
+  /// Base64 of the PHI-encrypted TOTP secret (PhiContext.UserTwoFaSecret). Set by /auth/2fa/setup,
+  /// only active once is_2fa_enabled is true.
+  twoFaSecret         String?   @map("two_fa_secret") @db.VarChar(255)
+  /// Last TOTP time step accepted — codes at or before it are refused (no replay).
+  twoFaLastUsedStep   Int?      @map("two_fa_last_used_step")
+  lastLoginAt         DateTime? @map("last_login_at") @db.Timestamptz(6)
+  passwordChangedAt   DateTime? @map("password_changed_at") @db.Timestamptz(6)
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime? @map("locked_until") @db.Timestamptz(6)
+  pinHash             String?   @map("pin_hash") @db.VarChar(255)
+  pushToken           String?   @map("push_token")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency                  Agency                   @relation(fields: [agencyId], references: [id])
+  userRoles               UserRole[]
+  recoveryCodes           TwoFaRecoveryCode[]
+  evvVerified             EvvRecord[]              @relation("EvvVerifiedBy")
+  evvExceptionsFiled      EvvException[]           @relation("EvvExceptionRequestedBy")
+  evvExceptionsDecided    EvvException[]           @relation("EvvExceptionDecidedBy")
+  openShiftsAssigned      OpenShift[]              @relation("OpenShiftAssignedBy")
+  openShiftsCreated       OpenShift[]              @relation("OpenShiftCreatedBy")
+  swapsDecided            ShiftSwapRequest[]       @relation("SwapDecidedBy")
+  claimsCreated           Claim[]                  @relation("ClaimCreatedBy")
+  claimsSubmitted         Claim[]                  @relation("ClaimSubmittedBy")
+  ediFilesUploaded        EdiFile[]                @relation("EdiFileUploadedBy")
+  paymentsPosted          Payment[]                @relation("PaymentPostedBy")
+  visitNotesAuthored      VisitNote[]              @relation("VisitNoteAuthor")
+  visitNotesSigned        VisitNote[]              @relation("VisitNoteSignedBy")
+  visitNotesQaReviewed    VisitNote[]              @relation("VisitNoteQaReviewedBy")
+  vitalsRecorded          VisitVital[]             @relation("VisitVitalRecordedBy")
+  vitalsMarkedInError     VisitVital[]             @relation("VisitVitalErrorBy")
+  visitTasksCompleted     VisitTask[]              @relation("VisitTaskCompletedBy")
+  refreshTokens           RefreshToken[]
+  staffProfile            StaffProfile?
+  portalPatients          Patient[]                @relation("PatientPortalUser")
+  verifiedCredentials     StaffCredential[]        @relation("CredentialVerifiedBy")
+  approvedTimeOff         StaffTimeOff[]           @relation("TimeOffApprovedBy")
+  createdVisits           Visit[]                  @relation("VisitCreatedBy")
+  uploadedDocuments       Document[]               @relation("DocumentUploadedBy")
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
+  pushDevices             PushDevice[]
+  passwordResets          PasswordResetToken[]
+
+  ordersTaken         PhysicianOrder[] @relation("OrderTakenBy")
+  carePlansSigned     CarePlan[]       @relation("CarePlanSignedBy")
+  assessmentsDone     Assessment[]     @relation("AssessmentAssessor")
+  assessmentsReviewed Assessment[]     @relation("AssessmentQaReviewer")
+
+  documentsDeleted Document[] @relation("DocumentDeletedBy")
+
+  conversationsStarted Conversation[]            @relation("ConversationCreatedBy")
+  conversations        ConversationParticipant[]
+  messagesSent         Message[]                 @relation("MessageSender")
+  invoicesCreated      Invoice[]                 @relation("InvoiceCreatedBy")
+  invoicePayments      InvoicePayment[]          @relation("InvoicePaymentRecordedBy")
+  eligibilityChecks    EligibilityCheck[]        @relation("EligibilityRequestedBy")
+  incidentsReported    IncidentReport[]          @relation("IncidentReportedBy")
+  incidentsResolved    IncidentReport[]          @relation("IncidentResolvedBy")
+  claimAppeals         ClaimAppeal[]             @relation("ClaimAppealCreatedBy")
+  payPeriodsApproved   PayPeriod[]               @relation("PayPeriodApprovedBy")
+  mileageDecided       MileageLog[]              @relation("MileageDecidedBy")
+  referralsAssigned    Referral[]                @relation("ReferralAssignedTo")
+  referralEvents       ReferralEvent[]           @relation("ReferralEventBy")
+
+  @@index([agencyId])
+  @@map("users")
+}
+
+/// One-time 2FA backup codes (DECISIONS D-026). Only a SHA-256 hash is stored; codes carry 80 random bits.
+model TwoFaRecoveryCode {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  codeHash  String    @map("code_hash") @db.VarChar(64)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, codeHash])
+  @@map("two_fa_recovery_codes")
+}
+
+/// agency_id is NULL for built-in system roles shared by all agencies (DECISIONS D-013).
+model Role {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId    String?  @map("agency_id") @db.Uuid
+  name        String   @db.VarChar(50)
+  description String?
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency          Agency?          @relation(fields: [agencyId], references: [id])
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@unique([agencyId, name])
+  /// Postgres treats NULLs as distinct, so the constraint above does not stop duplicate system roles.
+  @@unique([name], map: "roles_system_name_key", where: raw("agency_id IS NULL"))
+  @@index([agencyId])
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  resource    String  @db.VarChar(100)
+  action      String  @db.VarChar(50)
+  description String?
+
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  userId String @map("user_id") @db.Uuid
+  roleId String @map("role_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model RefreshToken {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  tokenHash     String    @map("token_hash") @db.VarChar(255)
+  deviceInfo    String?   @map("device_info") @db.VarChar(255)
+  ipAddress     String?   @map("ip_address") @db.Inet
+  expiresAt     DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt     DateTime? @map("revoked_at") @db.Timestamptz(6)
+  /// rotated | logout | reuse_detected | password_changed | locked | idle | expired | inactive
+  /// Only reuse of a *rotated* token signals theft (DECISIONS D-020).
+  revokedReason String?   @map("revoked_reason") @db.VarChar(30)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+/// HIPAA audit log. Append-only. Deliberately has no foreign keys so entries
+/// survive deletion/deactivation of the records they describe. Partitioned monthly by created_at
+/// (raw SQL migration — Prisma cannot express it); a DB trigger refuses UPDATE and DELETE; whole
+/// months are dropped only by the retention job after AUDIT_RETENTION_MONTHS (D-067).
+model AuditLog {
+  id           BigInt   @default(autoincrement())
+  agencyId     String   @map("agency_id") @db.Uuid
+  userId       String?  @map("user_id") @db.Uuid
+  action       String   @db.VarChar(100)
+  resourceType String?  @map("resource_type") @db.VarChar(100)
+  resourceId   String?  @map("resource_id") @db.Uuid
+  details      Json?
+  ipAddress    String?  @map("ip_address") @db.Inet
+  userAgent    String?  @map("user_agent")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@id([id, createdAt])
+  @@index([agencyId, createdAt])
+  @@index([userId, createdAt])
+  @@index([resourceType, resourceId])
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────── Patients (§5.2, core subset) ───────────────────────────────
+
+model Patient {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId                 String    @map("agency_id") @db.Uuid
+  mrn                      String?   @db.VarChar(50)
+  firstName                String    @map("first_name") @db.VarChar(100)
+  lastName                 String    @map("last_name") @db.VarChar(100)
+  dateOfBirth              DateTime  @map("date_of_birth") @db.Date
+  gender                   String?   @db.VarChar(10)
+  ssnEncrypted             Bytes?    @map("ssn_encrypted") // AES-256-GCM, DECISIONS D-006
+  phoneHome                String?   @map("phone_home") @db.VarChar(20)
+  /// A live-in caregiver lives in the home (Virginia personal care: UB modifier on the claim lines, D-077).
+  liveIn                   Boolean   @default(false) @map("live_in")
+  /// Caregiver matching (D-094): language the patient prefers their caregiver to speak, and caregiver gender (female | male).
+  preferredLanguage        String?   @map("preferred_language") @db.VarChar(50)
+  preferredCaregiverGender String?   @map("preferred_caregiver_gender") @db.VarChar(10)
+  phoneCell                String?   @map("phone_cell") @db.VarChar(20)
+  email                    String?   @db.VarChar(255)
+  addressLine1             String?   @map("address_line1") @db.VarChar(255)
+  addressLine2             String?   @map("address_line2") @db.VarChar(255)
+  city                     String?   @db.VarChar(100)
+  state                    String?   @db.VarChar(2)
+  zip                      String?   @db.VarChar(10)
+  latitude                 Decimal?  @db.Decimal(10, 8)
+  longitude                Decimal?  @db.Decimal(11, 8)
+  geoFenceRadiusMeters     Int       @default(200) @map("geo_fence_radius_meters")
+  emergencyContactName     String?   @map("emergency_contact_name") @db.VarChar(200)
+  emergencyContactPhone    String?   @map("emergency_contact_phone") @db.VarChar(20)
+  emergencyContactRelation String?   @map("emergency_contact_relation") @db.VarChar(50)
+  primaryPhysicianId       String?   @map("primary_physician_id") @db.Uuid
+  primaryDiagnosisCode     String?   @map("primary_diagnosis_code") @db.VarChar(10)
+  admissionDate            DateTime? @map("admission_date") @db.Date
+  dischargeDate            DateTime? @map("discharge_date") @db.Date
+  status                   String    @default("active") @db.VarChar(20)
+  payerPrimaryId           String?   @map("payer_primary_id") @db.Uuid
+  payerSecondaryId         String?   @map("payer_secondary_id") @db.Uuid
+  insuranceMemberId        String?   @map("insurance_member_id") @db.VarChar(50)
+  insuranceGroupNumber     String?   @map("insurance_group_number") @db.VarChar(50)
+  medicareBeneficiaryId    String?   @map("medicare_beneficiary_id") @db.VarChar(20)
+  medicaidId               String?   @map("medicaid_id") @db.VarChar(20)
+  notes                    String?
+  portalUserId             String?   @map("portal_user_id") @db.Uuid
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency           Agency             @relation(fields: [agencyId], references: [id])
+  primaryPhysician Physician?         @relation(fields: [primaryPhysicianId], references: [id])
+  payerPrimary     Payer?             @relation("PatientPayerPrimary", fields: [payerPrimaryId], references: [id])
+  payerSecondary   Payer?             @relation("PatientPayerSecondary", fields: [payerSecondaryId], references: [id])
+  portalUser       User?              @relation("PatientPortalUser", fields: [portalUserId], references: [id])
+  diagnoses        PatientDiagnosis[]
+  allergies        PatientAllergy[]
+  authorizations   Authorization[]
+  visits           Visit[]
+  recurrenceRules  RecurrenceRule[]
+  documents        Document[]
+  evvRecords       EvvRecord[]
+
+  /// Medical record numbers are unique within an agency (NULLs allowed — MRN is optional).
+  claims Claim[]
+
+  medications          Medication[]
+  physicianOrders      PhysicianOrder[]
+  carePlans            CarePlan[]
+  assessments          Assessment[]
+  conversations        Conversation[]
+  invoices             Invoice[]
+  eligibilityChecks    EligibilityCheck[]
+  incidentReports      IncidentReport[]
+  careUpdates          CareUpdate[]
+  referrals            Referral[]
+  caregiverPreferences PatientCaregiverPreference[]
+
+  @@unique([agencyId, mrn])
+  @@index([agencyId])
+  @@index([agencyId, status])
+  @@index([agencyId, lastName, firstName])
+  @@index([portalUserId])
+  @@map("patients")
+}
+
+model Physician {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId     String   @map("agency_id") @db.Uuid
+  npi          String?  @db.VarChar(10)
+  firstName    String   @map("first_name") @db.VarChar(100)
+  lastName     String   @map("last_name") @db.VarChar(100)
+  phone        String?  @db.VarChar(20)
+  fax          String?  @db.VarChar(20)
+  email        String?  @db.VarChar(255)
+  practiceName String?  @map("practice_name") @db.VarChar(255)
+  addressLine1 String?  @map("address_line1") @db.VarChar(255)
+  city         String?  @db.VarChar(100)
+  state        String?  @db.VarChar(2)
+  zip          String?  @db.VarChar(10)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency   Agency    @relation(fields: [agencyId], references: [id])
+  patients Patient[]
+
+  /// One directory entry per NPI within an agency (NULLs allowed — NPI is optional).
+  medications Medication[]
+  orders      PhysicianOrder[]
+  carePlans   CarePlan[]
+
+  @@unique([agencyId, npi])
+  @@index([agencyId])
+  @@map("physicians")
+}
+
+model PatientDiagnosis {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId     String    @map("patient_id") @db.Uuid
+  icd10Code     String    @map("icd10_code") @db.VarChar(10)
+  description   String?
+  isPrimary     Boolean   @default(false) @map("is_primary")
+  sequenceOrder Int       @default(1) @map("sequence_order")
+  onsetDate     DateTime? @map("onset_date") @db.Date
+  resolvedDate  DateTime? @map("resolved_date") @db.Date
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("patient_diagnoses")
+}
+
+model PatientAllergy {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId String   @map("patient_id") @db.Uuid
+  allergen  String   @db.VarChar(255)
+  reaction  String?
+  severity  String?  @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("patient_allergies")
+}
+
+// ─────────────────────────────── Payers (§5.6, needed by patients/authorizations) ───────────────────────────────
+
+model Payer {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId              String    @map("agency_id") @db.Uuid
+  name                  String    @db.VarChar(255)
+  payerType             String    @map("payer_type") @db.VarChar(30)
+  /// 837P (professional) or 837I (institutional / UB-04). Null: 837I for Medicare, 837P otherwise (D-061).
+  claimFormat           String?   @map("claim_format") @db.VarChar(4)
+  /// State EVV fields on this payer's claims: va_dmas = Virginia DMAS companion guides (D-069). Null = none.
+  evvClaimProfile       String?   @map("evv_claim_profile") @db.VarChar(20)
+  /// Hourly service units: null = quarter hours per visit; "monthly" = whole hours per month with carry-forward (DMAS personal care, D-077).
+  hourRounding          String?   @map("hour_rounding") @db.VarChar(10)
+  payerIdCode           String?   @map("payer_id_code") @db.VarChar(50)
+  addressLine1          String?   @map("address_line1") @db.VarChar(255)
+  city                  String?   @db.VarChar(100)
+  state                 String?   @db.VarChar(2)
+  zip                   String?   @db.VarChar(10)
+  phone                 String?   @db.VarChar(20)
+  claimsAddress         String?   @map("claims_address") @db.VarChar(255)
+  payments              Payment[]
+  ediSubmitterId        String?   @map("edi_submitter_id") @db.VarChar(50)
+  ediReceiverId         String?   @map("edi_receiver_id") @db.VarChar(50)
+  timelyFilingDays      Int       @default(365) @map("timely_filing_days")
+  /// Days after a denial to file an appeal (sets claims.appeal_deadline, D-063).
+  appealWindowDays      Int       @default(60) @map("appeal_window_days")
+  requiresAuthorization Boolean   @default(false) @map("requires_authorization")
+  isActive              Boolean   @default(true) @map("is_active")
+  settings              Json      @default("{}")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency            Agency             @relation(fields: [agencyId], references: [id])
+  primaryPatients   Patient[]          @relation("PatientPayerPrimary")
+  secondaryPatients Patient[]          @relation("PatientPayerSecondary")
+  authorizations    Authorization[]
+  rates             PayerRate[]
+  claims            Claim[]
+  invoices          Invoice[]
+  eligibilityChecks EligibilityCheck[]
+
+  @@index([agencyId])
+  @@map("payers")
+}
+
+// ─────────────────────────────── Staff (§5.3) ───────────────────────────────
+
+model StaffProfile {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String    @unique @map("user_id") @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  employeeId          String?   @map("employee_id") @db.VarChar(50)
+  /// Digits a caregiver keys in when clocking in/out by phone (IVR, D-073). Unique per agency; never returned by the API.
+  ivrCode             String?   @map("ivr_code") @db.VarChar(8)
+  discipline          String    @db.VarChar(20)
+  hireDate            DateTime? @map("hire_date") @db.Date
+  terminationDate     DateTime? @map("termination_date") @db.Date
+  employmentType      String    @default("full_time") @map("employment_type") @db.VarChar(20)
+  hourlyRate          Decimal?  @map("hourly_rate") @db.Decimal(10, 2)
+  perVisitRate        Decimal?  @map("per_visit_rate") @db.Decimal(10, 2)
+  overtimeRate        Decimal?  @map("overtime_rate") @db.Decimal(10, 2)
+  mileageRate         Decimal?  @map("mileage_rate") @db.Decimal(6, 4)
+  ssnEncrypted        Bytes?    @map("ssn_encrypted")
+  taxFilingStatus     String?   @map("tax_filing_status") @db.VarChar(20)
+  addressLine1        String?   @map("address_line1") @db.VarChar(255)
+  city                String?   @db.VarChar(100)
+  state               String?   @db.VarChar(2)
+  zip                 String?   @db.VarChar(10)
+  serviceAreaZipCodes String[]  @map("service_area_zip_codes")
+  maxPatients         Int?      @map("max_patients")
+  skills              String[]
+  languages           String[]
+  /// Caregiver matching (D-094): optional; female | male.
+  gender              String?   @db.VarChar(10)
+  /// Home location for distance, entered by the office (optional).
+  latitude            Decimal?  @db.Decimal(10, 8)
+  longitude           Decimal?  @db.Decimal(11, 8)
+  notes               String?
+  isActive            Boolean   @default(true) @map("is_active")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user               User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agency             Agency                       @relation(fields: [agencyId], references: [id])
+  credentials        StaffCredential[]
+  trainingCompletions TrainingCompletion[]
+  incidentReports    IncidentReport[]
+  payStubs           PayStub[]
+  mileageLogs        MileageLog[]
+  availability       StaffAvailability[]
+  timeOff            StaffTimeOff[]
+  visits             Visit[]
+  recurrenceRules    RecurrenceRule[]
+  documents          Document[]
+  evvRecords         EvvRecord[]
+  openShiftsClaimed  OpenShift[]
+  swapsRequested     ShiftSwapRequest[]           @relation("SwapRequesting")
+  swapsTargeted      ShiftSwapRequest[]           @relation("SwapTarget")
+  visitNotes         VisitNote[]
+  careUpdates        CareUpdate[]
+  patientPreferences PatientCaregiverPreference[]
+
+  @@unique([agencyId, employeeId])
+  @@unique([agencyId, ivrCode])
+  @@index([agencyId])
+  @@index([agencyId, discipline])
+  @@map("staff_profiles")
+}
+
+model StaffCredential {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staffProfileId   String    @map("staff_profile_id") @db.Uuid
+  credentialType   String    @map("credential_type") @db.VarChar(100)
+  credentialName   String    @map("credential_name") @db.VarChar(255)
+  credentialNumber String?   @map("credential_number") @db.VarChar(100)
+  issuingAuthority String?   @map("issuing_authority") @db.VarChar(255)
+  issueDate        DateTime? @map("issue_date") @db.Date
+  expiryDate       DateTime? @map("expiry_date") @db.Date
+  status           String    @default("active") @db.VarChar(20)
+  documentId       String?   @map("document_id") @db.Uuid
+  alertDaysBefore  Int       @default(30) @map("alert_days_before")
+  /// Last expiry alert sent: due | week | expired. Cleared when the expiry date changes (D-062).
+  expiryAlertStage String?   @map("expiry_alert_stage") @db.VarChar(10)
+  verifiedById     String?   @map("verified_by") @db.Uuid
+  verifiedAt       DateTime? @map("verified_at") @db.Timestamptz(6)
+  notes            String?
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+  document     Document?    @relation(fields: [documentId], references: [id])
+  verifiedBy   User?        @relation("CredentialVerifiedBy", fields: [verifiedById], references: [id])
+
+  @@index([staffProfileId])
+  @@index([expiryDate])
+  @@map("staff_credentials")
+}
+
+model StaffAvailability {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staffProfileId String    @map("staff_profile_id") @db.Uuid
+  dayOfWeek      Int       @map("day_of_week") @db.SmallInt // 0 = Sunday
+  startTime      DateTime  @map("start_time") @db.Time(6)
+  endTime        DateTime  @map("end_time") @db.Time(6)
+  isAvailable    Boolean   @default(true) @map("is_available")
+  effectiveDate  DateTime? @map("effective_date") @db.Date
+  endDate        DateTime? @map("end_date") @db.Date
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([staffProfileId])
+  @@map("staff_availability")
+}
+
+model StaffTimeOff {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  startDate      DateTime @map("start_date") @db.Date
+  endDate        DateTime @map("end_date") @db.Date
+  type           String   @db.VarChar(20)
+  status         String   @default("pending") @db.VarChar(20)
+  approvedById   String?  @map("approved_by") @db.Uuid
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+  approvedBy   User?        @relation("TimeOffApprovedBy", fields: [approvedById], references: [id])
+
+  @@index([staffProfileId])
+  @@map("staff_time_off")
+}
+
+// ─────────────────────────────── Billing setup (§5.6, DECISIONS D-050) ───────────────────────────────
+
+/// A billable service the agency provides (HCPCS/CPT/revenue code) with its unit and default rate.
+model ServiceCode {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId     String   @map("agency_id") @db.Uuid
+  code         String   @db.VarChar(20)
+  /// hcpcs | cpt | revenue
+  codeType     String   @map("code_type") @db.VarChar(20)
+  description  String?
+  defaultRate  Decimal? @map("default_rate") @db.Decimal(10, 2)
+  /// visit | hour | unit_15min | day
+  unitType     String   @default("visit") @map("unit_type") @db.VarChar(20)
+  /// UB-04 revenue code for institutional (837I) claims, e.g. 0571 aide, 0551 nursing (D-061).
+  revenueCode  String?  @map("revenue_code") @db.VarChar(4)
+  requiresAuth Boolean  @default(false) @map("requires_auth")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency Agency      @relation(fields: [agencyId], references: [id])
+  rates  PayerRate[]
+
+  @@unique([agencyId, code, codeType])
+  @@map("service_codes")
+}
+
+/// What a payer pays for a service code over a period (optionally with modifiers). Periods never overlap.
+model PayerRate {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payerId       String    @map("payer_id") @db.Uuid
+  serviceCodeId String    @map("service_code_id") @db.Uuid
+  rate          Decimal   @db.Decimal(10, 2)
+  effectiveDate DateTime  @map("effective_date") @db.Date
+  endDate       DateTime? @map("end_date") @db.Date
+  modifier1     String?   @map("modifier1") @db.VarChar(5)
+  modifier2     String?   @map("modifier2") @db.VarChar(5)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  payer       Payer       @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  serviceCode ServiceCode @relation(fields: [serviceCodeId], references: [id])
+
+  @@index([payerId, serviceCodeId, effectiveDate])
+  @@map("payer_rates")
+}
+
+// ─────────────────────────────── Claims (§5.6, DECISIONS D-052) ───────────────────────────────
+
+/// A bill to one payer for one patient over a period. A snapshot: codes, diagnoses and amounts are fixed at creation.
+model Claim {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId              String    @map("agency_id") @db.Uuid
+  patientId             String    @map("patient_id") @db.Uuid
+  payerId               String    @map("payer_id") @db.Uuid
+  claimNumber           String    @map("claim_number") @db.VarChar(20)
+  /// 837P | 837I
+  claimType             String    @map("claim_type") @db.VarChar(10)
+  /// Institutional (837I) only (D-061): type of bill (e.g. 0329), UB-04 patient status, HIPPS code (Medicare PDGM),
+  /// CBSA code (value code 61, Medicare).
+  typeOfBill            String?   @map("type_of_bill") @db.VarChar(4)
+  patientStatus         String?   @map("patient_status") @db.VarChar(2)
+  hippsCode             String?   @map("hipps_code") @db.VarChar(5)
+  cbsaCode              String?   @map("cbsa_code") @db.VarChar(5)
+  /// draft | ready | submitted | acknowledged | rejected | paid | partially_paid | denied | void
+  status                String    @default("draft") @db.VarChar(30)
+  /// 1 original, 7 replacement, 8 void (X12 CLM05-3)
+  frequencyCode         String    @default("1") @map("frequency_code") @db.VarChar(1)
+  billingPeriodStart    DateTime  @map("billing_period_start") @db.Date
+  billingPeriodEnd      DateTime  @map("billing_period_end") @db.Date
+  totalCharges          Decimal   @default(0) @map("total_charges") @db.Decimal(10, 2)
+  totalPaid             Decimal   @default(0) @map("total_paid") @db.Decimal(10, 2)
+  totalAdjustments      Decimal   @default(0) @map("total_adjustments") @db.Decimal(10, 2)
+  patientResponsibility Decimal   @default(0) @map("patient_responsibility") @db.Decimal(10, 2)
+  /// The payer's member ID for the patient, as billed.
+  memberId              String?   @map("member_id") @db.VarChar(50)
+  /// ICD-10 codes as billed, primary first (max 12).
+  diagnosisCodes        String[]  @map("diagnosis_codes")
+  /// The claim this replaces (frequency 7) — rebills.
+  originalClaimId       String?   @map("original_claim_id") @db.Uuid
+  submittedAt           DateTime? @map("submitted_at") @db.Timestamptz(6)
+  submittedById         String?   @map("submitted_by") @db.Uuid
+  payerClaimNumber      String?   @map("payer_claim_number") @db.VarChar(100)
+  /// The outbound 837 file this claim was last sent in (D-076).
+  ediFileId             String?   @map("edi_file_id") @db.Uuid
+  /// Why the clearinghouse (999) or payer (277CA) rejected it — fix, re-check, send again.
+  rejectionReason       String?   @map("rejection_reason")
+  rejectedAt            DateTime? @map("rejected_at") @db.Timestamptz(6)
+  denialReasonCode      String?   @map("denial_reason_code") @db.VarChar(20)
+  denialReason          String?   @map("denial_reason")
+  deniedAt              DateTime? @map("denied_at") @db.Timestamptz(6)
+  appealDeadline        DateTime? @map("appeal_deadline") @db.Date
+  qaPassed              Boolean?  @map("qa_passed")
+  qaErrors              Json?     @map("qa_errors")
+  qaReviewedAt          DateTime? @map("qa_reviewed_at") @db.Timestamptz(6)
+  voidReason            String?   @map("void_reason")
+  notes                 String?
+  createdById           String    @map("created_by") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency         Agency          @relation(fields: [agencyId], references: [id])
+  patient        Patient         @relation(fields: [patientId], references: [id])
+  payer          Payer           @relation(fields: [payerId], references: [id])
+  createdBy      User            @relation("ClaimCreatedBy", fields: [createdById], references: [id])
+  submittedBy    User?           @relation("ClaimSubmittedBy", fields: [submittedById], references: [id])
+  ediFile        EdiFile?        @relation(fields: [ediFileId], references: [id])
+  originalClaim  Claim?          @relation("ClaimReplacements", fields: [originalClaimId], references: [id])
+  replacements   Claim[]         @relation("ClaimReplacements")
+  lines          ClaimLine[]
+  appeals        ClaimAppeal[]
+  paymentDetails PaymentDetail[]
+
+  @@unique([agencyId, claimNumber])
+  @@index([agencyId, status])
+  @@index([patientId])
+  @@index([payerId, status])
+  @@index([ediFileId])
+  @@map("claims")
+}
+
+/// One billed service (one visit). A visit can be on only one active line (partial unique index).
+model ClaimLine {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  claimId              String    @map("claim_id") @db.Uuid
+  visitId              String?   @map("visit_id") @db.Uuid
+  lineNumber           Int       @map("line_number")
+  serviceCode          String    @map("service_code") @db.VarChar(20)
+  revenueCode          String?   @map("revenue_code") @db.VarChar(4)
+  modifier1            String?   @map("modifier1") @db.VarChar(5)
+  modifier2            String?   @map("modifier2") @db.VarChar(5)
+  serviceDate          DateTime  @map("service_date") @db.Date
+  units                Decimal   @default(1) @db.Decimal(8, 2)
+  unitRate             Decimal   @map("unit_rate") @db.Decimal(10, 2)
+  chargeAmount         Decimal   @map("charge_amount") @db.Decimal(10, 2)
+  paidAmount           Decimal   @default(0) @map("paid_amount") @db.Decimal(10, 2)
+  adjustmentAmount     Decimal   @default(0) @map("adjustment_amount") @db.Decimal(10, 2)
+  diagnosisPointers    Int[]     @default([1]) @map("diagnosis_pointers")
+  placeOfService       String    @default("12") @map("place_of_service") @db.VarChar(2)
+  renderingProviderNpi String?   @map("rendering_provider_npi") @db.VarChar(10)
+  /// The part of the visit this line bills, when a shift crossing midnight is split into one line per day (D-069).
+  evvStart             DateTime? @map("evv_start") @db.Timestamptz(6)
+  evvEnd               DateTime? @map("evv_end") @db.Timestamptz(6)
+  /// False once the claim is voided — the visit can then be billed again.
+  active               Boolean   @default(true)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  claim Claim  @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  visit Visit? @relation(fields: [visitId], references: [id])
+
+  @@unique([visitId, serviceDate], map: "claim_lines_one_active_per_visit_day", where: raw("active"))
+  @@index([claimId])
+  @@map("claim_lines")
+}
+
+// ─────────────────────────────── EDI files & payments (§5.6, DECISIONS D-054) ───────────────────────────────
+
+/// An EDI file received or sent. Content is kept in the database until file storage (S3) exists.
+model EdiFile {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId                 String    @map("agency_id") @db.Uuid
+  /// 835 | 837P | 837I | 999 | 277
+  fileType                 String    @map("file_type") @db.VarChar(10)
+  /// inbound | outbound
+  direction                String    @db.VarChar(10)
+  fileName                 String?   @map("file_name") @db.VarChar(255)
+  s3Key                    String?   @map("s3_key") @db.VarChar(500)
+  content                  String?
+  contentHash              String    @map("content_hash") @db.VarChar(64)
+  interchangeControlNumber String?   @map("interchange_control_number") @db.VarChar(20)
+  recordCount              Int?      @map("record_count")
+  /// received | parsed | error | generated | submitted | accepted | rejected
+  status                   String    @default("received") @db.VarChar(20)
+  errorDetails             Json?     @map("error_details")
+  processedAt              DateTime? @map("processed_at") @db.Timestamptz(6)
+  uploadedById             String?   @map("uploaded_by") @db.Uuid
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency     Agency    @relation(fields: [agencyId], references: [id])
+  uploadedBy User?     @relation("EdiFileUploadedBy", fields: [uploadedById], references: [id])
+  payments   Payment[]
+  claims     Claim[]
+
+  /// The same file can't be loaded twice.
+  @@unique([agencyId, contentHash])
+  @@map("edi_files")
+}
+
+/// A payment from a payer (one 835 remittance, or entered by hand).
+model Payment {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  payerId             String?   @map("payer_id") @db.Uuid
+  ediFileId           String?   @map("edi_file_id") @db.Uuid
+  checkNumber         String?   @map("check_number") @db.VarChar(50)
+  paymentDate         DateTime? @map("payment_date") @db.Date
+  paymentAmount       Decimal   @map("payment_amount") @db.Decimal(12, 2)
+  /// ACH | CHK | NON | other
+  paymentMethod       String?   @map("payment_method") @db.VarChar(20)
+  /// received | posted
+  status              String    @default("received") @db.VarChar(20)
+  /// PLB provider-level adjustments, as received.
+  providerAdjustments Json?     @map("provider_adjustments")
+  notes               String?
+  postedAt            DateTime? @map("posted_at") @db.Timestamptz(6)
+  postedById          String?   @map("posted_by") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency   Agency          @relation(fields: [agencyId], references: [id])
+  payer    Payer?          @relation(fields: [payerId], references: [id])
+  ediFile  EdiFile?        @relation(fields: [ediFileId], references: [id])
+  postedBy User?           @relation("PaymentPostedBy", fields: [postedById], references: [id])
+  details  PaymentDetail[]
+
+  @@index([agencyId, status])
+  @@map("payments")
+}
+
+/// One claim's result within a payment (CLP loop). `claimId` is null when the claim number isn't ours.
+model PaymentDetail {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId             String   @map("payment_id") @db.Uuid
+  claimId               String?  @map("claim_id") @db.Uuid
+  claimNumber           String   @map("claim_number") @db.VarChar(38)
+  /// CLP02: 1/2/3 processed, 4 denied, 22 reversal
+  statusCode            String   @map("status_code") @db.VarChar(3)
+  chargeAmount          Decimal  @map("charge_amount") @db.Decimal(10, 2)
+  paidAmount            Decimal  @map("paid_amount") @db.Decimal(10, 2)
+  adjustmentAmount      Decimal  @default(0) @map("adjustment_amount") @db.Decimal(10, 2)
+  patientResponsibility Decimal  @default(0) @map("patient_responsibility") @db.Decimal(10, 2)
+  payerClaimNumber      String?  @map("payer_claim_number") @db.VarChar(100)
+  adjustmentReasonCodes Json?    @map("adjustment_reason_codes")
+  remarkCodes           Json?    @map("remark_codes")
+  /// Service lines as received (SVC loops).
+  lines                 Json?
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  claim   Claim?  @relation(fields: [claimId], references: [id])
+
+  @@index([paymentId])
+  @@index([claimId])
+  @@map("payment_details")
+}
+
+// ─────────────────────────────── Clinical records (§5.2, DECISIONS D-055) ───────────────────────────────
+
+/// A medication the patient takes. Discontinued, never deleted (the list is a clinical record).
+model Medication {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId              String    @map("patient_id") @db.Uuid
+  drugName               String    @map("drug_name") @db.VarChar(255)
+  ndcCode                String?   @map("ndc_code") @db.VarChar(20)
+  dosage                 String?   @db.VarChar(100)
+  frequency              String?   @db.VarChar(100)
+  route                  String?   @db.VarChar(50)
+  prescribingPhysicianId String?   @map("prescribing_physician_id") @db.Uuid
+  startDate              DateTime? @map("start_date") @db.Date
+  endDate                DateTime? @map("end_date") @db.Date
+  isActive               Boolean   @default(true) @map("is_active")
+  discontinuedReason     String?   @map("discontinued_reason")
+  notes                  String?
+  createdById            String?   @map("created_by") @db.Uuid
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  physician Physician? @relation(fields: [prescribingPhysicianId], references: [id])
+
+  @@index([patientId])
+  @@map("medications")
+}
+
+/// A physician order (verbal, plan of care, medication change) and whether it came back signed.
+model PhysicianOrder {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId     String    @map("patient_id") @db.Uuid
+  physicianId   String?   @map("physician_id") @db.Uuid
+  /// verbal | plan_of_care | medication | visit_frequency | other
+  orderType     String    @map("order_type") @db.VarChar(50)
+  description   String
+  /// pending | sent | signed | cancelled
+  status        String    @default("pending") @db.VarChar(20)
+  orderedDate   DateTime  @map("ordered_date") @db.Date
+  sentDate      DateTime? @map("sent_date") @db.Date
+  signedDate    DateTime? @map("signed_date") @db.Date
+  effectiveDate DateTime? @map("effective_date") @db.Date
+  expiryDate    DateTime? @map("expiry_date") @db.Date
+  takenById     String?   @map("taken_by") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  physician Physician? @relation(fields: [physicianId], references: [id])
+  takenBy   User?      @relation("OrderTakenBy", fields: [takenById], references: [id])
+
+  @@index([patientId])
+  @@map("physician_orders")
+}
+
+/// Plan of care (CMS-485 style) for one certification period. A new active version supersedes the previous one.
+model CarePlan {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId                String    @map("patient_id") @db.Uuid
+  physicianId              String?   @map("physician_id") @db.Uuid
+  certificationPeriodStart DateTime  @map("certification_period_start") @db.Date
+  certificationPeriodEnd   DateTime  @map("certification_period_end") @db.Date
+  /// draft | active | superseded | ended
+  status                   String    @default("draft") @db.VarChar(20)
+  goals                    Json?
+  interventions            Json?
+  disciplinesRequired      Json?     @map("disciplines_required")
+  visitFrequency           Json?     @map("visit_frequency")
+  physicianSignatureDate   DateTime? @map("physician_signature_date") @db.Date
+  signedById               String?   @map("signed_by") @db.Uuid
+  version                  Int       @default(1)
+  createdById              String?   @map("created_by") @db.Uuid
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  physician Physician? @relation(fields: [physicianId], references: [id])
+  signedBy  User?      @relation("CarePlanSignedBy", fields: [signedById], references: [id])
+
+  @@index([patientId])
+  @@map("care_plans")
+}
+
+/// A clinical assessment (OASIS, fall risk, Braden). Answers stored as the form JSON; scores computed for known scales.
+model Assessment {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  visitId        String?   @map("visit_id") @db.Uuid
+  assessorId     String    @map("assessor_id") @db.Uuid
+  type           String    @db.VarChar(50)
+  /// draft | completed | approved
+  status         String    @default("draft") @db.VarChar(20)
+  data           Json
+  score          Decimal?  @db.Decimal(8, 2)
+  qaReviewedById String?   @map("qa_reviewed_by") @db.Uuid
+  qaReviewedAt   DateTime? @map("qa_reviewed_at") @db.Timestamptz(6)
+  qaNotes        String?   @map("qa_notes")
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient      Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visit        Visit?  @relation(fields: [visitId], references: [id])
+  assessor     User    @relation("AssessmentAssessor", fields: [assessorId], references: [id])
+  qaReviewedBy User?   @relation("AssessmentQaReviewer", fields: [qaReviewedById], references: [id])
+
+  @@index([patientId, type])
+  @@map("assessments")
+}
+
+// ─────────────────────────────── Scheduling (§5.4, core subset) ───────────────────────────────
+
+model Visit {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId         String    @map("agency_id") @db.Uuid
+  patientId        String    @map("patient_id") @db.Uuid
+  staffId          String?   @map("staff_id") @db.Uuid
+  authorizationId  String?   @map("authorization_id") @db.Uuid
+  visitType        String    @map("visit_type") @db.VarChar(50)
+  serviceCode      String?   @map("service_code") @db.VarChar(20)
+  status           String    @default("scheduled") @db.VarChar(20)
+  scheduledDate    DateTime  @map("scheduled_date") @db.Date
+  scheduledStart   DateTime  @map("scheduled_start") @db.Time(6)
+  scheduledEnd     DateTime  @map("scheduled_end") @db.Time(6)
+  actualStart      DateTime? @map("actual_start") @db.Timestamptz(6)
+  actualEnd        DateTime? @map("actual_end") @db.Timestamptz(6)
+  isRecurring      Boolean   @default(false) @map("is_recurring")
+  recurrenceRuleId String?   @map("recurrence_rule_id") @db.Uuid
+  notes            String?
+  cancelReason     String?   @map("cancel_reason")
+  missedReason     String?   @map("missed_reason")
+  /// When the late (15 min) / no-show (30 min) alerts went out — each fires once (DECISIONS D-041).
+  lateAlertedAt    DateTime? @map("late_alerted_at") @db.Timestamptz(6)
+  noShowAlertedAt  DateTime? @map("no_show_alerted_at") @db.Timestamptz(6)
+  priority         String    @default("normal") @db.VarChar(10)
+  createdById      String?   @map("created_by") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency         Agency             @relation(fields: [agencyId], references: [id])
+  patient        Patient            @relation(fields: [patientId], references: [id])
+  staff          StaffProfile?      @relation(fields: [staffId], references: [id])
+  authorization  Authorization?     @relation(fields: [authorizationId], references: [id])
+  recurrenceRule RecurrenceRule?    @relation(fields: [recurrenceRuleId], references: [id])
+  createdBy      User?              @relation("VisitCreatedBy", fields: [createdById], references: [id])
+  documents      Document[]
+  evvRecords     EvvRecord[]
+  openShifts     OpenShift[]
+  swapRequests   ShiftSwapRequest[]
+  visitNotes     VisitNote[]
+  careUpdates    CareUpdate[]
+  vitals         VisitVital[]
+  tasks          VisitTask[]
+  claimLines     ClaimLine[]
+
+  /// At most one occurrence per recurring rule per date — generation can be re-run safely (D-031).
+  assessments Assessment[]
+
+  invoiceLines    InvoiceLine[]
+  incidentReports IncidentReport[]
+  payStubLines    PayStubLine[]
+  mileageLogs     MileageLog[]
+
+  @@unique([recurrenceRuleId, scheduledDate])
+  @@index([agencyId, scheduledDate])
+  @@index([patientId, scheduledDate])
+  @@index([staffId, scheduledDate])
+  @@index([agencyId, status, scheduledDate])
+  @@index([recurrenceRuleId])
+  @@map("visits")
+}
+
+model RecurrenceRule {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String    @map("agency_id") @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  staffId        String?   @map("staff_id") @db.Uuid
+  visitType      String    @map("visit_type") @db.VarChar(50)
+  serviceCode    String?   @map("service_code") @db.VarChar(20)
+  frequency      String    @db.VarChar(20)
+  daysOfWeek     Int[]     @map("days_of_week") @db.SmallInt
+  startTime      DateTime  @map("start_time") @db.Time(6)
+  endTime        DateTime  @map("end_time") @db.Time(6)
+  startDate      DateTime  @map("start_date") @db.Date
+  endDate        DateTime? @map("end_date") @db.Date
+  maxOccurrences Int?      @map("max_occurrences")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency  Agency        @relation(fields: [agencyId], references: [id])
+  patient Patient       @relation(fields: [patientId], references: [id])
+  staff   StaffProfile? @relation(fields: [staffId], references: [id])
+  visits  Visit[]
+
+  @@index([agencyId])
+  @@index([patientId])
+  @@map("recurrence_rules")
+}
+
+model Authorization {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId           String   @map("patient_id") @db.Uuid
+  payerId             String   @map("payer_id") @db.Uuid
+  authorizationNumber String?  @map("authorization_number") @db.VarChar(50)
+  serviceCode         String?  @map("service_code") @db.VarChar(20)
+  startDate           DateTime @map("start_date") @db.Date
+  endDate             DateTime @map("end_date") @db.Date
+  authorizedVisits    Int?     @map("authorized_visits")
+  usedVisits          Int      @default(0) @map("used_visits")
+  authorizedHours     Decimal? @map("authorized_hours") @db.Decimal(8, 2)
+  usedHours           Decimal  @default(0) @map("used_hours") @db.Decimal(8, 2)
+  status              String   @default("active") @db.VarChar(20)
+  notes               String?
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  payer   Payer   @relation(fields: [payerId], references: [id])
+  visits  Visit[]
+
+  @@index([patientId])
+  @@index([payerId])
+  @@index([endDate])
+  @@map("authorizations")
+}
+
+// ─────────────────────────────── Documents & notifications (§5.8, core subset) ───────────────────────────────
+
+model Document {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId          String    @map("agency_id") @db.Uuid
+  patientId         String?   @map("patient_id") @db.Uuid
+  staffId           String?   @map("staff_id") @db.Uuid
+  visitId           String?   @map("visit_id") @db.Uuid
+  uploadedById      String    @map("uploaded_by") @db.Uuid
+  documentType      String    @map("document_type") @db.VarChar(50)
+  title             String    @db.VarChar(255)
+  description       String?
+  fileName          String    @map("file_name") @db.VarChar(255)
+  fileSize          Int?      @map("file_size")
+  mimeType          String?   @map("mime_type") @db.VarChar(100)
+  s3Key             String    @map("s3_key") @db.VarChar(500)
+  s3VersionId       String?   @map("s3_version_id") @db.VarChar(100)
+  isSigned          Boolean   @default(false) @map("is_signed")
+  /// Visible to the patient/family in the portal (D-058). Off by default; staff choose per document.
+  sharedWithPatient Boolean   @default(false) @map("shared_with_patient")
+  signatureData     Json?     @map("signature_data")
+  isFaxed           Boolean   @default(false) @map("is_faxed")
+  faxedTo           String?   @map("faxed_to") @db.VarChar(20)
+  faxedAt           DateTime? @map("faxed_at") @db.Timestamptz(6)
+  tags              String[]
+  /// SHA-256 of the file as uploaded (tamper evidence; recorded in e-signatures).
+  contentHash       String?   @map("content_hash") @db.VarChar(64)
+  /// 1 for the first upload; a new version points at the one it replaces (D-056).
+  version           Int       @default(1)
+  previousVersionId String?   @unique @map("previous_version_id") @db.Uuid
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedById       String?   @map("deleted_by") @db.Uuid
+  deleteReason      String?   @map("delete_reason")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency          Agency            @relation(fields: [agencyId], references: [id])
+  patient         Patient?          @relation(fields: [patientId], references: [id])
+  staff           StaffProfile?     @relation(fields: [staffId], references: [id])
+  visit           Visit?            @relation(fields: [visitId], references: [id])
+  uploadedBy      User              @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+  credentials     StaffCredential[]
+  blob            DocumentBlob?
+  previousVersion Document?         @relation("DocumentVersions", fields: [previousVersionId], references: [id])
+  nextVersion     Document?         @relation("DocumentVersions")
+  deletedBy       User?             @relation("DocumentDeletedBy", fields: [deletedById], references: [id])
+  messages        Message[]
+
+  @@index([patientId])
+  @@index([agencyId, documentType])
+  @@index([staffId])
+  @@index([visitId])
+  @@map("documents")
+}
+
+/// A document's file, encrypted (AES-256-GCM, bound to the document id) — the database storage driver (D-056).
+/// Replaced by object storage (S3 + BAA) at go-live; the storage interface hides which one is used.
+model DocumentBlob {
+  documentId String   @id @map("document_id") @db.Uuid
+  content    Bytes
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("document_blobs")
+}
+
+model Notification {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String    @map("agency_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  type           String    @db.VarChar(50)
+  title          String    @db.VarChar(255)
+  body           String?
+  data           Json?
+  channels       String[]
+  isRead         Boolean   @default(false) @map("is_read")
+  readAt         DateTime? @map("read_at") @db.Timestamptz(6)
+  sentViaPush    Boolean   @default(false) @map("sent_via_push")
+  sentViaSms     Boolean   @default(false) @map("sent_via_sms")
+  sentViaEmail   Boolean   @default(false) @map("sent_via_email")
+  deliveryStatus Json?     @map("delivery_status")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency     Agency                 @relation(fields: [agencyId], references: [id])
+  user       User                   @relation(fields: [userId], references: [id])
+  deliveries NotificationDelivery[]
+
+  @@index([userId, isRead, createdAt(sort: Desc)])
+  @@index([agencyId, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+// ─────────────────────────────── EVV (§5.5, DECISIONS D-038) ───────────────────────────────
+
+/// One per visit. Holds the 21st Century Cures Act data: service type, person served, caregiver, date,
+
+// ─────────────────────────────── Visit documentation (§5.4, DECISIONS D-039) ───────────────────────────────
+
+/// A clinical or activity note for a visit, written by the visit's caregiver. Locked once signed or submitted;
+/// later changes are addenda (a new note pointing at the one it amends).
+model VisitNote {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId            String    @map("visit_id") @db.Uuid
+  staffId            String    @map("staff_id") @db.Uuid
+  authorId           String    @map("author_id") @db.Uuid
+  /// progress | skilled_nursing | therapy | aide_activity | addendum
+  noteType           String    @map("note_type") @db.VarChar(50)
+  subjective         String?
+  objective          String?
+  assessment         String?
+  plan               String?
+  narrative          String?
+  formData           Json?     @map("form_data")
+  /// draft | submitted | signed
+  status             String    @default("draft") @db.VarChar(20)
+  amendsNoteId       String?   @map("amends_note_id") @db.Uuid
+  submittedAt        DateTime? @map("submitted_at") @db.Timestamptz(6)
+  signedAt           DateTime? @map("signed_at") @db.Timestamptz(6)
+  signedById         String?   @map("signed_by") @db.Uuid
+  qaReviewedById     String?   @map("qa_reviewed_by") @db.Uuid
+  qaReviewedAt       DateTime? @map("qa_reviewed_at") @db.Timestamptz(6)
+  /// Incident detection (D-096): set when a submitted note may describe a reportable incident.
+  incidentFlagType   String?   @map("incident_flag_type") @db.VarChar(30)
+  incidentFlagReason String?   @map("incident_flag_reason") @db.VarChar(500)
+  incidentFlaggedAt  DateTime? @map("incident_flagged_at") @db.Timestamptz(6)
+  /// open | reported | dismissed
+  incidentFlagStatus String?   @map("incident_flag_status") @db.VarChar(15)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  visit        Visit        @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  staff        StaffProfile @relation(fields: [staffId], references: [id])
+  author       User         @relation("VisitNoteAuthor", fields: [authorId], references: [id])
+  signedBy     User?        @relation("VisitNoteSignedBy", fields: [signedById], references: [id])
+  qaReviewedBy User?        @relation("VisitNoteQaReviewedBy", fields: [qaReviewedById], references: [id])
+  amends       VisitNote?   @relation("VisitNoteAddenda", fields: [amendsNoteId], references: [id])
+  addenda      VisitNote[]  @relation("VisitNoteAddenda")
+
+  @@index([visitId])
+  @@map("visit_notes")
+}
+
+/// Vital signs taken during a visit. Append-only: a wrong entry is marked "entered in error", never edited.
+model VisitVital {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId                String    @map("visit_id") @db.Uuid
+  recordedById           String    @map("recorded_by") @db.Uuid
+  bloodPressureSystolic  Int?      @map("blood_pressure_systolic")
+  bloodPressureDiastolic Int?      @map("blood_pressure_diastolic")
+  heartRate              Int?      @map("heart_rate")
+  respiratoryRate        Int?      @map("respiratory_rate")
+  temperature            Decimal?  @db.Decimal(5, 2)
+  /// F | C
+  temperatureUnit        String    @default("F") @map("temperature_unit") @db.VarChar(1)
+  oxygenSaturation       Decimal?  @map("oxygen_saturation") @db.Decimal(5, 2)
+  weight                 Decimal?  @db.Decimal(6, 2)
+  /// lbs | kg
+  weightUnit             String    @default("lbs") @map("weight_unit") @db.VarChar(3)
+  painLevel              Int?      @map("pain_level")
+  bloodGlucose           Int?      @map("blood_glucose")
+  notes                  String?
+  recordedAt             DateTime  @default(now()) @map("recorded_at") @db.Timestamptz(6)
+  enteredInErrorAt       DateTime? @map("entered_in_error_at") @db.Timestamptz(6)
+  enteredInErrorById     String?   @map("entered_in_error_by") @db.Uuid
+  enteredInErrorReason   String?   @map("entered_in_error_reason")
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  visit            Visit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  recordedBy       User  @relation("VisitVitalRecordedBy", fields: [recordedById], references: [id])
+  enteredInErrorBy User? @relation("VisitVitalErrorBy", fields: [enteredInErrorById], references: [id])
+
+  @@index([visitId])
+  @@map("visit_vitals")
+}
+
+/// A checklist item for a visit (bathing, meal prep, medication reminder…). Done, or not done with a reason.
+model VisitTask {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId       String    @map("visit_id") @db.Uuid
+  taskName      String    @map("task_name") @db.VarChar(255)
+  description   String?
+  isCompleted   Boolean   @default(false) @map("is_completed")
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz(6)
+  completedById String?   @map("completed_by") @db.Uuid
+  /// Why it wasn't done (e.g. "Patient declined"). Set together with completedById when marked not done.
+  notDoneReason String?   @map("not_done_reason")
+  sortOrder     Int       @default(0) @map("sort_order")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  visit       Visit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  completedBy User? @relation("VisitTaskCompletedBy", fields: [completedById], references: [id])
+
+  @@index([visitId, sortOrder])
+  @@map("visit_tasks")
+}
+
+// ─────────────────────────────── Open shifts & swaps (§5.4, DECISIONS D-040) ───────────────────────────────
+
+/// An unassigned visit offered to eligible caregivers. The visit holds the date, time, type and patient.
+model OpenShift {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId     String    @map("agency_id") @db.Uuid
+  visitId      String    @map("visit_id") @db.Uuid
+  /// open | filled | cancelled
+  status       String    @default("open") @db.VarChar(20)
+  notes        String?
+  claimedById  String?   @map("claimed_by") @db.Uuid
+  claimedAt    DateTime? @map("claimed_at") @db.Timestamptz(6)
+  assignedById String?   @map("assigned_by") @db.Uuid
+  assignedAt   DateTime? @map("assigned_at") @db.Timestamptz(6)
+  broadcastAt  DateTime? @map("broadcast_at") @db.Timestamptz(6)
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz(6)
+  createdById  String    @map("created_by") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency     Agency        @relation(fields: [agencyId], references: [id])
+  visit      Visit         @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  claimedBy  StaffProfile? @relation(fields: [claimedById], references: [id])
+  assignedBy User?         @relation("OpenShiftAssignedBy", fields: [assignedById], references: [id])
+  createdBy  User          @relation("OpenShiftCreatedBy", fields: [createdById], references: [id])
+
+  /// At most one open offer per visit.
+  @@unique([visitId], map: "open_shifts_one_open_per_visit", where: raw("((status)::text = 'open'::text)"))
+  @@index([agencyId, status])
+  @@map("open_shifts")
+}
+
+/// A caregiver asks to hand off one of their visits — to a named colleague, or back to the pool (open shift).
+model ShiftSwapRequest {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId          String    @map("agency_id") @db.Uuid
+  visitId           String    @map("visit_id") @db.Uuid
+  requestingStaffId String    @map("requesting_staff_id") @db.Uuid
+  targetStaffId     String?   @map("target_staff_id") @db.Uuid
+  /// pending | approved | denied | cancelled
+  status            String    @default("pending") @db.VarChar(20)
+  reason            String?
+  decisionNote      String?   @map("decision_note")
+  decidedById       String?   @map("approved_by") @db.Uuid
+  decidedAt         DateTime? @map("decided_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency     Agency        @relation(fields: [agencyId], references: [id])
+  visit      Visit         @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  requesting StaffProfile  @relation("SwapRequesting", fields: [requestingStaffId], references: [id])
+  target     StaffProfile? @relation("SwapTarget", fields: [targetStaffId], references: [id])
+  decidedBy  User?         @relation("SwapDecidedBy", fields: [decidedById], references: [id])
+
+  /// At most one pending request per visit.
+  @@unique([visitId], map: "shift_swaps_one_pending_per_visit", where: raw("((status)::text = 'pending'::text)"))
+  @@index([agencyId, status])
+  @@map("shift_swap_requests")
+}
+
+/// location, start/end times — plus how each was captured.
+model EvvRecord {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId                  String    @unique @map("visit_id") @db.Uuid
+  agencyId                 String    @map("agency_id") @db.Uuid
+  staffId                  String    @map("staff_id") @db.Uuid
+  patientId                String    @map("patient_id") @db.Uuid
+  serviceType              String    @map("service_type") @db.VarChar(50)
+  serviceDate              DateTime  @map("service_date") @db.Date
+  clockInTime              DateTime? @map("clock_in_time") @db.Timestamptz(6)
+  clockOutTime             DateTime? @map("clock_out_time") @db.Timestamptz(6)
+  /// gps | telephony | manual
+  clockInMethod            String    @map("clock_in_method") @db.VarChar(20)
+  clockOutMethod           String?   @map("clock_out_method") @db.VarChar(20)
+  clockInLatitude          Decimal?  @map("clock_in_latitude") @db.Decimal(10, 8)
+  clockInLongitude         Decimal?  @map("clock_in_longitude") @db.Decimal(11, 8)
+  clockOutLatitude         Decimal?  @map("clock_out_latitude") @db.Decimal(10, 8)
+  clockOutLongitude        Decimal?  @map("clock_out_longitude") @db.Decimal(11, 8)
+  /// Reported GPS accuracy (meters) — context for borderline geofence results.
+  clockInAccuracyMeters    Int?      @map("clock_in_accuracy_meters")
+  clockOutAccuracyMeters   Int?      @map("clock_out_accuracy_meters")
+  clockInPhoneNumber       String?   @map("clock_in_phone_number") @db.VarChar(20)
+  clockOutPhoneNumber      String?   @map("clock_out_phone_number") @db.VarChar(20)
+  clockInWithinGeofence    Boolean?  @map("clock_in_within_geofence")
+  clockOutWithinGeofence   Boolean?  @map("clock_out_within_geofence")
+  clockInDistanceMeters    Int?      @map("clock_in_distance_meters")
+  clockOutDistanceMeters   Int?      @map("clock_out_distance_meters")
+  patientSignatureUrl      String?   @map("patient_signature_url") @db.VarChar(500)
+  caregiverSignatureUrl    String?   @map("caregiver_signature_url") @db.VarChar(500)
+  /// in_progress | completed | exception | verified | rejected
+  status                   String    @default("in_progress") @db.VarChar(20)
+  /// Machine-readable reasons the record needs review, e.g. ["outside_geofence_in"].
+  flags                    String[]
+  verifiedById             String?   @map("verified_by") @db.Uuid
+  verifiedAt               DateTime? @map("verified_at") @db.Timestamptz(6)
+  verificationNote         String?   @map("verification_note")
+  aggregatorSubmittedAt    DateTime? @map("aggregator_submitted_at") @db.Timestamptz(6)
+  aggregatorConfirmationId String?   @map("aggregator_confirmation_id") @db.VarChar(100)
+  aggregatorStatus         String?   @map("aggregator_status") @db.VarChar(20)
+  deviceId                 String?   @map("device_id") @db.VarChar(100)
+  deviceModel              String?   @map("device_model") @db.VarChar(100)
+  appVersion               String?   @map("app_version") @db.VarChar(20)
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  visit      Visit          @relation(fields: [visitId], references: [id])
+  agency     Agency         @relation(fields: [agencyId], references: [id])
+  staff      StaffProfile   @relation(fields: [staffId], references: [id])
+  patient    Patient        @relation(fields: [patientId], references: [id])
+  verifiedBy User?          @relation("EvvVerifiedBy", fields: [verifiedById], references: [id])
+  exceptions EvvException[]
+
+  @@index([agencyId, serviceDate])
+  @@index([staffId, serviceDate])
+  @@index([agencyId, status])
+  @@map("evv_records")
+}
+
+/// A correction to an EVV record (e.g. forgot to clock out) with a required reason; applied only when approved.
+model EvvException {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  evvRecordId    String    @map("evv_record_id") @db.Uuid
+  /// clock_in_time | clock_out_time
+  exceptionType  String    @map("exception_type") @db.VarChar(50)
+  originalValue  String?   @map("original_value")
+  correctedValue String?   @map("corrected_value")
+  reason         String
+  requestedById  String    @map("requested_by") @db.Uuid
+  /// pending | approved | denied
+  status         String    @default("pending") @db.VarChar(20)
+  decidedById    String?   @map("approved_by") @db.Uuid
+  decidedAt      DateTime? @map("approved_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  evvRecord   EvvRecord @relation(fields: [evvRecordId], references: [id], onDelete: Cascade)
+  requestedBy User      @relation("EvvExceptionRequestedBy", fields: [requestedById], references: [id])
+  decidedBy   User?     @relation("EvvExceptionDecidedBy", fields: [decidedById], references: [id])
+
+  @@index([evvRecordId])
+  @@map("evv_exceptions")
+}
+
+/// Secure messaging (DECISIONS D-057). A conversation between agency users, optionally about one patient.
+model Conversation {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId      String    @map("agency_id") @db.Uuid
+  /// direct (two people) | group
+  type          String    @default("direct") @db.VarChar(20)
+  subject       String?   @db.VarChar(255)
+  patientId     String?   @map("patient_id") @db.Uuid
+  createdById   String    @map("created_by") @db.Uuid
+  lastMessageAt DateTime? @map("last_message_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency       Agency                    @relation(fields: [agencyId], references: [id])
+  patient      Patient?                  @relation(fields: [patientId], references: [id])
+  createdBy    User                      @relation("ConversationCreatedBy", fields: [createdById], references: [id])
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([agencyId, lastMessageAt(sort: Desc)])
+  @@index([patientId])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  conversationId String    @map("conversation_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  joinedAt       DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
+  lastReadAt     DateTime? @map("last_read_at") @db.Timestamptz(6)
+  /// Set when the person leaves a group; they keep read access to what was said before.
+  leftAt         DateTime? @map("left_at") @db.Timestamptz(6)
+  isMuted        Boolean   @default(false) @map("is_muted")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+/// Message text is PHI: stored encrypted, bound to the message ID (PhiCryptoService.encryptBytes).
+model Message {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId         String   @map("agency_id") @db.Uuid
+  conversationId   String   @map("conversation_id") @db.Uuid
+  senderId         String   @map("sender_id") @db.Uuid
+  contentEncrypted Bytes    @map("content_encrypted")
+  isUrgent         Boolean  @default(false) @map("is_urgent")
+  /// An attached document (already uploaded through /documents).
+  documentId       String?  @map("document_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency       Agency       @relation(fields: [agencyId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id])
+  document     Document?    @relation(fields: [documentId], references: [id])
+
+  @@index([conversationId, createdAt(sort: Desc)])
+  @@map("messages")
+}
+
+/// Private-pay invoices (DESIGN.md §10, DECISIONS D-059). Amounts are frozen when the invoice is created.
+model Invoice {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId           String    @map("agency_id") @db.Uuid
+  patientId          String    @map("patient_id") @db.Uuid
+  payerId            String    @map("payer_id") @db.Uuid
+  invoiceNumber      String    @map("invoice_number") @db.VarChar(20)
+  /// draft | sent | partially_paid | paid | void
+  status             String    @default("draft") @db.VarChar(20)
+  issueDate          DateTime  @map("issue_date") @db.Date
+  dueDate            DateTime  @map("due_date") @db.Date
+  billingPeriodStart DateTime  @map("billing_period_start") @db.Date
+  billingPeriodEnd   DateTime  @map("billing_period_end") @db.Date
+  subtotal           Decimal   @db.Decimal(10, 2)
+  taxAmount          Decimal   @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  totalAmount        Decimal   @map("total_amount") @db.Decimal(10, 2)
+  paidAmount         Decimal   @default(0) @map("paid_amount") @db.Decimal(10, 2)
+  /// Who the bill goes to, as printed (name, address lines) — kept as issued.
+  billTo             Json      @map("bill_to")
+  sentAt             DateTime? @map("sent_at") @db.Timestamptz(6)
+  paidAt             DateTime? @map("paid_at") @db.Timestamptz(6)
+  voidReason         String?   @map("void_reason")
+  notes              String?
+  createdById        String    @map("created_by") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency    Agency           @relation(fields: [agencyId], references: [id])
+  patient   Patient          @relation(fields: [patientId], references: [id])
+  payer     Payer            @relation(fields: [payerId], references: [id])
+  createdBy User             @relation("InvoiceCreatedBy", fields: [createdById], references: [id])
+  lines     InvoiceLine[]
+  payments  InvoicePayment[]
+
+  @@unique([agencyId, invoiceNumber])
+  @@index([agencyId, status])
+  @@index([patientId])
+  @@map("invoices")
+}
+
+model InvoiceLine {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId   String   @map("invoice_id") @db.Uuid
+  visitId     String?  @map("visit_id") @db.Uuid
+  lineNumber  Int      @map("line_number")
+  description String
+  serviceCode String?  @map("service_code") @db.VarChar(20)
+  serviceDate DateTime @map("service_date") @db.Date
+  quantity    Decimal  @db.Decimal(8, 2)
+  unitRate    Decimal  @map("unit_rate") @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+  /// False once the invoice is voided — the visit can then be billed again.
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  visit   Visit?  @relation(fields: [visitId], references: [id])
+
+  @@unique([visitId], map: "invoice_lines_one_active_per_visit", where: raw("active"))
+  @@index([invoiceId])
+  @@map("invoice_lines")
+}
+
+model InvoicePayment {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId    String   @map("invoice_id") @db.Uuid
+  amount       Decimal  @db.Decimal(10, 2)
+  paidOn       DateTime @map("paid_on") @db.Date
+  /// check | cash | card | ach | other
+  method       String   @db.VarChar(20)
+  reference    String?  @db.VarChar(100)
+  recordedById String   @map("recorded_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  invoice    Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  recordedBy User    @relation("InvoicePaymentRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([invoiceId])
+  @@map("invoice_payments")
+}
+
+/// Insurance eligibility checks (X12 270 request → 271 response, DECISIONS D-060).
+model EligibilityCheck {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  patientId           String    @map("patient_id") @db.Uuid
+  payerId             String    @map("payer_id") @db.Uuid
+  /// Sent in the 270 (BHT03/TRN02) and echoed in the 271 — how the answer is matched.
+  traceNumber         String    @map("trace_number") @db.VarChar(30)
+  serviceDate         DateTime  @map("service_date") @db.Date
+  memberId            String    @map("member_id") @db.VarChar(80)
+  /// pending (270 made, no answer yet) | active | inactive | rejected | unknown
+  status              String    @default("pending") @db.VarChar(20)
+  request270          String    @map("request_270")
+  responseData        Json?     @map("response_data")
+  coverageActive      Boolean?  @map("coverage_active")
+  planName            String?   @map("plan_name") @db.VarChar(100)
+  coverageStart       DateTime? @map("coverage_start") @db.Date
+  coverageEnd         DateTime? @map("coverage_end") @db.Date
+  copay               Decimal?  @db.Decimal(10, 2)
+  coinsurancePercent  Decimal?  @map("coinsurance_percent") @db.Decimal(5, 2)
+  deductible          Decimal?  @db.Decimal(10, 2)
+  deductibleRemaining Decimal?  @map("deductible_remaining") @db.Decimal(10, 2)
+  errorMessage        String?   @map("error_message")
+  respondedAt         DateTime? @map("responded_at") @db.Timestamptz(6)
+  requestedById       String    @map("requested_by") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  agency      Agency  @relation(fields: [agencyId], references: [id])
+  patient     Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  payer       Payer   @relation(fields: [payerId], references: [id])
+  requestedBy User    @relation("EligibilityRequestedBy", fields: [requestedById], references: [id])
+
+  @@unique([agencyId, traceNumber])
+  @@index([patientId, createdAt(sort: Desc)])
+  @@map("eligibility_checks")
+}
+
+/// Incident reports (DESIGN.md §5, DECISIONS D-062): falls, injuries, medication errors, complaints, policy breaches.
+model IncidentReport {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId         String    @map("agency_id") @db.Uuid
+  patientId        String?   @map("patient_id") @db.Uuid
+  staffId          String?   @map("staff_id") @db.Uuid
+  visitId          String?   @map("visit_id") @db.Uuid
+  reportedById     String    @map("reported_by") @db.Uuid
+  incidentDate     DateTime  @map("incident_date") @db.Date
+  incidentTime     String?   @map("incident_time") @db.VarChar(5)
+  /// fall | injury | medication_error | abuse_neglect | complaint | property_damage | infection | privacy_breach | other
+  incidentType     String    @map("incident_type") @db.VarChar(50)
+  description      String
+  /// low | moderate | high | critical
+  severity         String    @db.VarChar(20)
+  actionsTaken     String?   @map("actions_taken")
+  followUpRequired Boolean   @default(false) @map("follow_up_required")
+  followUpNotes    String?   @map("follow_up_notes")
+  /// open | investigating | resolved | closed
+  status           String    @default("open") @db.VarChar(20)
+  resolvedAt       DateTime? @map("resolved_at") @db.Timestamptz(6)
+  resolvedById     String?   @map("resolved_by") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency     Agency        @relation(fields: [agencyId], references: [id])
+  patient    Patient?      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  staff      StaffProfile? @relation(fields: [staffId], references: [id])
+  visit      Visit?        @relation(fields: [visitId], references: [id])
+  reportedBy User          @relation("IncidentReportedBy", fields: [reportedById], references: [id])
+  resolvedBy User?         @relation("IncidentResolvedBy", fields: [resolvedById], references: [id])
+
+  @@index([agencyId, status, incidentDate(sort: Desc)])
+  @@index([patientId])
+  @@map("incident_reports")
+}
+
+/// Appeals of denied claims (DECISIONS D-063). Level 1 = first appeal (e.g. Medicare redetermination), 2, 3…
+model ClaimAppeal {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  claimId      String    @map("claim_id") @db.Uuid
+  level        Int       @default(1)
+  /// filed | won | lost | withdrawn
+  status       String    @default("filed") @db.VarChar(20)
+  filedOn      DateTime  @map("filed_on") @db.Date
+  reason       String
+  /// Payer's appeal / reference number.
+  reference    String?   @db.VarChar(100)
+  outcomeNotes String?   @map("outcome_notes")
+  decidedOn    DateTime? @map("decided_on") @db.Date
+  createdById  String    @map("created_by") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  claim     Claim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  createdBy User  @relation("ClaimAppealCreatedBy", fields: [createdById], references: [id])
+
+  @@index([claimId])
+  @@map("claim_appeals")
+}
+
+/// Payroll (DESIGN.md §5.7, DECISIONS D-064). open → calculated → approved → exported.
+model PayPeriod {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId     String    @map("agency_id") @db.Uuid
+  periodStart  DateTime  @map("period_start") @db.Date
+  periodEnd    DateTime  @map("period_end") @db.Date
+  payDate      DateTime  @map("pay_date") @db.Date
+  /// open | calculated | approved | exported
+  status       String    @default("open") @db.VarChar(20)
+  calculatedAt DateTime? @map("calculated_at") @db.Timestamptz(6)
+  approvedById String?   @map("approved_by") @db.Uuid
+  approvedAt   DateTime? @map("approved_at") @db.Timestamptz(6)
+  exportedAt   DateTime? @map("exported_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency     Agency    @relation(fields: [agencyId], references: [id])
+  approvedBy User?     @relation("PayPeriodApprovedBy", fields: [approvedById], references: [id])
+  stubs      PayStub[]
+
+  @@unique([agencyId, periodStart])
+  @@index([agencyId, periodStart(sort: Desc)])
+  @@map("pay_periods")
+}
+
+model PayStub {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payPeriodId    String   @map("pay_period_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  regularHours   Decimal  @default(0) @map("regular_hours") @db.Decimal(8, 2)
+  overtimeHours  Decimal  @default(0) @map("overtime_hours") @db.Decimal(8, 2)
+  visitCount     Int      @default(0) @map("visit_count")
+  regularPay     Decimal  @default(0) @map("regular_pay") @db.Decimal(10, 2)
+  overtimePay    Decimal  @default(0) @map("overtime_pay") @db.Decimal(10, 2)
+  perVisitPay    Decimal  @default(0) @map("per_visit_pay") @db.Decimal(10, 2)
+  mileageMiles   Decimal  @default(0) @map("mileage_miles") @db.Decimal(8, 2)
+  mileageAmount  Decimal  @default(0) @map("mileage_amount") @db.Decimal(10, 2)
+  bonusAmount    Decimal  @default(0) @map("bonus_amount") @db.Decimal(10, 2)
+  deductions     Decimal  @default(0) @db.Decimal(10, 2)
+  /// Taxable earnings: regular + overtime + per-visit + bonus − deductions (mileage is a separate, non-taxable reimbursement).
+  grossPay       Decimal  @default(0) @map("gross_pay") @db.Decimal(10, 2)
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  payPeriod    PayPeriod     @relation(fields: [payPeriodId], references: [id], onDelete: Cascade)
+  staffProfile StaffProfile  @relation(fields: [staffProfileId], references: [id])
+  lines        PayStubLine[]
+
+  @@unique([payPeriodId, staffProfileId])
+  @@index([staffProfileId])
+  @@map("pay_stubs")
+}
+
+model PayStubLine {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payStubId    String   @map("pay_stub_id") @db.Uuid
+  visitId      String?  @map("visit_id") @db.Uuid
+  serviceDate  DateTime @map("service_date") @db.Date
+  /// First name and last initial only — enough for the caregiver to recognise the visit (minimum necessary).
+  patientLabel String?  @map("patient_label") @db.VarChar(100)
+  hours        Decimal? @db.Decimal(6, 2)
+  rate         Decimal? @db.Decimal(10, 2)
+  amount       Decimal  @db.Decimal(10, 2)
+  /// hourly | overtime | per_visit | mileage
+  payType      String   @map("pay_type") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  payStub PayStub @relation(fields: [payStubId], references: [id], onDelete: Cascade)
+  visit   Visit?  @relation(fields: [visitId], references: [id])
+
+  @@index([payStubId])
+  @@map("pay_stub_lines")
+}
+
+model MileageLog {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staffProfileId String    @map("staff_profile_id") @db.Uuid
+  visitId        String?   @map("visit_id") @db.Uuid
+  travelDate     DateTime  @map("travel_date") @db.Date
+  /// Free text — no patient addresses needed; "Office to client visit" is enough.
+  description    String?   @db.VarChar(255)
+  miles          Decimal   @db.Decimal(8, 2)
+  /// pending | approved | rejected
+  status         String    @default("pending") @db.VarChar(20)
+  decidedById    String?   @map("decided_by") @db.Uuid
+  decidedAt      DateTime? @map("decided_at") @db.Timestamptz(6)
+  rejectReason   String?   @map("reject_reason")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+  visit        Visit?       @relation(fields: [visitId], references: [id])
+  decidedBy    User?        @relation("MileageDecidedBy", fields: [decidedById], references: [id])
+
+  @@index([staffProfileId, travelDate])
+  @@map("mileage_logs")
+}
+
+/// Per-user notification choices (DECISIONS D-066). A row exists only where the user changed the defaults (all on).
+model NotificationPreference {
+  id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String  @map("user_id") @db.Uuid
+  notificationType String  @map("notification_type") @db.VarChar(50)
+  channelInApp     Boolean @default(true) @map("channel_in_app")
+  channelPush      Boolean @default(true) @map("channel_push")
+  channelSms       Boolean @default(true) @map("channel_sms")
+  channelEmail     Boolean @default(true) @map("channel_email")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationType])
+  @@map("notification_preferences")
+}
+
+/// Outbox for push / SMS / email: one row per notification and outside channel, sent by the delivery job with
+/// retries (D-071). No message text here — it's the notification's (PHI-free) title and body.
+model NotificationDelivery {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  notificationId    String    @map("notification_id") @db.Uuid
+  /// push | sms | email
+  channel           String    @db.VarChar(10)
+  /// pending | sending | sent | failed | skipped
+  status            String    @default("pending") @db.VarChar(10)
+  attempts          Int       @default(0)
+  nextAttemptAt     DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  /// When a job instance took the row (a row stuck in "sending" is taken again after a while).
+  claimedAt         DateTime? @map("claimed_at") @db.Timestamptz(6)
+  /// Provider error code/summary — never message text or contact details.
+  lastError         String?   @map("last_error") @db.VarChar(300)
+  providerMessageId String?   @map("provider_message_id") @db.VarChar(100)
+  sentAt            DateTime? @map("sent_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, channel])
+  @@index([status, nextAttemptAt])
+  @@map("notification_deliveries")
+}
+
+/// Phones signed in to the mobile app that can receive push notifications (Expo push tokens, D-071).
+model PushDevice {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  /// ExponentPushToken[…] — one phone; moves to whoever signed in on it last.
+  token      String   @unique @db.VarChar(255)
+  /// ios | android
+  platform   String   @db.VarChar(10)
+  lastSeenAt DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_devices")
+}
+
+/// "Forgot password" links (D-072): single use, 30 minutes. Only a SHA-256 hash of the token is stored.
+model PasswordResetToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+/// A patient's preferred or declined caregivers (D-094). Declined caregivers are never suggested.
+model PatientCaregiverPreference {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId      String   @map("patient_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  /// preferred | declined
+  kind           String   @db.VarChar(10)
+  note           String?  @db.VarChar(500)
+  createdById    String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([patientId, staffProfileId])
+  @@index([staffProfileId])
+  @@map("patient_caregiver_preferences")
+}
+
+/// A short update for the family about one visit (D-096), written or approved by the caregiver; shown in the portal.
+model CareUpdate {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String   @map("agency_id") @db.Uuid
+  patientId      String   @map("patient_id") @db.Uuid
+  visitId        String   @unique @map("visit_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  summary        String   @db.VarChar(1000)
+  /// good | okay | low — optional
+  mood           String?  @db.VarChar(10)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visit        Visit        @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, createdAt])
+  @@index([agencyId])
+  @@map("care_updates")
+}
+
+/// Where referrals come from (D-098): a hospital, a physician's office, a social worker, the website…
+model ReferralSource {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId     String   @map("agency_id") @db.Uuid
+  name         String   @db.VarChar(200)
+  /// hospital | physician | social_worker | family | website | community | insurance | other
+  sourceType   String   @map("source_type") @db.VarChar(30)
+  contactName  String?  @map("contact_name") @db.VarChar(200)
+  phone        String?  @db.VarChar(20)
+  email        String?  @db.VarChar(255)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency    Agency     @relation(fields: [agencyId], references: [id])
+  referrals Referral[]
+
+  @@unique([agencyId, name])
+  @@map("referral_sources")
+}
+
+/// A prospective client on the way to admission (D-098). Converts to a Patient when admitted.
+model Referral {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  sourceId            String?   @map("source_id") @db.Uuid
+  /// manual | web_form
+  channel             String    @default("manual") @db.VarChar(20)
+  /// new | contacted | assessment | authorization_pending | ready | admitted | lost
+  status              String    @default("new") @db.VarChar(30)
+  lostReason          String?   @map("lost_reason") @db.VarChar(500)
+  clientFirstName     String    @map("client_first_name") @db.VarChar(100)
+  clientLastName      String    @map("client_last_name") @db.VarChar(100)
+  dateOfBirth         DateTime? @map("date_of_birth") @db.Date
+  phone               String?   @db.VarChar(20)
+  email               String?   @db.VarChar(255)
+  city                String?   @db.VarChar(100)
+  zip                 String?   @db.VarChar(10)
+  /// medicaid | medicare | private_pay | insurance | va | unknown
+  payerType           String    @default("unknown") @map("payer_type") @db.VarChar(20)
+  careNeeds           String?   @map("care_needs")
+  /// The person who reached out, when not the client (daughter, discharge planner…).
+  contactName         String?   @map("contact_name") @db.VarChar(200)
+  contactRelationship String?   @map("contact_relationship") @db.VarChar(50)
+  contactPhone        String?   @map("contact_phone") @db.VarChar(20)
+  contactEmail        String?   @map("contact_email") @db.VarChar(255)
+  assignedToId        String?   @map("assigned_to") @db.Uuid
+  nextFollowUp        DateTime? @map("next_follow_up") @db.Date
+  patientId           String?   @unique @map("patient_id") @db.Uuid
+  statusChangedAt     DateTime  @default(now()) @map("status_changed_at") @db.Timestamptz(6)
+  admittedAt          DateTime? @map("admitted_at") @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency     Agency          @relation(fields: [agencyId], references: [id])
+  source     ReferralSource? @relation(fields: [sourceId], references: [id])
+  assignedTo User?           @relation("ReferralAssignedTo", fields: [assignedToId], references: [id])
+  patient    Patient?        @relation(fields: [patientId], references: [id])
+  events     ReferralEvent[]
+
+  @@index([agencyId, status])
+  @@index([agencyId, createdAt])
+  @@map("referrals")
+}
+
+/// The referral's history: status changes and call notes (D-098).
+model ReferralEvent {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  referralId String   @map("referral_id") @db.Uuid
+  /// created | status | note | admitted
+  eventType  String   @map("event_type") @db.VarChar(20)
+  fromStatus String?  @map("from_status") @db.VarChar(30)
+  toStatus   String?  @map("to_status") @db.VarChar(30)
+  note       String?
+  userId     String?  @map("user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  referral Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  user     User?    @relation("ReferralEventBy", fields: [userId], references: [id])
+
+  @@index([referralId, createdAt])
+  @@map("referral_events")
+}
+
+/// Primordial Academy (D-102): a short training module with a quiz. Passing can record a credential.
+model TrainingCourse {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId        String   @map("agency_id") @db.Uuid
+  title           String   @db.VarChar(200)
+  summary         String?  @db.VarChar(500)
+  /// The lesson, as plain text with blank lines between paragraphs.
+  content         String
+  /// Disciplines it is for (e.g. HHA, CNA); empty = everyone.
+  disciplines     String[]
+  /// Pass mark, percent of questions right.
+  passPercent     Int      @default(80) @map("pass_percent")
+  /// When set, passing records a credential of this type (e.g. infection_control).
+  credentialType  String?  @map("credential_type") @db.VarChar(100)
+  /// How long that credential lasts; null = no expiry.
+  validityMonths  Int?     @map("validity_months")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency      Agency               @relation(fields: [agencyId], references: [id])
+  questions   TrainingQuestion[]
+  completions TrainingCompletion[]
+
+  @@index([agencyId, isActive])
+  @@map("training_courses")
+}
+
+model TrainingQuestion {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId     String   @map("course_id") @db.Uuid
+  sortOrder    Int      @map("sort_order")
+  prompt       String   @db.VarChar(1000)
+  options      String[]
+  /// Index into options of the right answer. Never sent to people taking the quiz.
+  correctIndex Int      @map("correct_index")
+
+  course TrainingCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, sortOrder])
+  @@map("training_questions")
+}
+
+/// One attempt at a course's quiz.
+model TrainingCompletion {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId       String   @map("course_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  scorePercent   Int      @map("score_percent")
+  passed         Boolean
+  /// The credential recorded for a pass, when the course grants one.
+  credentialId   String?  @map("credential_id") @db.Uuid
+  completedAt    DateTime @default(now()) @map("completed_at") @db.Timestamptz(6)
+
+  course       TrainingCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  staffProfile StaffProfile   @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([staffProfileId, courseId, completedAt])
+  @@index([courseId])
+  @@map("training_completions")
+}

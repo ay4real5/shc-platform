@@ -1,0 +1,58 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+.next/
+out/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# expo / react native
+.expo/
+ios/
+android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# env & secrets — never commit
+.env
+.env.*
+!.env.example
+!.env.production.example
+certs/
+*.pem
+
+# local data (never commit PHI)
+*.sqlite
+*.db
+tmp/
+uploads/
+
+# logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# agent-local files
+.claude/settings.local.json
+
+# prisma generated client (rebuilt by `npm run generate`)
+apps/api/src/generated/
+
+# Next.js generated type file (regenerated on dev/build/typegen)
+apps/web/next-env.d.ts
+
+# Firebase config for Android push (D-091): kept out of the public repo; EAS builds get it from a file variable
+apps/mobile/google-services.json
