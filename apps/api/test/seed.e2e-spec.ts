@@ -77,7 +77,7 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
     expect(conversations).toHaveLength(1);
     const office = await login('office.staff@demo.shc.test');
     const unread = await http().get('/api/v1/messages/unread-count').set(office).expect(200);
-    expect(unread.body.data.unread).toBe(2); // the aide's reply + the supervisor's team message
+    expect(unread.body.data.unread).toBe(3); // the aide's reply + the supervisor's and nurse's team messages
     expect(conversations[0].lastMessage.content).toBe('Yes, I can come in on Thursday morning.');
 
     await login('supervisor@demo.shc.test');

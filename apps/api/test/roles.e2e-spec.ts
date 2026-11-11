@@ -70,21 +70,21 @@ describe.skipIf(!hasDb)('Custom roles (e2e)', () => {
       await http()
         .post(api('/roles'))
         .set(admin.auth)
-        .send({ name: 'intake_coordinator', description: 'Handles referrals', permissions: ['referrals:read', 'referrals:manage', 'patients:read'] })
+        .send({ name: 'training_lead', description: 'Runs training', permissions: ['training:manage', 'documents:read', 'documents:create'] })
         .expect(201)
     ).body.data;
-    expect(role).toMatchObject({ name: 'intake_coordinator', isSystem: false, users: 0, permissions: ['patients:read', 'referrals:manage', 'referrals:read'] });
+    expect(role).toMatchObject({ name: 'training_lead', isSystem: false, users: 0, permissions: ['documents:create', 'documents:read', 'training:manage'] });
 
     await http().patch(api(`/users/${staffer.id}`)).set(admin.auth).send({ roleIds: [role.id] }).expect(200);
-    await http().get(api('/referrals')).set(staffer.auth).expect(200);
-    await http().get(api('/schedule/visits')).set(staffer.auth).expect(403); // office_staff's visits:read is gone
+    await http().get(api('/training/courses')).set(staffer.auth).expect(200);
+    await http().get(api('/staff')).set(staffer.auth).expect(403); // office_staff's staff:read is gone
 
     // Narrowing the role takes effect straight away.
-    await http().patch(api(`/roles/${role.id}`)).set(admin.auth).send({ permissions: ['referrals:read'] }).expect(200);
-    await http().post(api('/referrals')).set(staffer.auth).send({ clientFirstName: 'A', clientLastName: 'B' }).expect(403);
+    await http().patch(api(`/roles/${role.id}`)).set(admin.auth).send({ permissions: ['documents:read'] }).expect(200);
+    await http().get(api('/training/courses')).set(staffer.auth).expect(403);
 
     const list = (await http().get(api('/roles')).set(admin.auth).expect(200)).body.data;
-    expect(list.find((r: { id: string }) => r.id === role.id)).toMatchObject({ users: 1, permissions: ['referrals:read'] });
+    expect(list.find((r: { id: string }) => r.id === role.id)).toMatchObject({ users: 1, permissions: ['documents:read'] });
 
     // In use → can't delete; free → can.
     await http().delete(api(`/roles/${role.id}`)).set(admin.auth).expect(409);
@@ -93,28 +93,28 @@ describe.skipIf(!hasDb)('Custom roles (e2e)', () => {
   });
 
   it('blocks privilege escalation, built-in roles and other agencies', async () => {
-    // A custom "mini admin" can manage roles but has no billing access…
-    const mini = (await http().post(api('/roles')).set(admin.auth).send({ name: 'mini_admin', permissions: ['settings:update', 'users:update', 'users:read', 'referrals:read'] }).expect(201)).body.data;
+    // A custom "mini admin" can manage roles but can't delete staff…
+    const mini = (await http().post(api('/roles')).set(admin.auth).send({ name: 'mini_admin', permissions: ['settings:update', 'users:update', 'users:read', 'documents:read'] }).expect(201)).body.data;
     const miniUser = await seedUser('mini_admin', agencyId, mini.id);
-    // …so it can't create or widen a role with billing permissions.
-    await http().post(api('/roles')).set(miniUser.auth).send({ name: 'sneaky', permissions: ['billing:read'] }).expect(403);
-    const ok = (await http().post(api('/roles')).set(miniUser.auth).send({ name: 'readers', permissions: ['referrals:read'] }).expect(201)).body.data;
-    await http().patch(api(`/roles/${ok.id}`)).set(miniUser.auth).send({ permissions: ['referrals:read', 'billing:read'] }).expect(403);
+    // …so it can't create or widen a role with that permission.
+    await http().post(api('/roles')).set(miniUser.auth).send({ name: 'sneaky', permissions: ['staff:delete'] }).expect(403);
+    const ok = (await http().post(api('/roles')).set(miniUser.auth).send({ name: 'readers', permissions: ['documents:read'] }).expect(201)).body.data;
+    await http().patch(api(`/roles/${ok.id}`)).set(miniUser.auth).send({ permissions: ['documents:read', 'staff:delete'] }).expect(403);
     // Nor reshape a role that already holds more than it has.
-    const wide = (await http().post(api('/roles')).set(admin.auth).send({ name: 'wide', permissions: ['billing:read', 'referrals:read'] }).expect(201)).body.data;
-    await http().patch(api(`/roles/${wide.id}`)).set(miniUser.auth).send({ permissions: ['referrals:read'] }).expect(403);
+    const wide = (await http().post(api('/roles')).set(admin.auth).send({ name: 'wide', permissions: ['staff:delete', 'documents:read'] }).expect(201)).body.data;
+    await http().patch(api(`/roles/${wide.id}`)).set(miniUser.auth).send({ permissions: ['documents:read'] }).expect(403);
     await http().delete(api(`/roles/${wide.id}`)).set(miniUser.auth).expect(403);
 
     // Built-in roles are fixed; their names are reserved.
     const builtIn = await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: 'office_staff' } });
     await http().patch(api(`/roles/${builtIn.id}`)).set(admin.auth).send({ description: 'x' }).expect(403);
-    await http().post(api('/roles')).set(admin.auth).send({ name: 'office_staff', permissions: ['referrals:read'] }).expect(409);
-    await http().post(api('/roles')).set(admin.auth).send({ name: 'readers', permissions: ['referrals:read'] }).expect(409);
-    await http().post(api('/roles')).set(admin.auth).send({ name: 'Bad Name', permissions: ['referrals:read'] }).expect(400);
+    await http().post(api('/roles')).set(admin.auth).send({ name: 'office_staff', permissions: ['documents:read'] }).expect(409);
+    await http().post(api('/roles')).set(admin.auth).send({ name: 'readers', permissions: ['documents:read'] }).expect(409);
+    await http().post(api('/roles')).set(admin.auth).send({ name: 'Bad Name', permissions: ['documents:read'] }).expect(400);
     await http().post(api('/roles')).set(admin.auth).send({ name: 'unknown_perm', permissions: ['nope:read'] }).expect(400);
 
     // Supervisors can't manage roles; another agency can't see or touch ours.
-    await http().post(api('/roles')).set(supervisor.auth).send({ name: 'x_role', permissions: ['referrals:read'] }).expect(403);
+    await http().post(api('/roles')).set(supervisor.auth).send({ name: 'x_role', permissions: ['documents:read'] }).expect(403);
     const outsider = await seedUser('agency_admin', otherAgencyId);
     await http().patch(api(`/roles/${ok.id}`)).set(outsider.auth).send({ description: 'mine now' }).expect(404);
     expect((await http().get(api('/roles')).set(outsider.auth).expect(200)).body.data.some((r: { id: string }) => r.id === ok.id)).toBe(false);

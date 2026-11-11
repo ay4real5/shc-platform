@@ -4,7 +4,7 @@ import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
-import { addDays, toDate, toTime, utcTodayString } from '../src/common/utils/dates.js';
+import { addDays, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';

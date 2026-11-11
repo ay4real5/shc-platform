@@ -100,8 +100,6 @@ describe.skipIf(!hasDb)('Onboarding checklist (e2e)', () => {
     expect((await http().get(api('/staff/me/onboarding')).set(aide.auth).expect(200)).body.data.percent).toBe(91);
     const overview = (await http().get(api('/staff/onboarding')).set(office.auth).expect(200)).body.data;
     expect(overview.find((s: { staffId: string }) => s.staffId === aide.staffId)).toMatchObject({ percent: 91, missing: ['Background check'] });
-    const center = (await http().get(api('/insights/command-center')).set(office.auth).expect(200)).body.data;
-    expect(center.onboarding.notReady).toBeGreaterThanOrEqual(1);
   });
 
   it('lets admins change what each discipline needs', async () => {

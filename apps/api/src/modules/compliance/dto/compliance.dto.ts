@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+import { IsOptional, IsUUID, Matches } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
 import { trimmed } from '../../../common/validators/fields.js';
 import { IsDateOnly } from '../../../common/validators/is-date-only.js';

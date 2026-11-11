@@ -1,5 +1,10 @@
 # Decisions log
 
+> **SHC platform:** entries D-001…D-103 were made for Primordial Health, whose code this platform started from.
+> They still describe the shared foundation (auth, RBAC, audit, encryption, documents, notifications, design system).
+> Anything about patients, visits, EVV, billing, Medicaid or HIPAA no longer applies. SHC decisions are numbered
+> **S-001** onwards at the bottom of this file.
+
 Decisions that refine or override [DESIGN.md](DESIGN.md). **Where they disagree, this file wins.**
 Append new entries at the bottom; never rewrite an old one — supersede it with a new entry instead.
 
@@ -1971,4 +1976,28 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   look reaches phones with the next EAS build.
 - **Checks**: the axe WCAG A/AA browser tests pass with the new colours, including contrast. The dashboard-heading
   e2e checks now accept "Good morning/afternoon/evening".
+
+---
+
+## SHC platform decisions
+
+### S-001 — Start SHC from the Primordial foundation, as a separate product
+2026-11-11 · Ayo + Claude Code
+- **Why:** UK care recruitment, onboarding and staff management reuse most of Primordial's building blocks
+  (multi-company data separation, 2FA, roles and custom roles, audit, credentials with expiry alerts, onboarding
+  checklist, Academy, documents and e-signing, messaging, notifications, mobile app, design). That makes the
+  6-week delivery realistic.
+- **Separate:** own repo (`ay4real5/shc-platform`), own database (dev: `shc` on the Neon dev server), own secrets.
+  No Primordial data is shared.
+- **Removed:** patients, physicians, visits and scheduling, EVV/IVR, billing/claims/invoices, clinical, payroll,
+  family portal, referrals, reports, insights and the AI assistant. Incident reports were removed too (they were
+  patient/visit-based); staff incidents can come back later if needed.
+- **Migrations restarted:** one generated `init` migration plus the hand-written audit-log partitioning and
+  append-only guard (unchanged from Primordial D-067).
+- **Documents:** company or staff files only. Types are UK HR ones; **no DBS certificate copies** (UK guidance —
+  record the number and date as a credential).
+- **Compliance:** the HIPAA checklist became a UK GDPR (Article 32) security checklist at
+  `GET /compliance/security-checklist`.
+- Still to do in later tasks: rename `@alora/*` packages and "agency" wording where it shows to users; replace US
+  home-health roles, disciplines and permissions with UK care ones (S1-03).
 

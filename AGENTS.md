@@ -1,4 +1,4 @@
-# AGENTS.md — Primordial Health platform (code name "Alora": the `@alora/*` packages)
+# AGENTS.md — SHC care workforce platform (built on the Primordial foundation; packages keep the `@alora/*` names)
 
 This repo is built by several AI agents taking turns (Claude Code, Devin, others) plus a human owner.
 No agent remembers the previous session. **The repo is the only memory.** Follow the protocol below
@@ -11,7 +11,8 @@ exactly so the next agent can continue where you stopped.
    2. [docs/ROADMAP.md](docs/ROADMAP.md) — the task list. Pick the task named in STATUS "Next up", or the
       first unchecked task in the current phase whose owner is `agent` and whose dependencies are done.
    3. [docs/DECISIONS.md](docs/DECISIONS.md) — decisions that override or refine the design doc.
-   4. The sections of [docs/DESIGN.md](docs/DESIGN.md) relevant to your task (don't read all 1,700 lines).
+   4. Background only: the Primordial design in [docs/primordial/DESIGN.md](docs/primordial/DESIGN.md) describes the
+      foundation this platform was copied from. Patient, visit, EVV and billing sections no longer apply.
 2. Run `git status` and `git log --oneline -15`. If there are uncommitted changes you didn't make, a previous
    session stopped mid-task — read STATUS "In progress" and continue it rather than starting over.
 3. If STATUS says a task is `in progress` with a branch name, check out that branch.
@@ -26,8 +27,9 @@ exactly so the next agent can continue where you stopped.
 - If you make a choice the design doc doesn't cover, or you deviate from it, add an entry to
   `docs/DECISIONS.md`. If you hit something that needs the human, add it to `docs/OPEN_QUESTIONS.md`
   and move on to something unblocked.
-- Never put real PHI (patient names, SSNs, DOBs, addresses) anywhere in the repo — seeds and tests use
-  obviously fake data. Never commit `.env` or any secret.
+- Never put real personal data (staff or applicant names, National Insurance numbers, DOBs, addresses, DBS or
+  Right to Work details) anywhere in the repo — seeds and tests use obviously fake data. Never commit `.env` or
+  any secret. This is UK GDPR data; criminal-record and health data are special/criminal-offence data.
 
 ## 3. End-of-session protocol (do this before you stop, even if the task is unfinished)
 

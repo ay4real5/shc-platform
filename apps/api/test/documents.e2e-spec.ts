@@ -4,7 +4,6 @@ import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
-import { toDate, toTime, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
@@ -36,7 +35,6 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
   let office: Auth;
   let admin: Auth;
   let rn: Auth;
-  let otherRn: Auth;
   const http = () => request(app.getHttpServer());
 
   beforeAll(async () => {
@@ -53,7 +51,6 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
     otherAgencyId = (await prisma.agency.create({ data: { name: `Docs Other ${randomUUID()}`, timezone: 'UTC' } })).id;
     office = await seedUser('office_staff');
     admin = await seedUser('agency_admin');
-    otherRn = await seedUser('registered_nurse');
     outsider = await seedUser('agency_admin', otherAgencyId);
     // A nurse with a staff file, who can sign documents.
     const role = await prisma.role.findFirstOrThrow({

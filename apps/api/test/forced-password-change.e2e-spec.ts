@@ -69,7 +69,7 @@ describe.skipIf(!hasDb)('Forced password change (e2e)', () => {
   const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
 
   const expectRestricted = async (token: string) => {
-    const blocked = await http().get('/api/v1/patients').set(bearer(token)).expect(403);
+    const blocked = await http().get('/api/v1/notifications').set(bearer(token)).expect(403);
     expect(blocked.body.error.code).toBe('PASSWORD_CHANGE_REQUIRED');
   };
 
@@ -101,7 +101,7 @@ describe.skipIf(!hasDb)('Forced password change (e2e)', () => {
         .expect(200)
     ).body.data;
     expect(changed.mustChangePassword).toBe(false);
-    await http().get('/api/v1/patients').set(bearer(changed.accessToken)).expect(200);
+    await http().get('/api/v1/notifications').set(bearer(changed.accessToken)).expect(200);
     const meAfter = (await http().get('/api/v1/auth/me').set(bearer(changed.accessToken)).expect(200)).body.data;
     expect(meAfter.mustChangePassword).toBe(false);
   });
@@ -133,7 +133,7 @@ describe.skipIf(!hasDb)('Forced password change (e2e)', () => {
     expect(changed.mustChangePassword).toBe(false);
     expect(changed.mustEnable2fa).toBe(true);
 
-    const restricted = await http().get('/api/v1/patients').set(bearer(changed.accessToken)).expect(403);
+    const restricted = await http().get('/api/v1/notifications').set(bearer(changed.accessToken)).expect(403);
     expect(restricted.body.error.code).toBe('TWO_FACTOR_SETUP_REQUIRED');
     await http().post('/api/v1/auth/2fa/setup').set(bearer(changed.accessToken)).send({}).expect(200);
   });
