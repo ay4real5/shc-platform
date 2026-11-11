@@ -22,7 +22,7 @@ const STATUS: Record<MyCourse['status'], [string, string]> = {
   expired: ['missed', 'Expired — retake'],
 };
 
-/** Primordial Academy (D-102): the caregiver's courses. */
+/** Academy (D-102): this person's courses. */
 export default function TrainingScreen() {
   const { request } = useAuth();
   const [courses, setCourses] = useState<MyCourse[] | null>(null);

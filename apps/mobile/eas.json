@@ -17,13 +17,13 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.primordialhealthservices.health/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://api.example-shc.invalid/api/v1"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.primordialhealthservices.health/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://api.example-shc.invalid/api/v1"
       }
     }
   },

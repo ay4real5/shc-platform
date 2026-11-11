@@ -35,17 +35,11 @@ function Routes() {
         <Stack.Screen name="change-password" options={{ title: 'New password', headerBackVisible: false }} />
       </Stack.Protected>
       <Stack.Protected guard={signedIn && !mustChangePassword}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Today' }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Home' }} />
         <Stack.Screen name="password" options={{ title: 'Change password' }} />
-        <Stack.Screen name="visit/[id]/index" options={{ title: 'Visit' }} />
-        <Stack.Screen name="visit/[id]/tasks" options={{ title: 'Tasks' }} />
-        <Stack.Screen name="visit/[id]/vitals" options={{ title: 'Vitals' }} />
-        <Stack.Screen name="visit/[id]/note" options={{ title: 'Visit note' }} />
         <Stack.Screen name="messages/[id]" options={{ title: 'Messages' }} />
         <Stack.Screen name="messages/new" options={{ title: 'New message' }} />
-        <Stack.Screen name="open-shifts" options={{ title: 'Open shifts' }} />
-        <Stack.Screen name="pay" options={{ title: 'My pay' }} />
-        <Stack.Screen name="pay/[id]" options={{ title: 'Pay stub' }} />
+        <Stack.Screen name="time-off" options={{ title: 'Holiday & time off' }} />
         <Stack.Screen name="training/index" options={{ title: 'Training' }} />
         <Stack.Screen name="training/[id]" options={{ title: 'Course' }} />
       </Stack.Protected>
@@ -53,7 +47,7 @@ function Routes() {
   );
 }
 
-/** Caregiver app root (DECISIONS D-043): each screen is only reachable in the matching session state. */
+/** Staff app root (DECISIONS D-043): each screen is only reachable in the matching session state. */
 export default function RootLayout() {
   return (
     <AuthProvider>

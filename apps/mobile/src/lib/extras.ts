@@ -20,7 +20,7 @@ export interface Conversation {
   id: string;
   type: string;
   subject: string | null;
-  patient: Person | null;
+
   participants: (Person & { left: boolean })[];
   lastMessage: Message | null;
   lastMessageAt: string | null;

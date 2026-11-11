@@ -122,13 +122,6 @@ export default function ConversationScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
       <Stack.Screen options={{ title }} />
-      {conversation?.patient && (
-        <View style={{ backgroundColor: colors.brandSoft, paddingHorizontal: 20, paddingVertical: 8 }}>
-          <Text style={{ color: colors.brandDark, fontWeight: '600' }}>
-            About {conversation.patient.firstName} {conversation.patient.lastName}
-          </Text>
-        </View>
-      )}
       <FlatList
         inverted
         data={messages ?? []}

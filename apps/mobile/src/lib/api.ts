@@ -1,5 +1,5 @@
 /**
- * Primordial Health API client for the caregiver app. Same envelope as the web ({ success, data, meta } / { success, error }).
+ * SHC API client for the staff app. Same envelope as the web ({ success, data, meta } / { success, error }).
  * The app uses body tokens, never cookies (DECISIONS D-043).
  */
 
@@ -21,7 +21,7 @@ export class ApiError extends Error {
 /** The request never reached the API (no signal, airplane mode). Distinct from the API saying no. */
 export class OfflineError extends Error {
   constructor() {
-    super("Can't reach Primordial Health. Check your connection.");
+    super("Can't reach SHC. Check your connection.");
     this.name = 'OfflineError';
   }
 }

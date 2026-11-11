@@ -7,7 +7,7 @@ import { useOffline } from '@/lib/offline';
 
 /**
  * Locked (relaunch, or 5+ minutes in the background): Face ID / fingerprint / device passcode to continue.
- * Nothing about patients is shown until unlocked.
+ * Nothing personal is shown until unlocked.
  */
 export default function UnlockScreen() {
   const { unlock } = useAuth();
@@ -35,7 +35,7 @@ export default function UnlockScreen() {
         <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name="lock-closed" size={38} color={colors.white} />
         </View>
-        <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800', textAlign: 'center' }}>Primordial Health is locked</Text>
+        <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800', textAlign: 'center' }}>SHC is locked</Text>
         <Text style={{ color: '#9aeedd', fontSize: 16, textAlign: 'center' }}>
           Unlock with Face ID, fingerprint or your phone passcode.
         </Text>

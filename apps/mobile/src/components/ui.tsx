@@ -15,7 +15,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-/** Primordial Teal palette (D-103): teal brand, coral accent — the same tokens as the dashboard. */
+/** Teal palette (D-103): teal brand, coral accent — the same tokens as the dashboard. */
 export const colors = {
   brand: '#0f766e',
   brandDark: '#115e59',
@@ -47,7 +47,7 @@ export const shadow: ViewStyle = Platform.select({
   default: { elevation: 2 },
 }) as ViewStyle;
 
-/** Large, high-contrast controls: caregivers use the app one-handed, often outdoors. */
+/** Large, high-contrast controls: staff use the app one-handed, often outdoors. */
 export function Button({
   title,
   onPress,
@@ -235,7 +235,7 @@ export const styles = StyleSheet.create({
   headerGlow: { position: 'absolute', right: -60, top: -60, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(249,115,98,0.22)' },
 });
 
-/** The Primordial Health mark (D-103), the same drawing as the app icon. */
+/** The SHC mark, the same drawing as the app icon. */
 export function BrandMark({ size = 56 }: { size?: number }) {
   return <Image source={require('../../assets/splash-icon.png')} style={{ width: size, height: size }} accessibilityIgnoresInvertColors />;
 }

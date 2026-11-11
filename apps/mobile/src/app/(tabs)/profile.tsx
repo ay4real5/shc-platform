@@ -1,11 +1,10 @@
 import Constants from 'expo-constants';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { Linking, ScrollView, Switch, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Linking, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar, Button, Card, ErrorText, GradientHeader, ListRow, Pill, SectionTitle, colors } from '@/components/ui';
 import { errorMessage, useAuth } from '@/lib/auth-context';
-import { remindersEnabled, setRemindersEnabled } from '@/lib/notifications';
 import { useOffline } from '@/lib/offline';
 import { humanize } from '@/lib/visits';
 
@@ -55,7 +54,7 @@ const BADGE_ICONS: Record<string, 'trophy-outline' | 'time-outline' | 'document-
 const date = (d: string | null) =>
   d ? new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : null;
 
-/** The caregiver's profile, credentials, settings and help (D-080). */
+/** This person's profile, checks, settings and help (D-080). */
 export default function ProfileScreen() {
   const { user, request } = useAuth();
   const { ops, signOut } = useOffline();
@@ -63,7 +62,6 @@ export default function ProfileScreen() {
   const [staff, setStaff] = useState<StaffMe | null>(null);
   const [credentials, setCredentials] = useState<Credential[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [reminders, setReminders] = useState(true);
   const [recognition, setRecognition] = useState<Recognition | null>(null);
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
 
@@ -90,12 +88,9 @@ export default function ProfileScreen() {
       void load();
     }, [load]),
   );
-  useEffect(() => {
-    void remindersEnabled().then(setReminders);
-  }, []);
 
   if (!user) return null;
-  const role = humanize(user.roles.find((r) => r !== 'portal_user') ?? 'caregiver');
+  const role = humanize(user.roles[0] ?? 'staff');
   const officePhone = user.agency?.phone ?? null;
   const unsent = ops.filter((op) => !op.failure).length;
 
@@ -130,10 +125,7 @@ export default function ProfileScreen() {
         </Card>
 
         <Card style={{ paddingVertical: 4 }}>
-          <ListRow icon="wallet-outline" label="My pay" onPress={() => router.push('/pay')} />
-          <ListRow icon="briefcase-outline" label="Open shifts" onPress={() => router.push('/open-shifts')} />
-          <ListRow icon="navigate-outline" label="Mileage" onPress={() => router.push('/mileage')} />
-          <ListRow icon="airplane-outline" label="Time off" onPress={() => router.push('/time-off')} />
+          <ListRow icon="airplane-outline" label="Holiday & time off" onPress={() => router.push('/time-off')} />
           <ListRow icon="school-outline" label="Training" onPress={() => router.push('/training')} last />
         </Card>
 
@@ -182,22 +174,6 @@ export default function ProfileScreen() {
 
         <SectionTitle>Settings</SectionTitle>
         <Card style={{ paddingVertical: 4 }}>
-          <ListRow
-            icon="alarm-outline"
-            label="Visit reminders"
-            right={
-              <Switch
-                accessibilityLabel="Visit reminders"
-                value={reminders}
-                trackColor={{ true: colors.brand, false: '#cbd5e1' }}
-                thumbColor={colors.white}
-                onValueChange={(on) => {
-                  setReminders(on);
-                  void setRemindersEnabled(on);
-                }}
-              />
-            }
-          />
           <ListRow icon="lock-closed-outline" label="App lock" value="After 5 min away" />
           <ListRow icon="key-outline" label="Change password" onPress={() => router.push('/password')} last />
         </Card>
@@ -216,7 +192,7 @@ export default function ProfileScreen() {
         <View style={{ marginTop: 8 }}>
           <Button title="Sign out" variant="danger" icon="log-out-outline" onPress={signOut} />
         </View>
-        <Text style={{ textAlign: 'center', color: colors.muted, fontSize: 13, marginTop: 4 }}>Primordial Health · Caregiver</Text>
+        <Text style={{ textAlign: 'center', color: colors.muted, fontSize: 13, marginTop: 4 }}>SHC · Staff app</Text>
       </View>
     </ScrollView>
   );

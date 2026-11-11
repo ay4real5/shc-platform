@@ -5,8 +5,7 @@ import { colors, type IconName } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
 
 const TAB_ICONS: Record<string, [IconName, IconName]> = {
-  index: ['today', 'today-outline'],
-  schedule: ['calendar', 'calendar-outline'],
+  index: ['home', 'home-outline'],
   messages: ['chatbubbles', 'chatbubbles-outline'],
   alerts: ['notifications', 'notifications-outline'],
   profile: ['person-circle', 'person-circle-outline'],
@@ -14,7 +13,7 @@ const TAB_ICONS: Record<string, [IconName, IconName]> = {
 
 const UNREAD_POLL_MS = 60_000;
 
-/** The caregiver's main tabs (D-080, D-083): Today, Schedule, Messages, Alerts, Profile. */
+/** The staff app's main tabs: Home, Messages, Alerts, Profile. */
 export default function TabsLayout() {
   const { request } = useAuth();
   const [unread, setUnread] = useState(0);
@@ -47,8 +46,7 @@ export default function TabsLayout() {
         },
       })}
     >
-      <Tabs.Screen name="index" options={{ title: 'Today' }} />
-      <Tabs.Screen name="schedule" options={{ title: 'Schedule' }} />
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="messages" options={{ title: 'Messages', tabBarBadge: unread > 0 ? (unread > 99 ? '99+' : unread) : undefined }} />
       <Tabs.Screen name="alerts" options={{ title: 'Alerts' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />

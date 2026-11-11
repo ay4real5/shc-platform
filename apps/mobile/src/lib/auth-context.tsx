@@ -52,7 +52,7 @@ export function errorMessage(error: unknown): string {
 }
 
 /**
- * Session state for the caregiver app (DECISIONS D-043): signed out → signed in → locked after 5 minutes in the
+ * Session state for the staff app (DECISIONS D-043): signed out → signed in → locked after 5 minutes in the
  * background (or on relaunch) → unlocked with biometrics/device passcode. Admins who must set up 2FA are sent to the
  * web — the app doesn't do 2FA setup.
  */
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data } = await session.request<Me>('/auth/me');
       if (data.is2faRequired && !data.is2faEnabled) {
         await session.signOut();
-        throw new Error('Your role needs two-factor authentication. Set it up in the Primordial Health web dashboard first.');
+        throw new Error('Your role needs two-factor authentication. Set it up in the SHC web dashboard first.');
       }
       setUser(data);
       setMustChangePassword(Boolean(data.mustChangePassword));

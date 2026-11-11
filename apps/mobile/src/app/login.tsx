@@ -35,8 +35,8 @@ export default function LoginScreen() {
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1 }}>
       <GradientHeader style={{ paddingTop: insets.top + 48, paddingBottom: 72, alignItems: 'center' }}>
         <BrandMark size={64} />
-        <Text style={{ color: colors.white, fontSize: 30, fontWeight: '800', marginTop: 16 }}>Primordial Health</Text>
-        <Text style={{ color: '#9aeedd', fontSize: 16, marginTop: 4 }}>Caregiver app</Text>
+        <Text style={{ color: colors.white, fontSize: 30, fontWeight: '800', marginTop: 16 }}>SHC</Text>
+        <Text style={{ color: '#9aeedd', fontSize: 16, marginTop: 4 }}>Staff app</Text>
       </GradientHeader>
       <View style={{ paddingHorizontal: 20, marginTop: -44 }}>
       <Card style={{ padding: 20, gap: 16 }}>
@@ -79,7 +79,7 @@ export default function LoginScreen() {
       <Button title={twoFactorToken ? 'Verify' : 'Sign in'} onPress={() => void submit()} busy={busy} />
       </Card>
       <Text style={{ textAlign: 'center', color: colors.muted, marginTop: 20, fontSize: 13 }}>
-        Forgot your password? Ask your office or use the Primordial Health website.
+        Forgot your password? Ask your office or use the SHC website.
       </Text>
       </View>
       </ScrollView>

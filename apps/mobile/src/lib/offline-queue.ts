@@ -1,5 +1,6 @@
 import { ApiError, OfflineError } from './api';
-import type { ClockBody } from './evv';
+/** Clock-in/out bodies came from Primordial's EVV; no screen queues them in SHC (kept so old queued items still parse). */
+type ClockBody = Record<string, unknown>;
 
 interface Base {
   id: string;

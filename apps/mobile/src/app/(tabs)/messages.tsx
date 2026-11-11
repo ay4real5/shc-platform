@@ -107,11 +107,6 @@ export default function MessagesScreen() {
                     </Text>
                     {item.lastMessageAt && <Text style={{ fontSize: 12, color: colors.muted }}>{shortWhen(item.lastMessageAt)}</Text>}
                   </View>
-                  {item.patient && (
-                    <Text numberOfLines={1} style={{ fontSize: 13, color: colors.brandDark, fontWeight: '600' }}>
-                      About {item.patient.firstName} {item.patient.lastName}
-                    </Text>
-                  )}
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     {last?.isUrgent && <Ionicons name="alert-circle" size={15} color={colors.danger} />}
                     <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, color: colors.muted }}>

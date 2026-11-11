@@ -11,7 +11,7 @@ import { humanize } from '@/lib/visits';
 const TYPES = ['vacation', 'sick', 'personal', 'other'] as const;
 
 /**
- * The caregiver's time-off requests (D-090): ask for days off, see decisions, cancel a request that is pending or
+ * Holiday and time-off requests (D-090): ask for days off, see decisions, cancel a request that is pending or
  * hasn't started yet. Supervisors decide on the dashboard.
  */
 export default function TimeOffScreen() {

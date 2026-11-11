@@ -34,7 +34,7 @@ const ICONS: Record<string, IconName> = {
   system: 'shield-checkmark',
 };
 
-/** Where tapping an alert goes (alerts carry no patient details, so they link to screens, not records). */
+/** Where tapping an alert goes (alerts carry no personal details, so they link to screens, not records). */
 const TARGETS: Record<string, Href> = {
   open_shift: '/open-shifts',
   message_received: '/messages',
@@ -54,7 +54,7 @@ function ago(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-/** The caregiver's alerts (the same inbox as the dashboard bell). Alerts never include patient details. */
+/** This person's alerts (the same inbox as the dashboard bell). Alerts never include personal details. */
 export default function AlertsScreen() {
   const { request } = useAuth();
   const insets = useSafeAreaInsets();
