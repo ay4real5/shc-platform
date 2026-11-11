@@ -6,13 +6,10 @@ import { ThrottlerStorage } from '@nestjs/throttler';
 import { io, type Socket } from 'socket.io-client';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
-import { addDays, toDate, toTime, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
-import { VisitMonitorService } from '../src/modules/jobs/visit-monitor.service.js';
 import { NotificationsService } from '../src/modules/notifications/notifications.service.js';
-import { RecurringService } from '../src/modules/scheduling/recurring.service.js';
 import { setupApp } from '../src/setup-app.js';
 import { loginForTests } from './login-helper.js';
 
@@ -26,18 +23,15 @@ const noThrottle = {
     timeToBlockExpire: 0,
   }),
 };
-const HOME = { latitude: 39.7817, longitude: -89.6501 };
 
-describe.skipIf(!hasDb)('Real-time and background jobs (e2e)', () => {
+describe.skipIf(!hasDb)('Real-time (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let baseUrl: string;
   let agencyId: string;
-  let patientId: string;
   let supervisor: { id: string; token: string };
   const sockets: Socket[] = [];
   const http = () => request(app.getHttpServer());
-  const today = utcTodayString();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
@@ -54,19 +48,6 @@ describe.skipIf(!hasDb)('Real-time and background jobs (e2e)', () => {
       })
     ).id;
     supervisor = await seedUser('supervisor');
-    patientId = (
-      await prisma.patient.create({
-        data: {
-          agencyId,
-          firstName: 'Rae',
-          lastName: `Live-${randomUUID().slice(0, 6)}`,
-          dateOfBirth: new Date('1940-01-01T00:00:00Z'),
-          status: 'active',
-          admissionDate: new Date('2025-01-01T00:00:00Z'),
-          ...HOME,
-        },
-      })
-    ).id;
   });
 
   afterEach(() => {
@@ -74,10 +55,6 @@ describe.skipIf(!hasDb)('Real-time and background jobs (e2e)', () => {
   });
 
   afterAll(async () => {
-    await prisma.evvRecord.deleteMany({ where: { agencyId } });
-    await prisma.visit.deleteMany({ where: { agencyId } });
-    await prisma.recurrenceRule.deleteMany({ where: { agencyId } });
-    await prisma.patient.deleteMany({ where: { agencyId } });
     await prisma.notification.deleteMany({ where: { agencyId } });
     await purgeAuditLogs(prisma, agencyId);
     await prisma.user.deleteMany({ where: { agencyId } });
@@ -109,22 +86,6 @@ describe.skipIf(!hasDb)('Real-time and background jobs (e2e)', () => {
       data: { userId: user.id, agencyId, discipline: 'HHA' },
     });
     return { ...user, staffId: staff.id };
-  }
-
-  async function seedVisit(staffId: string | null, start: string, end: string, date = today) {
-    return (
-      await prisma.visit.create({
-        data: {
-          agencyId,
-          patientId,
-          staffId,
-          visitType: 'home_health_aide',
-          scheduledDate: toDate(date)!,
-          scheduledStart: toTime(start),
-          scheduledEnd: toTime(end),
-        },
-      })
-    ).id;
   }
 
   /** Connects and resolves once the server has accepted (or rejected) the socket. */
@@ -184,158 +145,6 @@ describe.skipIf(!hasDb)('Real-time and background jobs (e2e)', () => {
       expect(await received).toMatchObject({ title: 'Hello', type: 'system', isRead: false });
       await new Promise((r) => setTimeout(r, 300));
       expect(bGotOne).toBe(false);
-    });
-
-    it('pushes clock-in (and a geofence violation) to the agency live monitor', async () => {
-      const cg = await caregiver();
-      const now = new Date();
-      const hhmm = (d: Date) => d.toISOString().slice(11, 16);
-      // A visit around now, on the visit's UTC date (the agency is UTC).
-      const start = new Date(now.getTime() - 5 * 60_000);
-      const end = new Date(
-        Math.min(
-          now.getTime() + 55 * 60_000,
-          Date.parse(`${start.toISOString().slice(0, 10)}T23:59:00Z`),
-        ),
-      );
-      const visitId = await seedVisit(
-        cg.staffId,
-        hhmm(start),
-        hhmm(end),
-        start.toISOString().slice(0, 10),
-      );
-
-      const monitor = (await connect('/live-monitor', supervisor.token)).socket;
-      const clockIn = next<Record<string, unknown>>(monitor, 'visit:clock-in');
-      const violation = next<Record<string, unknown>>(monitor, 'visit:geofence-violation');
-      await http()
-        .post('/api/v1/evv/clock-in')
-        .set({ Authorization: `Bearer ${cg.token}` })
-        .send({
-          visitId,
-          latitude: HOME.latitude + 0.01,
-          longitude: HOME.longitude,
-          timestamp: now.toISOString(),
-        })
-        .expect(200);
-      expect(await clockIn).toMatchObject({
-        visitId,
-        status: 'in_progress',
-        withinGeofence: false,
-        staffName: 'Rio home_health_aide',
-      });
-      expect(await violation).toMatchObject({ visitId, stage: 'clock-in' });
-
-      const live = await http()
-        .get('/api/v1/evv/live')
-        .set({ Authorization: `Bearer ${supervisor.token}` })
-        .expect(200);
-      expect(live.body.data.active.map((a: { visitId: string }) => a.visitId)).toContain(visitId);
-      expect(
-        live.body.data.active.find((a: { visitId: string }) => a.visitId === visitId),
-      ).toMatchObject({
-        home: HOME,
-        withinGeofence: false,
-      });
-      await http()
-        .get('/api/v1/evv/live')
-        .set({ Authorization: `Bearer ${cg.token}` })
-        .expect(403);
-    });
-  });
-
-  describe('visit monitor job', () => {
-    it('late at 15 min, no-show at 30 min (supervisors told), missed 2 h after the end — each once', async () => {
-      const lateCg = await caregiver();
-      const noShowCg = await caregiver();
-      const onTimeCg = await caregiver();
-      // A fixed "now" of 12:00 UTC today; the agency is UTC.
-      const now = new Date(`${today}T12:00:00Z`);
-      const late = await seedVisit(lateCg.staffId, '11:40', '12:40');
-      const noShow = await seedVisit(noShowCg.staffId, '11:25', '12:25');
-      const notYet = await seedVisit(onTimeCg.staffId, '11:50', '12:50');
-      const missed = await seedVisit(lateCg.staffId, '08:00', '09:00');
-      const unassignedMissed = await seedVisit(null, '07:00', '08:00');
-      const offer = await prisma.openShift.create({
-        data: { agencyId, visitId: unassignedMissed, createdById: supervisor.id },
-      });
-
-      const monitor = (await connect('/live-monitor', supervisor.token)).socket;
-      const events: string[] = [];
-      monitor.onAny((event: string, payload: { visitId: string }) =>
-        events.push(`${event}:${payload.visitId}`),
-      );
-
-      const jobs = app.get(VisitMonitorService);
-      const first = await jobs.run(now, [agencyId]);
-      expect(first.late).toEqual([late]);
-      expect(first.noShow).toEqual([noShow]);
-      expect(first.missed.sort()).toEqual([missed, unassignedMissed].sort());
-      expect(first.late).not.toContain(notYet);
-
-      const visits = await prisma.visit.findMany({
-        where: { id: { in: [missed, unassignedMissed, noShow] } },
-      });
-      const byId = new Map(visits.map((v) => [v.id, v]));
-      expect(byId.get(missed)).toMatchObject({ status: 'missed', missedReason: 'No clock-in' });
-      expect(byId.get(unassignedMissed)).toMatchObject({
-        status: 'missed',
-        missedReason: 'No caregiver assigned',
-      });
-      expect(byId.get(noShow)!.noShowAlertedAt).toBeTruthy();
-      expect((await prisma.openShift.findUniqueOrThrow({ where: { id: offer.id } })).status).toBe(
-        'cancelled',
-      );
-
-      expect(
-        await prisma.notification.count({ where: { userId: lateCg.id, type: 'late_arrival' } }),
-      ).toBe(1);
-      expect(
-        await prisma.notification.count({ where: { userId: noShowCg.id, type: 'missed_visit' } }),
-      ).toBe(1);
-      expect(
-        await prisma.notification.count({ where: { userId: supervisor.id, type: 'missed_visit' } }),
-      ).toBe(1);
-
-      // Running again (or on another instance) changes nothing.
-      expect(await jobs.run(now, [agencyId])).toEqual({ late: [], noShow: [], missed: [] });
-      // Later, the late visit becomes a no-show — alerted once more, as a no-show.
-      const later = await jobs.run(new Date(now.getTime() + 20 * 60_000), [agencyId]);
-      expect(later.noShow).toContain(late);
-
-      await new Promise((r) => setTimeout(r, 300));
-      expect(events).toEqual(
-        expect.arrayContaining([
-          `visit:late:${late}`,
-          `visit:noshow:${noShow}`,
-          `visit:missed:${missed}`,
-        ]),
-      );
-    });
-
-    it('the nightly extension books active recurring series ahead, idempotently', async () => {
-      const cg = await caregiver();
-      const rule = await prisma.recurrenceRule.create({
-        data: {
-          agencyId,
-          patientId,
-          staffId: cg.staffId,
-          visitType: 'home_health_aide',
-          frequency: 'weekly',
-          daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
-          startTime: toTime('06:00'),
-          endTime: toTime('06:30'),
-          startDate: toDate(addDays(today, 1))!,
-        },
-      });
-      const recurring = app.get(RecurringService);
-      const first = await recurring.extendAllActive([agencyId]);
-      expect(first.created).toBeGreaterThanOrEqual(20);
-      expect(await prisma.visit.count({ where: { recurrenceRuleId: rule.id } })).toBe(
-        first.created,
-      );
-      const again = await recurring.extendAllActive([agencyId]);
-      expect(again.created).toBe(0);
     });
   });
 });

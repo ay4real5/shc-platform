@@ -7,7 +7,6 @@ import {
   HttpStatus,
   Module,
   Param,
-  Patch,
   ParseUUIDPipe,
   Post,
   Query,
@@ -22,14 +21,12 @@ import type { Request } from 'express';
 import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
-import { PatientsModule } from '../patients/patients.module.js';
 import { DatabaseDocumentStorage, DocumentStorage } from './document-storage.js';
 import { DocumentsService, type UploadedFile as File } from './documents.service.js';
 import {
   DeleteDocumentDto,
   ListDocumentsQueryDto,
   SignDocumentDto,
-  UpdateDocumentDto,
   UploadDocumentDto,
 } from './dto/documents.dto.js';
 import { MAX_DOCUMENT_BYTES } from './file-type.js';
@@ -105,14 +102,6 @@ export class DocumentsController {
     });
   }
 
-  /** Show or hide it in the patient portal (D-058). */
-  @Permissions('documents:create')
-  @Audit({ action: 'UPDATE_DOCUMENT_SHARING', resourceType: 'documents' })
-  @Patch(':id')
-  update(@CurrentUser() caller: AuthUser, @Param('id', uuid()) id: string, @Body() dto: UpdateDocumentDto) {
-    return this.documents.setSharing(caller, id, dto.sharedWithPatient);
-  }
-
   /** Soft delete with a reason; the record and file are kept. */
   @Permissions('documents:delete')
   @Audit({ action: 'DELETE_DOCUMENT', resourceType: 'documents' })
@@ -128,7 +117,6 @@ export class DocumentsController {
 }
 
 @Module({
-  imports: [PatientsModule],
   controllers: [DocumentsController],
   providers: [DocumentsService, { provide: DocumentStorage, useClass: DatabaseDocumentStorage }],
   exports: [DocumentsService],

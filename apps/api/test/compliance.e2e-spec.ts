@@ -25,12 +25,10 @@ describe.skipIf(!hasDb)('Compliance (e2e)', () => {
   let agencyId: string;
   let admin: Auth;
   let supervisor: Auth;
-  let supervisorId: string;
   let aide: Auth;
   let aideUserId: string;
   let office: Auth;
   let officeId: string;
-  let patientId: string;
   const http = () => request(app.getHttpServer());
   const today = utcTodayString();
 
@@ -44,20 +42,13 @@ describe.skipIf(!hasDb)('Compliance (e2e)', () => {
     prisma = app.get(PrismaService);
     agencyId = (await prisma.agency.create({ data: { name: `Compliance Test ${randomUUID()}`, timezone: 'UTC' } })).id;
     ({ auth: admin } = await seedUser('agency_admin'));
-    ({ auth: supervisor, id: supervisorId } = await seedUser('supervisor'));
+    ({ auth: supervisor } = await seedUser('supervisor'));
     ({ auth: office, id: officeId } = await seedUser('office_staff'));
     ({ auth: aide, id: aideUserId } = await seedUser('home_health_aide', true));
-    patientId = (
-      await prisma.patient.create({
-        data: { agencyId, firstName: 'Ida', lastName: 'Incident', dateOfBirth: new Date('1935-01-01T00:00:00Z'), status: 'active' },
-      })
-    ).id;
   });
 
   afterAll(async () => {
-    await prisma.incidentReport.deleteMany({ where: { agencyId } });
     await prisma.notification.deleteMany({ where: { agencyId } });
-    await prisma.patient.deleteMany({ where: { agencyId } });
     await purgeAuditLogs(prisma, agencyId);
     await prisma.user.deleteMany({ where: { agencyId } }); // staff profiles, credentials cascade
     await prisma.agency.delete({ where: { id: agencyId } });
@@ -82,44 +73,11 @@ describe.skipIf(!hasDb)('Compliance (e2e)', () => {
     return { id: user.id, auth: { Authorization: `Bearer ${await loginForTests(http(), email, PASSWORD)}` } };
   }
 
-  let incidentId: string;
-
-  it('any caregiver can report an incident; serious ones alert compliance staff without PHI', async () => {
-    const res = await http()
-      .post('/api/v1/compliance/incidents')
-      .set(aide)
-      .send({ incidentType: 'fall', severity: 'high', incidentDate: today, incidentTime: '10:15', description: 'Client slipped in the bathroom, no visible injury.', followUpRequired: true })
-      .expect(201);
-    incidentId = res.body.data.id;
-    expect(res.body.data).toMatchObject({ status: 'open', severity: 'high', incidentTime: '10:15', reportedBy: { id: aideUserId } });
-    const note = await prisma.notification.findFirstOrThrow({ where: { userId: supervisorId, type: 'system' } });
-    expect(note.title).toBe('New high incident report');
-    expect(`${note.title} ${note.body}`).not.toMatch(/bathroom|slipped/);
-
-    await http().post('/api/v1/compliance/incidents').set(aide).send({ incidentType: 'fall', severity: 'low', incidentDate: addDays(today, 2), description: 'x' }).expect(400);
-    await http().post('/api/v1/compliance/incidents').set(aide).send({ incidentType: 'alien', severity: 'low', incidentDate: today, description: 'x' }).expect(400);
-    // An aide can report, not browse incidents; nor report about a patient they don't care for.
-    await http().get('/api/v1/compliance/incidents').set(aide).expect(403);
-    await http().post('/api/v1/compliance/incidents').set(aide).send({ incidentType: 'complaint', severity: 'low', incidentDate: today, description: 'x', patientId }).expect(404);
-  });
-
-  it('supervisors investigate, resolve and close incidents; closed ones are final', async () => {
-    const list = (await http().get('/api/v1/compliance/incidents?status=open').set(supervisor).expect(200)).body.data;
-    expect(list.map((i: { id: string }) => i.id)).toContain(incidentId);
-    await http().patch(`/api/v1/compliance/incidents/${incidentId}`).set(supervisor).send({ status: 'investigating', actionsTaken: 'Called family; PT evaluation ordered.' }).expect(200);
-    const resolved = (await http().patch(`/api/v1/compliance/incidents/${incidentId}`).set(supervisor).send({ status: 'resolved', followUpNotes: 'Grab bars installed.' }).expect(200)).body.data;
-    expect(resolved).toMatchObject({ status: 'resolved', resolvedBy: { id: supervisorId }, followUpNotes: 'Grab bars installed.' });
-    expect(resolved.resolvedAt).toBeTruthy();
-    await http().patch(`/api/v1/compliance/incidents/${incidentId}`).set(supervisor).send({ status: 'closed' }).expect(200);
-    await http().patch(`/api/v1/compliance/incidents/${incidentId}`).set(supervisor).send({ status: 'open' }).expect(409);
-  });
-
   it('the dashboard counts what needs attention', async () => {
-    await http().post('/api/v1/compliance/incidents').set(office).send({ incidentType: 'complaint', severity: 'critical', incidentDate: today, description: 'Family complaint about a late visit.', patientId }).expect(201);
     const d = (await http().get('/api/v1/compliance/dashboard').set(supervisor).expect(200)).body.data;
-    expect(d.incidents).toEqual({ open: 1, openHighOrCritical: 1, last30Days: 2 });
+    expect(d.credentials).toEqual({ expired: 0, expiringWithin30Days: 0 });
     expect(d.security.adminsWithout2fa).toBe(0); // the test admin set up 2FA at sign-in
-    await http().get('/api/v1/compliance/dashboard').set(office).expect(403);
+    await http().get('/api/v1/compliance/dashboard').set(aide).expect(403);
   });
 
   it('credential alerts go out once per stage and start again after renewal', async () => {
@@ -144,19 +102,15 @@ describe.skipIf(!hasDb)('Compliance (e2e)', () => {
     expect(await job.run(agencyId)).toBe(1);
   });
 
-  it('admins search the audit log and see the HIPAA checklist', async () => {
-    const res = await http().get(`/api/v1/compliance/audit-logs?action=REPORT_INCIDENT&from=${today}&to=${today}`).set(admin).expect(200);
-    // Refused attempts are audited too; two reports succeeded.
-    const outcomes = res.body.data.map((e: { details: { outcome: string } }) => e.details.outcome);
-    expect(outcomes.filter((o: string) => o === 'success')).toHaveLength(2);
-    expect(outcomes.filter((o: string) => o === 'error')).toHaveLength(3);
-    expect(res.body.data[0]).toMatchObject({ action: 'REPORT_INCIDENT', resourceType: 'incident_reports', user: { firstName: 'Cora' } });
+  it('admins search the audit log and see the data protection checklist', async () => {
+    const res = await http().get(`/api/v1/compliance/audit-logs?action=UPDATE_STAFF_CREDENTIAL&from=${today}&to=${today}`).set(admin).expect(200);
+    expect(res.body.data[0]).toMatchObject({ action: 'UPDATE_STAFF_CREDENTIAL', user: { firstName: 'Cora' } });
     await http().get('/api/v1/compliance/audit-logs?action=bad action').set(admin).expect(400);
     await http().get('/api/v1/compliance/audit-logs').set(supervisor).expect(403);
 
-    const checklist = (await http().get('/api/v1/compliance/hipaa-checklist').set(admin).expect(200)).body.data;
+    const checklist = (await http().get('/api/v1/compliance/security-checklist').set(admin).expect(200)).body.data;
     expect(checklist.find((c: { item: string }) => c.item.startsWith('Two-factor'))).toMatchObject({ ok: true });
-    expect(checklist.find((c: { item: string }) => c.item.startsWith('Business Associate'))).toMatchObject({ ok: false });
+    expect(checklist.find((c: { item: string }) => c.item.startsWith('ICO registration'))).toMatchObject({ ok: false });
   });
 
   /** Everyone with staff:update gets credential alerts: office staff, supervisor, admin. */

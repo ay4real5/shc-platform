@@ -8,12 +8,12 @@ import { addDays, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
+import { NotificationsService } from '../src/modules/notifications/notifications.service.js';
 import { setupApp } from '../src/setup-app.js';
 import { loginForTests } from './login-helper.js';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const PASSWORD = 'Correct-Horse-9!';
-const PATIENT_LAST_NAME = `Privateperson${randomUUID().slice(0, 6)}`;
 const noThrottle = {
   increment: async () => ({ totalHits: 1, timeToExpire: 60, isBlocked: false, timeToBlockExpire: 0 }),
 };
@@ -25,7 +25,6 @@ describe.skipIf(!hasDb)('Notifications (e2e)', () => {
   let agencyId: string;
   let office: { id: string; auth: Auth };
   let admin: { id: string; auth: Auth };
-  let patientId: string;
   const http = () => request(app.getHttpServer());
   const day = addDays(utcTodayString(), 30);
 
@@ -40,17 +39,10 @@ describe.skipIf(!hasDb)('Notifications (e2e)', () => {
     agencyId = (await prisma.agency.create({ data: { name: `Notifications Test ${randomUUID()}` } })).id;
     office = await seedUser('office_staff');
     admin = await seedUser('agency_admin');
-    patientId = (
-      await prisma.patient.create({
-        data: { agencyId, firstName: 'Secret', lastName: PATIENT_LAST_NAME, dateOfBirth: new Date('1950-01-01T00:00:00Z'), status: 'active' },
-      })
-    ).id;
   });
 
   afterAll(async () => {
     await prisma.notification.deleteMany({ where: { agencyId } });
-    await prisma.visit.deleteMany({ where: { agencyId } });
-    await prisma.patient.deleteMany({ where: { agencyId } });
     await purgeAuditLogs(prisma, agencyId);
     await prisma.user.deleteMany({ where: { agencyId } });
     await prisma.agency.delete({ where: { id: agencyId } });
@@ -82,43 +74,9 @@ describe.skipIf(!hasDb)('Notifications (e2e)', () => {
   }
 
   const inbox = async (who: Auth) => (await http().get('/api/v1/notifications').set(who).expect(200)).body.data;
-  const book = (staffId: string, start: string) =>
-    http()
-      .post('/api/v1/schedule/visits')
-      .set(office.auth)
-      .send({ patientId, staffId, visitType: 'home_health_aide', scheduledDate: day, scheduledStart: start, scheduledEnd: `${Number(start.slice(0, 2)) + 1}:00`.padStart(5, '0') })
-      .expect(201);
-
-  it('tells a caregiver about a new visit — with no patient details', async () => {
-    const cg = await caregiver();
-    const visit = (await book(cg.staffId, '09:00')).body.data;
-
-    const [note] = await inbox(cg.auth);
-    expect(note).toMatchObject({
-      type: 'shift_assigned',
-      title: 'New visit assigned',
-      body: `You have a visit on ${day} at 09:00. Open the app for details.`,
-      data: { visitId: visit.id },
-      isRead: false,
-    });
-    expect(JSON.stringify(note)).not.toContain(PATIENT_LAST_NAME);
-    expect(JSON.stringify(note)).not.toContain('Secret');
-  });
-
-  it('notifies both caregivers on reassignment, and the caregiver on reschedule and cancel', async () => {
-    const a = await caregiver();
-    const b = await caregiver();
-    const visit = (await book(a.staffId, '11:00')).body.data;
-
-    await http().patch(`/api/v1/schedule/visits/${visit.id}`).set(office.auth).send({ staffId: b.staffId }).expect(200);
-    expect((await inbox(a.auth)).map((n: { type: string }) => n.type)).toEqual(['shift_unassigned', 'shift_assigned']);
-    expect((await inbox(b.auth)).map((n: { type: string }) => n.type)).toEqual(['shift_assigned']);
-
-    await http().patch(`/api/v1/schedule/visits/${visit.id}`).set(office.auth).send({ scheduledStart: '12:00', scheduledEnd: '13:00' }).expect(200);
-    await http().patch(`/api/v1/schedule/visits/${visit.id}`).set(office.auth).send({ notes: 'Bring gloves' }).expect(200); // no time change → no notification
-    await http().post(`/api/v1/schedule/visits/${visit.id}/cancel`).set(office.auth).send({ reason: 'test' }).expect(200);
-    expect((await inbox(b.auth)).map((n: { type: string }) => n.type)).toEqual(['shift_cancelled', 'shift_updated', 'shift_assigned']);
-  });
+  /** A notification straight from the service, as any feature would send one. */
+  const send = (userId: string, actorUserId?: string) =>
+    app.get(NotificationsService).notify({ agencyId, userIds: [userId], type: 'system', title: 'Test notice', body: 'Open the app for details.', ...(actorUserId ? { actorUserId } : {}) });
 
   it('tells the requester when time off is decided', async () => {
     const cg = await caregiver();
@@ -137,8 +95,8 @@ describe.skipIf(!hasDb)('Notifications (e2e)', () => {
 
   it('marks one or all as read, counts unread, and keeps inboxes private', async () => {
     const cg = await caregiver();
-    await book(cg.staffId, '14:00');
-    await book(cg.staffId, '15:00');
+    await send(cg.id);
+    await send(cg.id);
 
     expect((await http().get('/api/v1/notifications/unread-count').set(cg.auth).expect(200)).body.data).toEqual({ unread: 2 });
     const [first] = await inbox(cg.auth);
@@ -158,7 +116,9 @@ describe.skipIf(!hasDb)('Notifications (e2e)', () => {
   it("doesn't notify people about their own actions", async () => {
     const before = await prisma.notification.count({ where: { userId: office.id } });
     const cg = await caregiver();
-    await book(cg.staffId, '16:00'); // office books; only the caregiver is told
+    await send(office.id, office.id); // the actor is never told about their own action
+    await send(cg.id, office.id);
     expect(await prisma.notification.count({ where: { userId: office.id } })).toBe(before);
+    expect(await prisma.notification.count({ where: { userId: cg.id } })).toBe(1);
   });
 });

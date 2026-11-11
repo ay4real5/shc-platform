@@ -1,5 +1,5 @@
 /**
- * `npm run db:seed -w @alora/api` (after `npm run build`). Wipes and rebuilds the FAKE demo agency and prints
+ * `npm run db:seed -w @alora/api` (after `npm run build`). Wipes and rebuilds the FAKE demo company and prints
  * its logins. Refuses to run when APP_ENV=production. See demo-seed.ts and DECISIONS D-033.
  */
 import { resolve } from 'node:path';
@@ -37,13 +37,7 @@ try {
     encryptMessage: keyring
       ? (text, messageId) => new Uint8Array(encryptPhiBytes(Buffer.from(text, 'utf8'), messageContentContext(messageId), keyring))
       : undefined,
-    encryptSsn: keyring
-      ? (ssn, kind) =>
-          new Uint8Array(encryptPhi(ssn, kind === 'patient' ? PhiContext.PatientSsn : PhiContext.StaffSsn, keyring))
-      : undefined,
   });
-  // Reports read a materialized view (D-065); refresh it so the demo's numbers show straight away.
-  await prisma.$executeRawUnsafe('REFRESH MATERIALIZED VIEW mv_daily_visit_summary');
   console.log('\nDemo agency seeded (all data is FAKE).\n');
   console.table(summary.counts);
   console.log(`Password for every demo login: ${summary.password}\n`);

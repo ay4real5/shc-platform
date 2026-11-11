@@ -43,8 +43,6 @@ describe.skipIf(!hasDb)('Time off (e2e)', () => {
 
   afterAll(async () => {
     for (const id of [agencyId, otherAgencyId]) {
-      await prisma.visit.deleteMany({ where: { agencyId: id } });
-      await prisma.patient.deleteMany({ where: { agencyId: id } });
       await prisma.notification.deleteMany({ where: { agencyId: id } });
       await purgeAuditLogs(prisma, id);
       await prisma.user.deleteMany({ where: { agencyId: id } }); // staff profiles and time off cascade
@@ -90,35 +88,20 @@ describe.skipIf(!hasDb)('Time off (e2e)', () => {
     expect((await http().get('/api/v1/time-off').set(outsider.auth).expect(200)).body.data).toEqual([]);
   });
 
-  it('supervisors see pending requests with booked visits, decide them, and the requester is told', async () => {
-    const patient = await prisma.patient.create({
-      data: { agencyId, firstName: 'Pat', lastName: 'TimeOff', dateOfBirth: new Date('1940-01-01T00:00:00Z'), status: 'active' },
-    });
-    await prisma.visit.create({
-      data: {
-        agencyId,
-        patientId: patient.id,
-        staffId: nurse.staffId!,
-        visitType: 'skilled_nursing',
-        scheduledDate: toDate(day(10))!,
-        scheduledStart: toTime('09:00'),
-        scheduledEnd: toTime('10:00'),
-      },
-    });
+  it('supervisors see pending requests, decide them, and the requester is told', async () => {
     const req = (await ask(nurse, { startDate: day(10), endDate: day(10), type: 'sick' }).expect(201)).body.data;
 
     await http().patch(`/api/v1/time-off/${req.id}`).set(aide.auth).send({ status: 'approved' }).expect(403); // no visits:approve
     await http().patch(`/api/v1/time-off/${req.id}`).set(outsider.auth).send({ status: 'approved' }).expect(404);
     const pending = (await http().get('/api/v1/time-off?status=pending').set(supervisor.auth).expect(200)).body.data;
-    expect(pending.find((t: { id: string }) => t.id === req.id)).toMatchObject({ bookedVisits: 1 });
+    expect(pending.find((t: { id: string }) => t.id === req.id)).toMatchObject({ status: 'pending' });
 
     const decided = (await http().patch(`/api/v1/time-off/${req.id}`).set(supervisor.auth).send({ status: 'approved' }).expect(200)).body.data;
-    expect(decided).toMatchObject({ status: 'approved', decidedBy: { id: supervisor.id }, bookedVisits: 1 });
+    expect(decided).toMatchObject({ status: 'approved', decidedBy: { id: supervisor.id } });
     await http().patch(`/api/v1/time-off/${req.id}`).set(supervisor.auth).send({ status: 'denied' }).expect(409); // already decided
 
     const note = await prisma.notification.findFirstOrThrow({ where: { userId: nurse.id, type: 'time_off_decided' } });
     expect(note.title).toBe('Time off approved');
-    expect(`${note.title} ${note.body}`).not.toContain('Pat'); // dates only, never patient details
   });
 
   it('nobody decides their own request; requesters can withdraw until it starts', async () => {

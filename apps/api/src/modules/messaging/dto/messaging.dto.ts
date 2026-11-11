@@ -36,7 +36,7 @@ export class SendMessageDto {
   documentId?: string;
 }
 
-/** Start a conversation with its first message. One other person and no subject/patient reuses the direct thread. */
+/** Start a conversation with its first message. One other person and no subject reuses the direct thread. */
 export class CreateConversationDto extends SendMessageDto {
   /** The other people (the caller is added automatically). */
   @IsArray()
@@ -50,11 +50,6 @@ export class CreateConversationDto extends SendMessageDto {
   @IsString()
   @MaxLength(255)
   subject?: string;
-
-  /** The patient this is about (the caller must have access to them). */
-  @IsOptional()
-  @IsUUID()
-  patientId?: string;
 }
 
 export class ListMessagesQueryDto {
@@ -72,10 +67,6 @@ export class ListMessagesQueryDto {
 }
 
 export class ListConversationsQueryDto {
-  @IsOptional()
-  @IsUUID()
-  patientId?: string;
-
   @IsOptional()
   @Type(() => Number)
   @IsInt()

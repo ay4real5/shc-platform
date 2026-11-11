@@ -22,7 +22,6 @@ import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import { DocumentsModule } from '../documents/documents.module.js';
 import type { UploadedFile as File } from '../documents/documents.service.js';
 import { MAX_DOCUMENT_BYTES } from '../documents/file-type.js';
-import { PatientsModule } from '../patients/patients.module.js';
 import {
   AddParticipantsDto,
   ContactsQueryDto,
@@ -122,7 +121,7 @@ export class MessagingController {
 }
 
 @Module({
-  imports: [PatientsModule, DocumentsModule],
+  imports: [DocumentsModule],
   controllers: [MessagingController],
   providers: [MessagingService],
   exports: [MessagingService],

@@ -11,7 +11,6 @@ import type { AuthUser } from '../../common/decorators/current-user.decorator.js
 import { Paginated } from '../../common/dto/pagination.dto.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
-import { PatientsService } from '../patients/patients.service.js';
 import { DocumentStorage } from './document-storage.js';
 import type { ListDocumentsQueryDto, UploadDocumentDto } from './dto/documents.dto.js';
 import {
@@ -24,7 +23,6 @@ import {
 
 const INCLUDE = {
   uploadedBy: { select: { id: true, firstName: true, lastName: true } },
-  patient: { select: { id: true, firstName: true, lastName: true } },
   nextVersion: { select: { id: true } },
 } satisfies Prisma.DocumentInclude;
 type DocumentRow = Prisma.DocumentGetPayload<{ include: typeof INCLUDE }>;
@@ -37,15 +35,12 @@ export interface DocumentView {
   fileName: string;
   fileSize: number | null;
   mimeType: string | null;
-  patient: { id: string; firstName: string; lastName: string } | null;
   staffId: string | null;
-  visitId: string | null;
   version: number;
   previousVersionId: string | null;
   /** A newer version exists. */
   superseded: boolean;
   isSigned: boolean;
-  sharedWithPatient: boolean;
   signature: { name: string; signedAt: string; signedById: string } | null;
   uploadedBy: { id: string; firstName: string; lastName: string };
   deleted: boolean;
@@ -69,14 +64,13 @@ export const MESSAGE_PHOTO = 'message_photo';
 /**
  * Documents (DESIGN.md §6.9, DECISIONS D-056): upload, list, download, versions, e-sign, soft delete. Files are
  * recognised by content (PDF, PNG, JPEG, DOCX; 10 MB), stored through `DocumentStorage` (encrypted), and streamed back
- * through the API so every download is audited. A document tied to a patient follows patient access.
+ * through the API so every download is audited. A document is the agency's, optionally about one staff member.
  */
 @Injectable()
 export class DocumentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: DocumentStorage,
-    private readonly patients: PatientsService,
   ) {}
 
   async upload(
@@ -93,34 +87,21 @@ export class DocumentsService {
         'Only PDF, PNG, JPEG and Word (.docx) files are accepted',
       );
 
-    let links = {
-      patientId: dto.patientId ?? null,
-      staffId: dto.staffId ?? null,
-      visitId: dto.visitId ?? null,
-    };
+    let links = { staffId: dto.staffId ?? null };
     let type: string = dto.documentType;
     let version = 1;
     let previousVersionId: string | null = null;
-    let sharedWithPatient = dto.sharedWithPatient ?? false;
     if (dto.replacesDocumentId) {
       const previous = await this.find(caller, dto.replacesDocumentId);
       if (previous.deletedAt) throw new ConflictException('That document was deleted');
       if (previous.nextVersion)
         throw new ConflictException('A newer version already exists — replace that one');
-      links = {
-        patientId: previous.patientId,
-        staffId: previous.staffId,
-        visitId: previous.visitId,
-      };
+      links = { staffId: previous.staffId };
       type = previous.documentType;
-      sharedWithPatient = dto.sharedWithPatient ?? previous.sharedWithPatient;
       version = previous.version + 1;
       previousVersionId = previous.id;
     } else {
       await this.assertLinks(caller, links);
-    }
-    if (sharedWithPatient && !links.patientId) {
-      throw new BadRequestException('Only a document about a patient can be shared with the patient');
     }
 
     const id = (
@@ -144,7 +125,6 @@ export class DocumentsService {
             contentHash: sha256(file.buffer),
             version,
             previousVersionId,
-            sharedWithPatient,
             tags: [],
           },
         });
@@ -204,17 +184,12 @@ export class DocumentsService {
   }
 
   async list(caller: AuthUser, query: ListDocumentsQueryDto): Promise<Paginated<DocumentView>> {
-    if (query.patientId) await this.patients.assertAccessible(caller, query.patientId);
     const where: Prisma.DocumentWhereInput = {
       agencyId: caller.agencyId,
       nextVersion: null, // latest versions only
       documentType: query.documentType ?? { not: MESSAGE_PHOTO },
       ...(query.includeDeleted ? {} : { deletedAt: null }),
-      ...(query.patientId ? { patientId: query.patientId } : {}),
       ...(query.staffId ? { staffId: query.staffId } : {}),
-      ...(query.visitId ? { visitId: query.visitId } : {}),
-      // Documents about patients the caller can't see are invisible.
-      OR: [{ patientId: null }, { patient: await this.patients.accessibleWhere(caller) }],
     };
     const [rows, total] = await Promise.all([
       this.prisma.document.findMany({
@@ -300,43 +275,6 @@ export class DocumentsService {
     return this.get(caller, id);
   }
 
-  /** Show or hide the document in the patient portal (D-058). */
-  async setSharing(caller: AuthUser, id: string, sharedWithPatient: boolean): Promise<DocumentView> {
-    const doc = await this.find(caller, id);
-    if (doc.deletedAt) throw new NotFoundException('Document not found');
-    if (sharedWithPatient && !doc.patientId) {
-      throw new BadRequestException('Only a document about a patient can be shared with the patient');
-    }
-    await this.prisma.document.update({ where: { id }, data: { sharedWithPatient } });
-    return this.get(caller, id);
-  }
-
-  /**
-   * The portal's view (D-058): newest versions of a patient's documents that staff shared, not deleted. The caller
-   * (PortalService) has already checked that the portal user belongs to this patient.
-   */
-  async listSharedWithPatient(agencyId: string, patientId: string) {
-    const rows = await this.prisma.document.findMany({
-      where: { agencyId, patientId, sharedWithPatient: true, deletedAt: null, nextVersion: null },
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, documentType: true, title: true, fileName: true, fileSize: true, mimeType: true, isSigned: true, createdAt: true },
-    });
-    return rows;
-  }
-
-  /** Download for the portal — only a shared, current, not-deleted document of that patient. */
-  async downloadSharedWithPatient(agencyId: string, patientId: string, id: string) {
-    const doc = await this.prisma.document.findFirst({
-      where: { id, agencyId, patientId, sharedWithPatient: true, deletedAt: null, nextVersion: null },
-    });
-    if (!doc) throw new NotFoundException('Document not found');
-    const content = await this.storage.load(doc.id);
-    if (doc.contentHash && sha256(content) !== doc.contentHash) {
-      throw new ConflictException('The stored file does not match what was uploaded');
-    }
-    return { fileName: doc.fileName, mimeType: doc.mimeType ?? 'application/octet-stream', content };
-  }
-
   /** Soft delete with a reason — records are retained (HIPAA/state retention); the file stays stored. */
   async remove(caller: AuthUser, id: string, reason: string): Promise<void> {
     const doc = await this.find(caller, id);
@@ -356,7 +294,6 @@ export class DocumentsService {
         id,
         agencyId: caller.agencyId,
         documentType: { not: MESSAGE_PHOTO },
-        OR: [{ patientId: null }, { patient: await this.patients.accessibleWhere(caller) }],
       },
       include: INCLUDE,
     });
@@ -364,26 +301,10 @@ export class DocumentsService {
     return doc;
   }
 
-  private async assertLinks(
-    caller: AuthUser,
-    links: { patientId: string | null; staffId: string | null; visitId: string | null },
-  ): Promise<void> {
-    if (links.patientId) await this.patients.assertAccessible(caller, links.patientId);
+  private async assertLinks(caller: AuthUser, links: { staffId: string | null }): Promise<void> {
     if (links.staffId) {
-      const staff = await this.prisma.staffProfile.count({
-        where: { id: links.staffId, agencyId: caller.agencyId },
-      });
-      if (!staff)
-        throw new BadRequestException('staffId does not match a staff member in this agency');
-    }
-    if (links.visitId) {
-      const visit = await this.prisma.visit.findFirst({
-        where: { id: links.visitId, agencyId: caller.agencyId },
-        select: { patientId: true },
-      });
-      if (!visit) throw new BadRequestException('visitId does not match a visit in this agency');
-      if (links.patientId && visit.patientId !== links.patientId)
-        throw new BadRequestException('The visit is for a different patient');
+      const staff = await this.prisma.staffProfile.count({ where: { id: links.staffId, agencyId: caller.agencyId } });
+      if (!staff) throw new BadRequestException('staffId does not match a staff member in this agency');
     }
   }
 }
@@ -398,14 +319,11 @@ function toView(d: DocumentRow & { deletedAt: Date | null }): DocumentView {
     fileName: d.fileName,
     fileSize: d.fileSize,
     mimeType: d.mimeType,
-    patient: d.patient,
     staffId: d.staffId,
-    visitId: d.visitId,
     version: d.version,
     previousVersionId: d.previousVersionId,
     superseded: Boolean(d.nextVersion),
     isSigned: d.isSigned,
-    sharedWithPatient: d.sharedWithPatient,
     signature: sig ? { name: sig.name, signedAt: sig.signedAt, signedById: sig.signedById } : null,
     uploadedBy: d.uploadedBy,
     deleted: Boolean(d.deletedAt),

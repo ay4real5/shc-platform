@@ -8,7 +8,6 @@ import { toDate, toTime, utcTodayString } from '../src/common/utils/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
-import { NoteAiService } from '../src/modules/visit-docs/note-ai.service.js';
 import { setupApp } from '../src/setup-app.js';
 import { loginForTests } from './login-helper.js';
 
@@ -31,7 +30,9 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let agencyId: string;
-  let patientId: string;
+  let otherAgencyId: string;
+  let staffId: string;
+  let outsider: Auth;
   let office: Auth;
   let admin: Auth;
   let rn: Auth;
@@ -49,21 +50,12 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
     agencyId = (
       await prisma.agency.create({ data: { name: `Docs Test ${randomUUID()}`, timezone: 'UTC' } })
     ).id;
-    patientId = (
-      await prisma.patient.create({
-        data: {
-          agencyId,
-          firstName: 'Dot',
-          lastName: 'Document',
-          dateOfBirth: new Date('1940-01-01T00:00:00Z'),
-          status: 'active',
-        },
-      })
-    ).id;
+    otherAgencyId = (await prisma.agency.create({ data: { name: `Docs Other ${randomUUID()}`, timezone: 'UTC' } })).id;
     office = await seedUser('office_staff');
     admin = await seedUser('agency_admin');
     otherRn = await seedUser('registered_nurse');
-    // A nurse with a visit to the patient can see (and sign) the patient's documents.
+    outsider = await seedUser('agency_admin', otherAgencyId);
+    // A nurse with a staff file, who can sign documents.
     const role = await prisma.role.findFirstOrThrow({
       where: { agencyId: null, name: 'registered_nurse' },
     });
@@ -81,39 +73,28 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
       },
       include: { staffProfile: true },
     });
-    await prisma.visit.create({
-      data: {
-        agencyId,
-        patientId,
-        staffId: nurse.staffProfile!.id,
-        visitType: 'home_health_aide',
-        scheduledDate: toDate(utcTodayString())!,
-        scheduledStart: toTime('09:00'),
-        scheduledEnd: toTime('10:00'),
-      },
-    });
+    staffId = nurse.staffProfile!.id;
     rn = { Authorization: `Bearer ${await loginForTests(http(), email, PASSWORD)}` };
   });
 
   afterAll(async () => {
-    await app.get(NoteAiService).idle(); // incident scans of submitted notes (D-096)
     await prisma.notification.deleteMany({ where: { agencyId } });
     await prisma.document.updateMany({ where: { agencyId }, data: { previousVersionId: null } });
     await prisma.document.deleteMany({ where: { agencyId } }); // blobs cascade
-    await prisma.visit.deleteMany({ where: { agencyId } });
-    await prisma.patient.deleteMany({ where: { agencyId } });
-    await purgeAuditLogs(prisma, agencyId);
-    await prisma.user.deleteMany({ where: { agencyId } });
-    await prisma.agency.delete({ where: { id: agencyId } });
+    for (const id of [agencyId, otherAgencyId]) {
+      await purgeAuditLogs(prisma, id);
+      await prisma.user.deleteMany({ where: { agencyId: id } });
+      await prisma.agency.delete({ where: { id } });
+    }
     await app.close();
   });
 
-  async function seedUser(roleName: string): Promise<Auth> {
+  async function seedUser(roleName: string, inAgency = agencyId): Promise<Auth> {
     const role = await prisma.role.findFirstOrThrow({ where: { agencyId: null, name: roleName } });
     const email = `docs-${randomUUID()}@example.test`;
     await prisma.user.create({
       data: {
-        agencyId,
+        agencyId: inAgency,
         email,
         passwordHash: await app.get(PasswordService).hash(PASSWORD),
         passwordChangedAt: new Date(),
@@ -134,9 +115,9 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
   it('uploads, stores encrypted, and downloads the exact file', async () => {
     const content = pdf('signed consent');
     const res = await upload(office, content, 'Consent Form.pdf', {
-      documentType: 'consent',
-      title: 'Admission consent',
-      patientId,
+      documentType: 'contract',
+      title: 'Employment contract',
+      staffId,
     }).expect(201);
     const doc = res.body.data;
     expect(doc).toMatchObject({
@@ -144,7 +125,7 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
       mimeType: 'application/pdf',
       version: 1,
       isSigned: false,
-      patient: { id: patientId },
+      staffId,
     });
 
     const blob = await prisma.documentBlob.findUniqueOrThrow({ where: { documentId: doc.id } });
@@ -185,27 +166,21 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
     await upload(office, pdf('x'), 'x.pdf', { documentType: 'tax_return', title: 'x' }).expect(400);
   });
 
-  it("follows patient access: a nurse sees their patient's documents, not others'", async () => {
-    const doc = (
-      await upload(office, pdf('care plan'), 'plan.pdf', {
-        documentType: 'care_plan',
-        title: 'Plan of care',
-        patientId,
-      }).expect(201)
-    ).body.data;
+  it('keeps documents inside the company', async () => {
+    const doc = (await upload(office, pdf('handbook'), 'handbook.pdf', { documentType: 'policy', title: 'Staff handbook' }).expect(201)).body.data;
     await http().get(`/api/v1/documents/${doc.id}/download`).set(rn).expect(200);
-    await http().get(`/api/v1/documents/${doc.id}`).set(otherRn).expect(404);
-    await http().get(`/api/v1/documents?patientId=${patientId}`).set(otherRn).expect(404);
-    const all = await http().get('/api/v1/documents').set(otherRn).expect(200);
+    await http().get(`/api/v1/documents/${doc.id}`).set(outsider).expect(404);
+    const all = await http().get('/api/v1/documents').set(outsider).expect(200);
     expect(all.body.data.map((d: { id: string }) => d.id)).not.toContain(doc.id);
+    await upload(office, pdf('x'), 'x.pdf', { documentType: 'other', title: 'x', staffId: randomUUID() }).expect(400);
   });
 
   it('versions: a new upload replaces the old one, history kept, no forks', async () => {
     const v1 = (
       await upload(office, pdf('v1'), 'orders.pdf', {
-        documentType: 'physician_order',
-        title: 'Orders',
-        patientId,
+        documentType: 'reference',
+        title: 'Reference',
+        staffId,
       }).expect(201)
     ).body.data;
     const v2 = (
@@ -218,8 +193,8 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
     expect(v2).toMatchObject({
       version: 2,
       previousVersionId: v1.id,
-      documentType: 'physician_order',
-      patient: { id: patientId },
+      documentType: 'reference',
+      staffId,
     });
     await upload(office, pdf('fork'), 'fork.pdf', {
       documentType: 'other',
@@ -229,7 +204,7 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
 
     const list = (
       await http()
-        .get(`/api/v1/documents?patientId=${patientId}&documentType=physician_order`)
+        .get(`/api/v1/documents?staffId=${staffId}&documentType=reference`)
         .set(office)
         .expect(200)
     ).body.data;
@@ -248,9 +223,9 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
   it('e-signature records who, when and the file hash; tampering is caught', async () => {
     const doc = (
       await upload(office, pdf('to sign'), 'sign-me.pdf', {
-        documentType: 'consent',
-        title: 'Consent',
-        patientId,
+        documentType: 'contract',
+        title: 'Contract',
+        staffId,
       }).expect(201)
     ).body.data;
     await http()
@@ -284,7 +259,7 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
       await upload(office, pdf('old'), 'old.pdf', {
         documentType: 'other',
         title: 'Old letter',
-        patientId,
+        staffId,
       }).expect(201)
     ).body.data;
     await http()
@@ -299,12 +274,12 @@ describe.skipIf(!hasDb)('Documents (e2e)', () => {
       .send({ reason: 'Duplicate upload' })
       .expect(204);
     const list = (
-      await http().get(`/api/v1/documents?patientId=${patientId}`).set(office).expect(200)
+      await http().get(`/api/v1/documents?staffId=${staffId}`).set(office).expect(200)
     ).body.data;
     expect(list.map((d: { id: string }) => d.id)).not.toContain(doc.id);
     const withDeleted = (
       await http()
-        .get(`/api/v1/documents?patientId=${patientId}&includeDeleted=true`)
+        .get(`/api/v1/documents?staffId=${staffId}&includeDeleted=true`)
         .set(office)
         .expect(200)
     ).body.data;

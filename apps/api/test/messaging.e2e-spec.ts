@@ -25,7 +25,6 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
   let prisma: PrismaService;
   let agencyId: string;
   let otherAgencyId: string;
-  let patientId: string;
   let office: Person;
   let nurse: Person;
   let aide: Person;
@@ -45,11 +44,6 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
     prisma = app.get(PrismaService);
     agencyId = (await prisma.agency.create({ data: { name: `Msg Test ${randomUUID()}`, timezone: 'UTC' } })).id;
     otherAgencyId = (await prisma.agency.create({ data: { name: `Msg Other ${randomUUID()}`, timezone: 'UTC' } })).id;
-    patientId = (
-      await prisma.patient.create({
-        data: { agencyId, firstName: 'Mo', lastName: 'Message', dateOfBirth: new Date('1938-02-02T00:00:00Z'), status: 'active' },
-      })
-    ).id;
     office = await seedUser(agencyId, 'office_staff', 'Olive');
     nurse = await seedUser(agencyId, 'registered_nurse', 'Nia');
     aide = await seedUser(agencyId, 'home_health_aide', 'Abe');
@@ -65,7 +59,6 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
       await prisma.conversation.deleteMany({ where: { agencyId: id } }); // participants, messages cascade
       await prisma.document.deleteMany({ where: { agencyId: id } }); // message photos (blobs cascade)
       await prisma.notification.deleteMany({ where: { agencyId: id } });
-      await prisma.patient.deleteMany({ where: { agencyId: id } });
       await purgeAuditLogs(prisma, id);
       await prisma.user.deleteMany({ where: { agencyId: id } });
       await prisma.agency.delete({ where: { id } });
@@ -150,24 +143,23 @@ describe.skipIf(!hasDb)('Messaging (e2e)', () => {
     expect(aideList.map((c: { id: string }) => c.id)).not.toContain(convo.id);
   });
 
-  it('refuses people who can’t be messaged and patients the sender can’t see', async () => {
+  it('refuses people who can’t be messaged', async () => {
     await start(office, { participantIds: [portalUserId], content: 'x' }).expect(400);
     await start(office, { participantIds: [inactiveId], content: 'x' }).expect(400);
     await start(office, { participantIds: [outsider.id], content: 'x' }).expect(400);
     await start(office, { participantIds: [office.id], content: 'x' }).expect(400);
     await start(office, { participantIds: [nurse.id], content: '   ' }).expect(400);
-    await start(aide, { participantIds: [office.id], patientId, content: 'About my patient' }).expect(404); // not assigned
     await start(office, { participantIds: [nurse.id], content: 'x', documentId: randomUUID() }).expect(404);
     // A bad attachment is refused before anything is created.
     await start(office, { participantIds: [billing.id], subject: 'Never created', content: 'x', documentId: randomUUID() }).expect(404);
     expect(await prisma.conversation.count({ where: { agencyId, subject: 'Never created' } })).toBe(0);
   });
 
-  it('groups about a patient: leaving keeps earlier history only, people can be added back', async () => {
+  it('groups: leaving keeps earlier history only, people can be added back', async () => {
     const convo = (
-      await start(office, { participantIds: [nurse.id, aide.id], subject: 'Care team', patientId, content: 'Welcome, team' }).expect(201)
+      await start(office, { participantIds: [nurse.id, aide.id], subject: 'Care team', content: 'Welcome, team' }).expect(201)
     ).body.data;
-    expect(convo).toMatchObject({ type: 'group', subject: 'Care team', patient: { id: patientId } });
+    expect(convo).toMatchObject({ type: 'group', subject: 'Care team' });
     expect(convo.participants).toHaveLength(3);
 
     await http().post(`/api/v1/messages/conversations/${convo.id}/leave`).set(aide.auth).expect(204);

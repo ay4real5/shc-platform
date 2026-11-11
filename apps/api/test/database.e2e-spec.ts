@@ -16,20 +16,22 @@ describe.skipIf(!hasDb)('database schema (e2e)', () => {
   });
 
   afterAll(async () => {
-    await prisma.patient.deleteMany({ where: { agencyId } });
-    await prisma.user.deleteMany({ where: { agencyId } });
+    await prisma.user.deleteMany({ where: { agencyId } }); // staff profiles and credentials cascade
     await prisma.agency.delete({ where: { id: agencyId } });
     await prisma.$disconnect();
   });
 
-  it('applies database defaults (uuid, timestamps, geofence radius, status)', async () => {
-    const patient = await prisma.patient.create({
-      data: { agencyId, firstName: 'Test', lastName: 'Patient', dateOfBirth: new Date('1950-01-01') },
-    });
-    expect(patient.id).toMatch(/^[0-9a-f-]{36}$/);
-    expect(patient.status).toBe('active');
-    expect(patient.geoFenceRadiusMeters).toBe(200);
-    expect(patient.createdAt).toBeInstanceOf(Date);
+  async function staff(email = `db-${randomUUID()}@example.test`) {
+    const user = await prisma.user.create({ data: { agencyId, email, passwordHash: 'x', firstName: 'Test', lastName: 'Staff' } });
+    return prisma.staffProfile.create({ data: { agencyId, userId: user.id, discipline: 'HHA' } });
+  }
+
+  it('applies database defaults (uuid, timestamps, status)', async () => {
+    const profile = await staff();
+    expect(profile.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(profile.isActive).toBe(true);
+    expect(profile.employmentType).toBe('full_time');
+    expect(profile.createdAt).toBeInstanceOf(Date);
   });
 
   it('enforces unique email addresses', async () => {
@@ -38,17 +40,10 @@ describe.skipIf(!hasDb)('database schema (e2e)', () => {
     await expect(prisma.user.create({ data })).rejects.toThrow();
   });
 
-  it('cascades patient children on delete', async () => {
-    const patient = await prisma.patient.create({
-      data: {
-        agencyId,
-        firstName: 'Cascade',
-        lastName: 'Test',
-        dateOfBirth: new Date('1960-05-05'),
-        diagnoses: { create: { icd10Code: 'I10', isPrimary: true } },
-      },
-    });
-    await prisma.patient.delete({ where: { id: patient.id } });
-    expect(await prisma.patientDiagnosis.count({ where: { patientId: patient.id } })).toBe(0);
+  it('cascades staff children on delete', async () => {
+    const profile = await staff();
+    await prisma.staffCredential.create({ data: { staffProfileId: profile.id, credentialType: 'dbs_enhanced', credentialName: 'DBS' } });
+    await prisma.user.delete({ where: { id: profile.userId } });
+    expect(await prisma.staffCredential.count({ where: { staffProfileId: profile.id } })).toBe(0);
   });
 });

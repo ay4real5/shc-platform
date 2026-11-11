@@ -9,7 +9,6 @@ import { PHONE, trimmed, upperTrimmed, US_STATE, US_ZIP } from '../../common/val
 import { IsNpi } from '../../common/validators/is-npi.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../database/prisma.service.js';
-import { recognitionEnabled } from '../insights/workforce.service.js';
 
 export class UpdateAgencyDto {
   @IsOptional()
@@ -95,6 +94,11 @@ const SELECT = {
   timezone: true,
   settings: true,
 } as const;
+
+/** Agency setting (off by default): show staff recognition badges in the app. */
+function recognitionEnabled(settings: unknown): boolean {
+  return typeof settings === 'object' && settings !== null && (settings as Record<string, unknown>).recognitionBadges === true;
+}
 
 const isObject = (v: unknown): v is Prisma.JsonObject => typeof v === 'object' && v !== null && !Array.isArray(v);
 

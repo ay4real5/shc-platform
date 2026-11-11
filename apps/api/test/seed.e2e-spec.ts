@@ -45,7 +45,6 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
       syncRoles: () => app.get(RbacSyncService).sync(),
       encryptTwoFaSecret: (base32) =>
         Buffer.from(crypto.encrypt(base32, PhiContext.UserTwoFaSecret)).toString('base64'),
-      encryptSsn: (ssn, kind) => crypto.encrypt(ssn, kind === 'patient' ? PhiContext.PatientSsn : PhiContext.StaffSsn),
       encryptMessage: (text, id) => crypto.encryptBytes(Buffer.from(text, 'utf8'), messageContentContext(id)),
     });
   }, 300_000);
@@ -58,56 +57,31 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
     await expect(runDemoSeed(prisma, { appEnv: 'production', syncRoles: async () => {} })).rejects.toThrow(/production/);
   });
 
-  it('creates exactly one demo agency with the expected data', async () => {
+  it('creates exactly one demo company with the expected data', async () => {
     expect(await prisma.agency.count({ where: { id: DEMO_AGENCY_ID } })).toBe(1);
-    expect(await prisma.patient.count({ where: { agencyId: DEMO_AGENCY_ID } })).toBe(30);
-    expect(await prisma.staffProfile.count({ where: { agencyId: DEMO_AGENCY_ID } })).toBe(15);
-    expect(await prisma.recurrenceRule.count({ where: { agencyId: DEMO_AGENCY_ID } })).toBe(4);
-    expect(await prisma.visit.count({ where: { agencyId: DEMO_AGENCY_ID } })).toBeGreaterThan(40);
-  });
-
-  it('never double-books a caregiver', async () => {
-    const overlaps = await prisma.$queryRaw<{ n: bigint }[]>`
-      SELECT count(*) AS n FROM visits a JOIN visits b
-        ON a.staff_id = b.staff_id AND a.scheduled_date = b.scheduled_date AND a.id < b.id
-       AND a.scheduled_start < b.scheduled_end AND b.scheduled_start < a.scheduled_end
-     WHERE a.agency_id = ${DEMO_AGENCY_ID}::uuid`;
-    expect(Number(overlaps[0]!.n)).toBe(0);
+    expect(await prisma.staffProfile.count({ where: { agencyId: DEMO_AGENCY_ID } })).toBe(12);
+    expect(await prisma.staffCredential.count({ where: { staffProfile: { agencyId: DEMO_AGENCY_ID } } })).toBe(48);
   });
 
   it('lets each demo login in, with the right view of the data', async () => {
-    const admin = await login('agency.admin@demo.alora.test');
-    const patients = await http().get('/api/v1/patients?limit=100').set(admin).expect(200);
-    expect(patients.body.meta.total).toBe(30);
+    const admin = await login('agency.admin@demo.shc.test');
+    const staff = await http().get('/api/v1/staff?limit=100').set(admin).expect(200);
+    expect(staff.body.meta.total).toBe(12);
 
     const expiring = await http().get('/api/v1/staff/expiring-credentials').set(admin).expect(200);
     expect(expiring.body.data.some((c: { state: string }) => c.state === 'expired')).toBe(true);
 
-    // A field nurse sees only patients they have visits with.
-    const rn = await login('rn@demo.alora.test');
-    const rnPatients = await http().get('/api/v1/patients?limit=100').set(rn).expect(200);
-    expect(rnPatients.body.meta.total).toBeLessThan(30);
-
-    // Demo messages decrypt through the API; the office has unread replies.
-    const conversations = (await http().get('/api/v1/messages/conversations').set(rn).expect(200)).body.data;
-    expect(conversations).toHaveLength(2);
-    const office = await login('office.staff@demo.alora.test');
+    // Demo messages decrypt through the API; the office has an unread reply.
+    const hha = await login('hha@demo.shc.test');
+    const conversations = (await http().get('/api/v1/messages/conversations').set(hha).expect(200)).body.data;
+    expect(conversations).toHaveLength(1);
+    const office = await login('office.staff@demo.shc.test');
     const unread = await http().get('/api/v1/messages/unread-count').set(office).expect(200);
-    expect(unread.body.data.unread).toBe(4); // the RN's reply + the 3 care-team messages
-    expect(conversations.map((c: { lastMessage: { content: string } }) => c.lastMessage.content)).toContain(
-      'Thanks, I will check vitals at my visit on Thursday.',
-    );
+    expect(unread.body.data.unread).toBe(2); // the aide's reply + the supervisor's team message
+    expect(conversations[0].lastMessage.content).toBe('Yes, I can come in on Thursday morning.');
 
-    await login('billing.staff@demo.alora.test');
-
-    // The demo family member sees their patient's plan of care and medications in the portal.
-    const family = await login('family@demo.alora.test');
-    const me = (await http().get('/api/v1/portal/me').set(family).expect(200)).body.data;
-    expect(me.patients).toHaveLength(1);
-    const base = `/api/v1/portal/patients/${me.patients[0].id}`;
-    expect((await http().get(`${base}/care-plan`).set(family).expect(200)).body.data.goals).toHaveLength(2);
-    expect((await http().get(`${base}/medications`).set(family).expect(200)).body.data).toHaveLength(2);
-    expect((await http().get(`${base}/messages`).set(family).expect(200)).body.data.messages).toHaveLength(2);
+    await login('supervisor@demo.shc.test');
+    await login('rn@demo.shc.test');
     // Admins have 2FA on; nobody else is forced.
     expect(await prisma.user.count({ where: { agencyId: DEMO_AGENCY_ID, is2faEnabled: true } })).toBe(2);
   });

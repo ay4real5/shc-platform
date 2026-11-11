@@ -11,15 +11,19 @@ import {
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
 import { trimmed } from '../../../common/validators/fields.js';
 
+/** Kinds of document a care company keeps about its staff and itself. DBS certificates are deliberately absent:
+ * copies must not be kept (record the certificate number and date as a credential instead). */
 export const DOCUMENT_TYPES = [
-  'consent',
-  'care_plan',
-  'physician_order',
-  'assessment',
-  'insurance_card',
-  'identification',
-  'credential',
+  'contract',
   'policy',
+  'identification',
+  'right_to_work',
+  'reference',
+  'qualification',
+  'training_certificate',
+  'health_declaration',
+  'supervision',
+  'credential',
   'correspondence',
   'other',
 ] as const;
@@ -43,45 +47,18 @@ export class UploadDocumentDto {
 
   @IsOptional()
   @IsUUID()
-  patientId?: string;
-
-  @IsOptional()
-  @IsUUID()
   staffId?: string;
 
-  @IsOptional()
-  @IsUUID()
-  visitId?: string;
-
-  /** Upload as a new version of this document (inherits its links, type and portal sharing). */
+  /** Upload as a new version of this document (inherits its links and type). */
   @IsOptional()
   @IsUUID()
   replacesDocumentId?: string;
-
-  /** Show it to the patient/family in the portal (D-058). Needs a patient. Multipart sends "true"/"false". */
-  @IsOptional()
-  @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
-  @IsBoolean()
-  sharedWithPatient?: boolean;
-}
-
-export class UpdateDocumentDto {
-  @IsBoolean()
-  sharedWithPatient!: boolean;
 }
 
 export class ListDocumentsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsUUID()
-  patientId?: string;
-
-  @IsOptional()
-  @IsUUID()
   staffId?: string;
-
-  @IsOptional()
-  @IsUUID()
-  visitId?: string;
 
   @IsOptional()
   @IsIn(DOCUMENT_TYPES)

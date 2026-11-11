@@ -26,8 +26,6 @@ export interface TimeOffView {
   notes: string | null;
   decidedBy: { id: string; firstName: string; lastName: string } | null;
   createdAt: Date;
-  /** For approvers: the person's visits already booked in those days, which need another caregiver if approved. */
-  bookedVisits?: number;
 }
 
 /** "Sep 3" — alerts carry dates only, never patient details. */
@@ -69,9 +67,6 @@ export class TimeOffService {
       this.prisma.staffTimeOff.count({ where }),
     ]);
     const views = rows.map(toView);
-    if (approver) {
-      for (const v of views.filter((x) => x.status === 'pending')) v.bookedVisits = await this.bookedVisits(caller.agencyId, v);
-    }
     return Paginated.of(views, total, query);
   }
 
@@ -145,19 +140,7 @@ export class TimeOffService {
       body: dto.status === 'approved' ? `${range} is approved.` : `${range} was not approved. Contact the office if you have questions.`,
       data: { timeOffId: id },
     });
-    if (dto.status === 'approved') view.bookedVisits = await this.bookedVisits(caller.agencyId, view);
     return view;
-  }
-
-  private async bookedVisits(agencyId: string, v: TimeOffView): Promise<number> {
-    return this.prisma.visit.count({
-      where: {
-        agencyId,
-        staffId: v.staff.id,
-        status: { in: ['scheduled', 'in_progress'] },
-        scheduledDate: { gte: toDate(v.startDate)!, lte: toDate(v.endDate)! },
-      },
-    });
   }
 
   private async find(caller: AuthUser, id: string): Promise<Row> {

@@ -6,7 +6,6 @@ import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { DocumentsService, MESSAGE_PHOTO, type UploadedFile } from '../documents/documents.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
-import { PatientsService } from '../patients/patients.service.js';
 import { RealtimeService } from '../realtime/realtime.service.js';
 import { messageContentContext as contentContext } from './message-content.js';
 import type {
@@ -20,7 +19,6 @@ import type {
 const PERSON = { select: { id: true, firstName: true, lastName: true } } as const;
 const CONVERSATION_INCLUDE = {
   participants: { include: { user: PERSON }, orderBy: { joinedAt: 'asc' } },
-  patient: PERSON,
 } satisfies Prisma.ConversationInclude;
 type ConversationRow = Prisma.ConversationGetPayload<{ include: typeof CONVERSATION_INCLUDE }>;
 const MESSAGE_INCLUDE = {
@@ -46,7 +44,6 @@ export interface ConversationView {
   id: string;
   type: string;
   subject: string | null;
-  patient: Person | null;
   participants: (Person & { left: boolean })[];
   lastMessage: MessageView | null;
   lastMessageAt: Date | null;
@@ -64,7 +61,6 @@ export class MessagingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly crypto: PhiCryptoService,
-    private readonly patients: PatientsService,
     private readonly documents: DocumentsService,
     private readonly realtime: RealtimeService,
     private readonly notifications: NotificationsService,
@@ -101,7 +97,6 @@ export class MessagingService {
       where: {
         agencyId: caller.agencyId,
         participants: { some: { userId: caller.userId } },
-        ...(query.patientId ? { patientId: query.patientId } : {}),
       },
       include: CONVERSATION_INCLUDE,
       orderBy: [{ lastMessageAt: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
@@ -133,7 +128,7 @@ export class MessagingService {
   }
 
   /**
-   * Start a conversation with its first message. With one other person and no subject or patient, the existing
+   * Start a conversation with its first message. With one other person and no subject, the existing
    * direct conversation between the two is reused.
    */
   async create(caller: AuthUser, dto: CreateConversationDto): Promise<ConversationView> {
@@ -141,10 +136,9 @@ export class MessagingService {
     if (!others.length) throw new BadRequestException('Add at least one other person');
     const found = await this.prisma.user.count({ where: { ...this.messageable(caller.agencyId), id: { in: others } } });
     if (found !== others.length) throw new BadRequestException('Some people can’t be messaged (not active staff in this agency)');
-    if (dto.patientId) await this.patients.assertAccessible(caller, dto.patientId);
     if (dto.documentId) await this.assertAttachable(caller, dto.documentId); // before creating anything
 
-    const direct = others.length === 1 && !dto.subject && !dto.patientId;
+    const direct = others.length === 1 && !dto.subject;
     let conversationId = direct ? await this.findDirect(caller, others[0]!) : null;
     if (!conversationId) {
       conversationId = (
@@ -153,7 +147,6 @@ export class MessagingService {
             agencyId: caller.agencyId,
             type: direct ? 'direct' : 'group',
             subject: dto.subject || null,
-            patientId: dto.patientId ?? null,
             createdById: caller.userId,
             participants: { create: [caller.userId, ...others].map((userId) => ({ userId })) },
           },
@@ -267,96 +260,6 @@ export class MessagingService {
     });
   }
 
-  // ---- Patient portal (D-058). The portal controller has already checked the portal user belongs to the patient. ----
-
-  /** The portal user's conversation with the care team about one patient, with its messages (newest first). */
-  async portalThread(caller: AuthUser, patientId: string, query: ListMessagesQueryDto) {
-    const conversation = await this.findPortal(caller, patientId);
-    if (!conversation) return { conversationId: null, unread: 0, messages: [] as MessageView[] };
-    const [unread, messages] = await Promise.all([
-      this.unreadByConversation(caller.userId, [conversation.id]),
-      this.messages(caller, conversation.id, query),
-    ]);
-    return { conversationId: conversation.id, unread: unread.get(conversation.id) ?? 0, messages };
-  }
-
-  /**
-   * A message from the portal to the care team. The first one opens the conversation; every message (re)adds the
-   * agency's current portal responders (`messages:portal`) and alerts them in-app (no content in the alert).
-   */
-  async portalSend(caller: AuthUser, patientId: string, content: string): Promise<MessageView> {
-    const [responders, existing] = await Promise.all([
-      this.portalResponders(caller.agencyId),
-      this.findPortal(caller, patientId),
-    ]);
-    const conversationId =
-      existing?.id ??
-      (
-        await this.prisma.conversation.create({
-          data: {
-            agencyId: caller.agencyId,
-            type: 'portal',
-            patientId,
-            createdById: caller.userId,
-            participants: { create: { userId: caller.userId } },
-          },
-          select: { id: true },
-        })
-      ).id;
-    // Two set-based statements instead of an upsert per responder (each is a round trip to the database).
-    await Promise.all([
-      this.prisma.conversationParticipant.createMany({
-        data: responders.map((userId) => ({ conversationId, userId })),
-        skipDuplicates: true,
-      }),
-      this.prisma.conversationParticipant.updateMany({
-        where: { conversationId, userId: { in: responders }, leftAt: { not: null } },
-        data: { leftAt: null },
-      }),
-    ]);
-    const message = await this.send(caller, conversationId, { content });
-    await this.notifications.notify({
-      agencyId: caller.agencyId,
-      userIds: responders,
-      type: 'message_received',
-      title: 'New patient portal message',
-      body: 'A patient or family member wrote to the care team. Open Messages to read it.',
-      data: { conversationId },
-      actorUserId: caller.userId,
-    });
-    return message;
-  }
-
-  async portalMarkRead(caller: AuthUser, patientId: string): Promise<void> {
-    const conversation = await this.findPortal(caller, patientId);
-    if (conversation) await this.markRead(caller, conversation.id);
-  }
-
-  private findPortal(caller: AuthUser, patientId: string) {
-    return this.prisma.conversation.findFirst({
-      where: { agencyId: caller.agencyId, type: 'portal', patientId, createdById: caller.userId },
-      select: { id: true },
-    });
-  }
-
-  /** Active staff whose role (built-in or this agency's) grants `messages:portal`. */
-  private async portalResponders(agencyId: string): Promise<string[]> {
-    const users = await this.prisma.user.findMany({
-      where: {
-        ...this.messageable(agencyId),
-        userRoles: {
-          some: {
-            role: {
-              OR: [{ agencyId: null }, { agencyId }],
-              rolePermissions: { some: { permission: { resource: 'messages', action: 'portal' } } },
-            },
-          },
-        },
-      },
-      select: { id: true },
-    });
-    return users.map((u) => u.id);
-  }
 
   /**
    * A library document: 404 unless the sender can see it. A message photo (D-089): only the person who uploaded it, once,
@@ -488,7 +391,6 @@ export class MessagingService {
       id: r.id,
       type: r.type,
       subject: r.subject,
-      patient: r.patient,
       participants: r.participants.map((p) => ({ ...p.user, left: Boolean(p.leftAt) })),
       lastMessage: last ? this.toMessage(last) : null,
       lastMessageAt: r.lastMessageAt,
