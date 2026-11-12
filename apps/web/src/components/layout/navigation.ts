@@ -1,4 +1,5 @@
 import {
+  Briefcase,
   Building2,
   ClipboardCheck,
   GraduationCap,
@@ -19,6 +20,7 @@ type Group = 'Overview' | 'People' | 'Compliance' | 'Admin';
 export const NAVIGATION: readonly { href: string; label: string; permission: string | null; icon: LucideIcon; group: Group }[] = [
   { href: '/', label: 'Dashboard', permission: null, icon: LayoutDashboard, group: 'Overview' },
   { href: '/messages', label: 'Messages', permission: 'messages:use', icon: MessageSquare, group: 'Overview' },
+  { href: '/recruitment', label: 'Recruitment', permission: 'recruitment:read', icon: Briefcase, group: 'People' },
   { href: '/staff', label: 'Staff', permission: 'staff:read', icon: Users, group: 'People' },
   { href: '/staff/onboarding', label: 'Onboarding', permission: 'staff:read', icon: ClipboardCheck, group: 'People' },
   { href: '/staff/credentials', label: 'Checks & expiries', permission: 'staff:read', icon: ShieldCheck, group: 'People' },

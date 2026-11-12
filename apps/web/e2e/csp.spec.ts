@@ -22,13 +22,18 @@ test('every page carries a nonce-based CSP, and the app runs without violating i
   await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible({ timeout: 20_000 });
   const nav = page.getByRole('navigation', { name: 'Main' });
 
-  await nav.getByRole('link', { name: 'Live monitor' }).click(); // Leaflet map + OpenStreetMap tiles + socket
-  await expect(page.locator('.leaflet-tile-loaded').first()).toBeVisible({ timeout: 30_000 });
-  await nav.getByRole('link', { name: 'Reports' }).click(); // Recharts
-  await expect(page.getByRole('img', { name: /Visits per day/ })).toBeVisible({ timeout: 30_000 });
-  await nav.getByRole('link', { name: 'Patients' }).click();
+  await nav.getByRole('link', { name: 'Recruitment' }).click();
+  await expect(page.getByRole('heading', { name: 'Job adverts' })).toBeVisible({ timeout: 30_000 });
+  await nav.getByRole('link', { name: 'Staff', exact: true }).click();
   await page.getByRole('row').nth(1).getByRole('link').first().click();
-  await expect(page.getByText(/^MRN /)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('heading', { name: 'Credentials' })).toBeVisible({ timeout: 20_000 });
+  await nav.getByRole('link', { name: 'Messages' }).click();
+  await expect(page.getByRole('heading', { name: 'Messages' }).first()).toBeVisible({ timeout: 20_000 });
+
+  // The public careers pages may be framed by the company's own site (CAREERS_FRAME_ANCESTORS); nothing else may.
+  const careers = (await page.request.get('/careers/demo-care')).headers();
+  expect(careers['content-security-policy']).toMatch(/frame-ancestors 'self'/);
+  expect(careers['x-frame-options']).toBeUndefined();
 
   expect(violations).toEqual([]);
 });

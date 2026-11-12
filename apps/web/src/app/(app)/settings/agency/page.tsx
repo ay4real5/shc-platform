@@ -17,11 +17,12 @@ interface Agency {
   town: string | null;
   postcode: string | null;
   timezone: string;
+  careersSlug: string | null;
 }
 
-const FIELDS = ['name', 'phone', 'addressLine1', 'addressLine2', 'town', 'postcode'] as const;
+const FIELDS = ['name', 'phone', 'addressLine1', 'addressLine2', 'town', 'postcode', 'careersSlug'] as const;
 
-/** The agency profile claims are billed under (D-053). Admins edit; the timezone is fixed. */
+/** The company profile and careers page address. Admins edit; the timezone is fixed. */
 export default function AgencySettingsPage() {
   const { request, can } = useAuth();
   const queryClient = useQueryClient();
@@ -35,7 +36,7 @@ export default function AgencySettingsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agency'] }),
   });
 
-  if (!can('settings:read')) return <PageHeader title="Agency settings" subtitle="You don't have access to settings." />;
+  if (!can('settings:read')) return <PageHeader title="Company settings" subtitle="You don't have access to settings." />;
   const a = agency.data;
   const editable = can('settings:update');
 
@@ -63,6 +64,19 @@ export default function AgencySettingsPage() {
             <Field label="Address line 2" name="addressLine2" defaultValue={a.addressLine2 ?? ''} disabled={!editable} className="sm:col-span-2" />
             <Field label="Town or city" name="town" defaultValue={a.town ?? ''} disabled={!editable} />
             <Field label="Postcode" name="postcode" defaultValue={a.postcode ?? ''} disabled={!editable} hint="e.g. M1 1AA" />
+            <Field
+              label="Careers page address"
+              name="careersSlug"
+              defaultValue={a.careersSlug ?? ''}
+              disabled={!editable}
+              className="sm:col-span-2"
+              pattern="[a-z0-9][a-z0-9\-]{0,58}[a-z0-9]?"
+              hint={
+                a.careersSlug
+                  ? `Your careers page: ${typeof window === 'undefined' ? '' : window.location.origin}/careers/${a.careersSlug}`
+                  : 'Lower-case letters, numbers and dashes, e.g. your-company. Your jobs then appear at /careers/your-company.'
+              }
+            />
             <p className="text-sm text-slate-600 sm:col-span-2">Timezone: {a.timezone}</p>
             {editable && (
               <div className="flex flex-col gap-2 sm:col-span-2">

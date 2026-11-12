@@ -106,7 +106,7 @@ export function NotificationBell() {
               >
                 <p className="font-medium">{n.title}</p>
                 {n.body && <p className="text-xs">{n.body}</p>}
-                <p className="text-xs text-slate-500">{new Date(n.createdAt).toLocaleString()}</p>
+                <p className="text-xs text-slate-500">{new Date(n.createdAt).toLocaleString('en-GB')}</p>
               </li>
             ))}
           </ul>

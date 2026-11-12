@@ -18,7 +18,7 @@ export function buildCsp(nonce: string, opts: { apiUrl: string; dev: boolean; fr
     ['object-src', ["'none'"]],
     ['base-uri', ["'self'"]],
     ['form-action', ["'self'"]],
-    // Only the public intake form (D-098) may be embedded, and only by the sites listed in INTAKE_FRAME_ANCESTORS.
+    // Only the public careers pages (S1-04) may be embedded, and only by the sites listed in CAREERS_FRAME_ANCESTORS.
     ['frame-ancestors', opts.frameAncestors?.length ? opts.frameAncestors : ["'none'"]],
   ];
   const policy = directives.map(([name, values]) => `${name} ${values.join(' ')}`);

@@ -36,8 +36,8 @@ const name = (p: Person) => `${p.firstName} ${p.lastName}`;
 const when = (iso: string) => {
   const d = new Date(iso);
   return d.toDateString() === new Date().toDateString()
-    ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-    : d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    ? d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' })
+    : d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
 };
 
 /** Secure staff messaging (D-057). New messages arrive over the notifications socket, which refreshes these queries. */

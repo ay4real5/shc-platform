@@ -101,7 +101,7 @@ export default function AuditLogPage() {
           <tbody className="divide-y divide-slate-100">
             {log.data?.data.map((e) => (
               <tr key={e.id}>
-                <td className="py-2 pr-4 whitespace-nowrap">{new Date(e.createdAt).toLocaleString()}</td>
+                <td className="py-2 pr-4 whitespace-nowrap">{new Date(e.createdAt).toLocaleString('en-GB')}</td>
                 <td className="py-2 pr-4">{e.user ? `${e.user.firstName ?? ''} ${e.user.lastName ?? ''}`.trim() || e.user.email : 'System'}</td>
                 <td className="py-2 pr-4 font-mono text-xs">{e.action}</td>
                 <td className="py-2 pr-4 text-xs text-slate-600">

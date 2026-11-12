@@ -45,5 +45,5 @@ export function formatTime(hhmm: string): string {
 
 /** An ISO instant → local clock time ("4:05 PM"), or a dash. */
 export function clockTime(value: string | null | undefined): string {
-  return value ? new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—';
+  return value ? new Date(value).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' }) : '—';
 }

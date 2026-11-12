@@ -92,8 +92,8 @@ export default function UserPage() {
           items={[
             ['Phone', u.phone],
             ['Two-factor sign-in', u.is2faEnabled ? 'On' : 'Off'],
-            ['Last sign-in', u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never'],
-            ['Created', new Date(u.createdAt).toLocaleDateString()],
+            ['Last sign-in', u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('en-GB') : 'Never'],
+            ['Created', new Date(u.createdAt).toLocaleDateString('en-GB')],
           ]}
         />
       </Card>
@@ -119,7 +119,7 @@ export default function UserPage() {
             {activity.data?.map((entry) => (
               <li key={entry.id} className="flex justify-between gap-4 py-2">
                 <span className="text-slate-800">{humanize(entry.action)}</span>
-                <span className="text-slate-500">{new Date(entry.createdAt).toLocaleString()}</span>
+                <span className="text-slate-500">{new Date(entry.createdAt).toLocaleString('en-GB')}</span>
               </li>
             ))}
             {activity.data?.length === 0 && <li className="py-2 text-slate-500">No activity yet.</li>}

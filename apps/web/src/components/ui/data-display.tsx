@@ -83,6 +83,14 @@ export function StatusBadge({ status }: { status: string }) {
     partially_paid: 'bg-amber-50 text-amber-800 ring-amber-600/20',
     void: 'bg-slate-100 text-slate-600 ring-slate-500/20',
     overdue: 'bg-red-50 text-red-800 ring-red-600/20',
+    // Recruitment (S1-04/S1-05)
+    applied: 'bg-sky-50 text-sky-800 ring-sky-600/20',
+    screened: 'bg-brand-50 text-brand-800 ring-brand-600/20',
+    interview: 'bg-brand-50 text-brand-800 ring-brand-600/20',
+    offer: 'bg-amber-50 text-amber-800 ring-amber-600/20',
+    hired: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
+    withdrawn: 'bg-slate-100 text-slate-600 ring-slate-500/20',
+    closed: 'bg-slate-100 text-slate-600 ring-slate-500/20',
     // Referral stages (D-098)
     new: 'bg-sky-50 text-sky-800 ring-sky-600/20',
     contacted: 'bg-brand-50 text-brand-800 ring-brand-600/20',
@@ -135,7 +143,7 @@ export function Pager({
  */
 export function formatDate(value: string | null | undefined): string {
   if (!value) return '';
-  if (value.length > 10) return new Date(value).toLocaleDateString('en-US', { dateStyle: 'medium' });
+  if (value.length > 10) return new Date(value).toLocaleDateString('en-GB', { dateStyle: 'medium' });
   const [y, m, d] = value.split('-').map(Number);
-  return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString('en-US', { timeZone: 'UTC', dateStyle: 'medium' });
+  return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString('en-GB', { timeZone: 'UTC', dateStyle: 'medium' });
 }

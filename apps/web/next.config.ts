@@ -13,8 +13,8 @@ const sharedHeaders = [
   // Pages render patient data in the browser; never let shared caches keep them.
   { key: 'Cache-Control', value: 'no-store' },
 ];
-// No clickjacking: nothing may be framed except the public intake form, whose CSP frame-ancestors (src/proxy.ts)
-// lists the agency's own website (D-098).
+// No clickjacking: nothing may be framed except the public careers pages, whose CSP frame-ancestors (src/proxy.ts)
+// lists the company's own website (CAREERS_FRAME_ANCESTORS, S1-04).
 const securityHeaders = [{ key: 'X-Frame-Options', value: 'DENY' }, ...sharedHeaders];
 
 const nextConfig: NextConfig = {
@@ -28,8 +28,8 @@ const nextConfig: NextConfig = {
     : {}),
   async headers() {
     return [
-      { source: '/((?!intake/).*)', headers: securityHeaders },
-      { source: '/intake/:path*', headers: sharedHeaders },
+      { source: '/((?!careers/).*)', headers: securityHeaders },
+      { source: '/careers/:path*', headers: sharedHeaders },
     ];
   },
 };
