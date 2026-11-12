@@ -1,56 +1,53 @@
 # Status — SHC care workforce platform
 
 ## Current state
-- Repo created 11 Nov 2026 from the Primordial foundation (`ay4real5/Kayyo-alora_health-` @ 54cea0d).
-- **API: the workforce core plus recruitment**:
-  - Workforce core: auth/2FA, users, roles, audit log, company settings, staff records (UK), credentials with
-    expiry alerts, availability, time off, onboarding checklist, Academy training, documents with e-signing,
-    messaging, notifications, compliance.
-  - Recruitment (S1-04): job adverts, the public careers page and applications.
-- Separate **dev database** `shc` on the Neon dev server. Migrations: `init`, `audit_logs_partitioning`,
-  `uk_staff_record`, `uk_company`, `recruitment`, `hiring_pipeline`.
+- Repo created 11 Nov 2026 from the Primordial foundation. Company name confirmed as **SHC** (Michael's company).
+- **Stage 1 (recruitment) and Stage 2 (onboarding and compliance) are done** (12 Nov):
+  - careers page and application form (CQC history with explained gaps, referees);
+  - pipeline with interviews, then hire, which creates the login and staff record;
+  - references (one-time links, verified);
+  - Right to Work (share code or manual, follow-ups);
+  - DBS (Update Service status checks, manager risk decisions);
+  - contracts and policies signed online, with onboarding packs per job role;
+  - health questionnaire (encrypted, managers only);
+  - the CQC "ready to start" checklist (Schedule 3 items tagged).
+- Dev database `shc` on the Neon dev server. Migrations: `init`, `audit_logs_partitioning`, `uk_staff_record`,
+  `uk_company`, `recruitment`, `hiring_pipeline`, `right_to_work`, `dbs`, `references`, `signatures`, `health`.
 - Local `.env` (not committed) has its own JWT secret and encryption key.
 - Demo seed:
   - "Demo Care Services (FAKE DATA)", Europe/London, logins `*@demo.shc.test`, password `Demo-Password-1!`.
-  - Admins have 2FA with the demo key in `demo-seed.ts`.
-  - Careers page at `/careers/demo-care`, with 2 open jobs, 1 draft and 6 fake applications.
-- Earlier runs (12 Nov):
-  - API unit 82/82 and API e2e 144/144, after S1-03.
-  - The 5 recruitment e2e tests pass on their own.
-  - Shared tests 24/24.
-  - Web typecheck and lint are clean.
+  - Admins use 2FA with the demo key in `demo-seed.ts`.
+  - Careers page at `/careers/demo-care`.
+  - Staff have fake Right to Work and DBS records behind their credentials.
+- **Email is not connected** (no provider in `.env`).
+  - Candidate emails, welcome links and reference requests are recorded as "not sent".
+  - The office is shown the links to pass on.
+  - Email goes live with hosting (Azure).
 
 ## In progress
-Nothing. **Stage 1 (foundation and recruitment) is done.** Recruitment works end to end:
-- a job advert, then the public careers page and application form (with explained gaps and referees);
-- screening, interviews with scores, the offer;
-- hire, which creates the login and staff record and starts onboarding.
-
-Tests at the end of S1-05 (12 Nov):
-- API unit 85/85 and API e2e 152/152;
-- shared 25/25;
-- browser suite 16/16;
-- typecheck and lint clean.
+Nothing: Stage 2 finished. See the session log for the last test results.
 
 How to run the browser suite locally:
 1. Build the API: `npm run build -w @alora/api`.
 2. Start it from `apps/api` with `RATE_LIMITS_DISABLED=true JOBS_ENABLED=false node dist/main`.
 3. Start the web app: `npm run dev -w @alora/web`.
-4. Run the tests: `npm run test:e2e -w @alora/web`.
+4. Run the tests: `npm run test:e2e -w @alora/web`. This re-seeds the demo company.
 
 ## Next up
-**S2-01**: Right to Work (share code / eVisa and manual document checks, follow-up dates and reminders). After that:
-- S2-02: DBS;
-- S2-03: automatic reference requests (the referees are already on each application);
-- S2-04: contracts and policies;
-- S2-05: health declaration;
-- S2-06: the CQC "ready to start" checklist.
+**Stage 3 (weeks 5–6)**, in order:
+- S3-01: expiry alerts for all checks (credential job; Right to Work and DBS already feed it).
+- S3-02: training and the Care Certificate.
+- S3-03: holiday (5.6 weeks, pro-rata) and absence.
+- S3-04: supervisions and appraisals.
+- S3-05: staff app, which also needs documents to sign and the health questionnaire.
+- S3-06: go-live.
 
 Open items:
-- Retention schedule for unsuccessful applicants (six months; S-004).
+- Retention for unsuccessful applicants (six months).
 - `CAREERS_FRAME_ANCESTORS` is one list per deployment.
-- Careers pages are `noindex` like the rest of the app.
-- Optional: an "application received" email to the applicant.
+- Careers pages are `noindex`.
+- An "application received" email to the applicant.
+- DBS policy periods could become company settings.
 
 ## Blockers / waiting on Ayo
 See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and domain.
@@ -59,6 +56,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-12 | Claude Code | S2-01..S2-06 | Right to Work, DBS, references, documents to sign + onboarding packs, health questionnaire, CQC ready-to-start. Final run: browser 21/21, API unit 85/85, API e2e 167/167, shared 34/34. |
 | 2026-11-12 | Claude Code | S1-05 | Hiring pipeline (stages, interviews, timeline, candidate emails, hire → login + staff record); API e2e 152/152, browser 16/16. |
 | 2026-11-12 | Claude Code | S1-03, S1-04 | UK staff/company records (S-003); recruitment API and careers pages; API e2e 144/144 plus recruitment 5/5; browser tests not yet run. |
 | 2026-11-11 | Claude Code | S1-02 | UK roles/permissions; web and staff app stripped and rebranded SHC. The API e2e suite was fully green only on 12 Nov, after the branding fixes. |
