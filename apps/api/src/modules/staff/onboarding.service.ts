@@ -4,6 +4,7 @@ import type { AuthUser } from '../../common/decorators/current-user.decorator.js
 import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
+import { healthStatus } from './health.js';
 
 export type RequiredCredentials = Record<Discipline, string[]>;
 
@@ -21,6 +22,7 @@ const SELECT = {
   _count: { select: { availability: true } },
   credentials: { where: { status: 'active' }, select: { credentialType: true, expiryDate: true } },
   signatureRequests: { where: { status: { not: 'cancelled' } }, select: { status: true } },
+  healthDeclaration: { select: { outcome: true } },
 } as const;
 type Row = Prisma.StaffProfileGetPayload<{ select: typeof SELECT }>;
 
@@ -81,6 +83,7 @@ export class OnboardingService {
         hasEmergencyContact: Boolean(row.emergencyContactName && row.emergencyContactPhone),
         documentsToSign: row.signatureRequests.length,
         documentsSigned: row.signatureRequests.filter((r) => r.status === 'signed').length,
+        health: healthStatus(row.healthDeclaration),
         validCredentialTypes: valid,
         expiredCredentialTypes: expired.filter((t) => !valid.includes(t)),
       },

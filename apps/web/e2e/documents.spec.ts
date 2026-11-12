@@ -1,11 +1,18 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function signIn(page: Page, email: string) {
-  await page.goto('/login');
+  if (!page.url().endsWith('/login')) await page.goto('/login');
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill('Demo-Password-1!');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible({ timeout: 20_000 });
+}
+
+/** Sign-out is a full page load to /login; wait for it rather than racing it. */
+async function signOut(page: Page) {
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await expect(page).toHaveURL(/\/login$/, { timeout: 20_000 });
+  await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
 }
 
 /** A coordinator uploads a policy and sends it to everyone; a care worker reads and signs it (FAKE data). */
@@ -26,7 +33,7 @@ test('a policy is sent to everyone, a care worker signs it from the home page, a
   await expect(row.getByText(/^Sent to \d+\./)).toBeVisible({ timeout: 20_000 });
 
   // The care worker signs.
-  await page.getByRole('button', { name: 'Sign out' }).click();
+  await signOut(page);
   await signIn(page, 'care.worker@demo.shc.test');
   const card = page.getByRole('listitem').filter({ hasText: title });
   await card.getByRole('link', { name: 'Read and sign' }).click();
@@ -36,7 +43,7 @@ test('a policy is sent to everyone, a care worker signs it from the home page, a
   await expect(page.getByText(/^Signed/)).toBeVisible({ timeout: 20_000 });
 
   // The office sees it.
-  await page.getByRole('button', { name: 'Sign out' }).click();
+  await signOut(page);
   await signIn(page, 'care.coordinator@demo.shc.test');
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Documents' }).click();
   const again = page.getByRole('listitem').filter({ hasText: title });

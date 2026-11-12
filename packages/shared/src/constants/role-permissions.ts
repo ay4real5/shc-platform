@@ -19,7 +19,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
   /** The company's administrator (owner/director). */
   agency_admin: PERMISSIONS,
 
-  /** The CQC-registered manager: everything except company settings and deleting user accounts. */
+  /** The CQC-registered manager: everything except company settings and deleting user accounts. Includes health:read. */
   registered_manager: PERMISSIONS.filter((p) => p !== 'settings:update' && p !== 'users:delete'),
 
   /** Office coordinator: runs recruitment, onboarding, staff records, training and holidays. */

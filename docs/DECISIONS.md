@@ -2158,3 +2158,30 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Verified**: the office records how it confirmed the reference (CQC expects references to be verified).
 - References stay on the application, which links to the hire (`hired_user_id`). The CQC "ready to start"
   checklist (S2-06) will count two satisfactory, verified references.
+
+### S-009 — Contracts and policies signed online; onboarding packs
+2026-11-12 · Claude Code
+- **Signature requests** (`signature_requests`): one row per document per person.
+  - Works for a personal contract (a document on their file) or a company policy many people sign.
+  - Each person signs their own request, recording the typed name, an "I have read and agree" tick, time, IP,
+    browser, and the SHA-256 of exactly the file they signed.
+  - Signing a personal document also fills the document's own signature.
+  - Nobody can be asked twice for the same document while a request is pending or signed.
+  - A personal document can only go to its own person.
+- **Access**: staff need no documents permission. They can list (`/signature-requests/mine`), open (`/:id/file`)
+  and sign only what was sent to them, and only they can sign.
+  - Sending needs `documents:create`.
+  - Seeing who signed needs `documents:read`.
+  - A person's list is visible to them and to `staff:read` holders.
+- **Onboarding packs** (`onboarding_packs`): a name, job roles (none = everyone) and company documents (never
+  personal ones).
+  - On hire, every matching pack goes out automatically.
+  - The office can also send packs from the staff page.
+  - People are notified with `document_signature` (push and SMS when connected): "Please sign: <title>".
+- **Onboarding checklist**: once anything has been sent, a required "Contracts and policies signed" item appears
+  ("2 of 3 still to sign").
+- **Web**:
+  - Documents page: upload, send to sign (everyone or chosen people), who has signed, packs.
+  - Staff-page "Contracts and policies" panel, with "Upload a contract to sign".
+  - "Documents to sign" card on everyone's home page, and the sign page.
+  - The staff app gets the same in S3.

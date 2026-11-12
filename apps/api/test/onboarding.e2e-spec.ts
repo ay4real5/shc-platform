@@ -66,8 +66,8 @@ describe.skipIf(!hasDb)('Onboarding checklist (e2e)', () => {
 
   it('lists what a new aide is missing, and fills up as the office completes it', async () => {
     const first = (await http().get(api(`/staff/${aide.staffId}/onboarding`)).set(office.auth).expect(200)).body.data;
-    // Care worker defaults: 6 profile items + 3 checks = 9 required; only "signed in" is done.
-    expect(first).toMatchObject({ percent: 11, ready: false });
+    // Care worker defaults: 6 profile items + 3 checks + health questionnaire = 10 required; only "signed in" is done.
+    expect(first).toMatchObject({ percent: 10, ready: false });
     expect(first.items.filter((i: { done: boolean; required: boolean }) => i.required && !i.done).map((i: { key: string }) => i.key)).toEqual([
       'phone',
       'address',
@@ -77,6 +77,7 @@ describe.skipIf(!hasDb)('Onboarding checklist (e2e)', () => {
       'credential:right_to_work',
       'credential:dbs_enhanced',
       'credential:care_certificate',
+      'health_declaration',
     ]);
 
     await prisma.user.update({ where: { id: aide.id }, data: { phone: '07700 900110' } });
@@ -88,16 +89,18 @@ describe.skipIf(!hasDb)('Onboarding checklist (e2e)', () => {
     for (const t of ['Right_To_Work', 'Care Certificate']) {
       await prisma.staffCredential.create({ data: { staffProfileId: aide.staffId!, credentialType: t, credentialName: t } });
     }
+    // A reviewed, cleared health questionnaire (the answers themselves don't matter to the checklist).
+    await prisma.healthDeclaration.create({ data: { agencyId, staffProfileId: aide.staffId!, answersEncrypted: Buffer.from('x'), submittedAt: new Date(), outcome: 'fit', reviewedAt: new Date() } });
     await prisma.staffCredential.create({ data: { staffProfileId: aide.staffId!, credentialType: 'dbs_enhanced', credentialName: 'Enhanced DBS', expiryDate: toDate(addDays(today, -1)) } });
 
     const later = (await http().get(api(`/staff/${aide.staffId}/onboarding`)).set(office.auth).expect(200)).body.data;
-    expect(later.percent).toBe(89); // 8 of 9 — the DBS check is expired
+    expect(later.percent).toBe(90); // 9 of 10 — the DBS check is expired
     expect(later.items.find((i: { key: string }) => i.key === 'credential:dbs_enhanced')).toMatchObject({ done: false, detail: expect.stringContaining('expired') });
 
     // The aide sees their own; the overview lists people least ready first.
-    expect((await http().get(api('/staff/me/onboarding')).set(aide.auth).expect(200)).body.data.percent).toBe(89);
+    expect((await http().get(api('/staff/me/onboarding')).set(aide.auth).expect(200)).body.data.percent).toBe(90);
     const overview = (await http().get(api('/staff/onboarding')).set(office.auth).expect(200)).body.data;
-    expect(overview.find((s: { staffId: string }) => s.staffId === aide.staffId)).toMatchObject({ percent: 89, missing: ['Enhanced DBS (adult barred list)'] });
+    expect(overview.find((s: { staffId: string }) => s.staffId === aide.staffId)).toMatchObject({ percent: 90, missing: ['Enhanced DBS (adult barred list)'] });
   });
 
   it('lets admins change what each discipline needs', async () => {

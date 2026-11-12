@@ -369,6 +369,8 @@ export async function wipeDemoAgency(prisma: PrismaClient): Promise<void> {
   await prisma.jobPosting.deleteMany({ where });
   await purgeAuditLogs(prisma, DEMO_AGENCY_ID);
   await prisma.conversation.deleteMany({ where }); // participants and messages cascade
+  await prisma.signatureRequest.deleteMany({ where }); // they point at documents
+  await prisma.onboardingPack.deleteMany({ where });
   await prisma.document.deleteMany({ where }); // stored files cascade; version links are cleared
   await prisma.trainingCourse.deleteMany({ where }); // questions and completions cascade
   await prisma.user.deleteMany({ where }); // staff profiles, credentials, availability, tokens, roles-links cascade

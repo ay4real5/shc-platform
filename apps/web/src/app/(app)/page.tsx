@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Bell, ClipboardCheck, GraduationCap, ShieldAlert, UserPlus, Users, type LucideIcon } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
 import { ToSignCard } from '@/components/documents/signing';
+import { HealthPromptCard } from '@/components/staff/health';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { useAgencyToday } from '@/lib/use-agency-today';
@@ -131,6 +132,7 @@ export default function DashboardPage() {
         </div>
       </div>
       <ToSignCard />
+      <HealthPromptCard />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {can('staff:read') && (
           <>

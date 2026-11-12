@@ -46,6 +46,8 @@ export interface OnboardingFacts {
   /** Contracts and policies sent for signature (S2-04), and how many are signed. Optional: 0 when none were sent. */
   documentsToSign?: number;
   documentsSigned?: number;
+  /** Health declaration (S2-05). Left out = not tracked (no item). */
+  health?: 'none' | 'submitted' | 'cleared' | 'referred';
   /** Credential types (lower-case) with an active, unexpired credential. */
   validCredentialTypes: string[];
   /** Credential types on file but expired. */
@@ -105,6 +107,21 @@ export function onboardingChecklist(facts: OnboardingFacts, requiredCredentials:
             (facts.documentsSigned ?? 0) >= facts.documentsToSign!,
             'caregiver',
             `${facts.documentsToSign! - (facts.documentsSigned ?? 0)} of ${facts.documentsToSign} still to sign.`,
+          ),
+        ]
+      : []),
+    ...(facts.health
+      ? [
+          item(
+            'health_declaration',
+            'Health questionnaire',
+            facts.health === 'cleared',
+            facts.health === 'none' ? 'caregiver' : 'office',
+            facts.health === 'none'
+              ? 'They fill it in from their home page.'
+              : facts.health === 'submitted'
+                ? 'Waiting for a manager to review it.'
+                : 'Referred to occupational health.',
           ),
         ]
       : []),

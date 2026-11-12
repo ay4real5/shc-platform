@@ -20,6 +20,8 @@ export const PERMISSION_CATALOGUE = {
   training: ['manage'],
   /** Jobs, the careers page and the applicant pipeline (S1-04/S1-05). */
   recruitment: ['read', 'manage'],
+  /** Read health declarations (special category data, S2-05). Managers only. */
+  health: ['read'],
 } as const;
 
 type Catalogue = typeof PERMISSION_CATALOGUE;

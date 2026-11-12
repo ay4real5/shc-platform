@@ -254,6 +254,7 @@ model StaffProfile {
   rightToWorkChecks  RightToWorkCheck[]
   dbsChecks          DbsCheck[]
   signatureRequests  SignatureRequest[]
+  healthDeclaration  HealthDeclaration?
 
   @@unique([agencyId, employeeId])
   @@index([agencyId])
@@ -939,4 +940,26 @@ model OnboardingPack {
 
   @@index([agencyId])
   @@map("onboarding_packs")
+}
+
+/// Health declaration (S2-05). Special category data: answers and the review note are encrypted; only the person and
+/// health:read holders can read them. One per person (a resubmission replaces it and waits for a new review).
+model HealthDeclaration {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  staffProfileId      String    @unique @map("staff_profile_id") @db.Uuid
+  /// AES-256-GCM, context health_declarations.answers.
+  answersEncrypted    Bytes     @map("answers_encrypted")
+  submittedAt         DateTime  @map("submitted_at") @db.Timestamptz(6)
+  /// fit | fit_with_adjustments | occupational_health
+  outcome             String?   @db.VarChar(25)
+  reviewedById        String?   @map("reviewed_by_id") @db.Uuid
+  reviewedAt          DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  /// AES-256-GCM, context health_declarations.review_note.
+  reviewNoteEncrypted Bytes?    @map("review_note_encrypted")
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@map("health_declarations")
 }
