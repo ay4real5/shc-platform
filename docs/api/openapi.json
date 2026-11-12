@@ -835,6 +835,142 @@
         ]
       }
     },
+    "/api/v1/staff/{id}/dbs": {
+      "get": {
+        "operationId": "DbsController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      },
+      "post": {
+        "operationId": "DbsController_record",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordDbsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/dbs/{checkId}/decision": {
+      "post": {
+        "operationId": "DbsController_decide",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "checkId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DbsDecisionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/dbs/{checkId}/status-checks": {
+      "post": {
+        "operationId": "DbsController_statusCheck",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "checkId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DbsStatusCheckDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
     "/api/v1/staff/onboarding": {
       "get": {
         "operationId": "StaffController_onboardingOverview",
@@ -3637,6 +3773,18 @@
         }
       },
       "RecordRightToWorkDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "RecordDbsDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "DbsDecisionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "DbsStatusCheckDto": {
         "type": "object",
         "properties": {}
       },

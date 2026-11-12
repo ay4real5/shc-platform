@@ -252,6 +252,7 @@ model StaffProfile {
   timeOff            StaffTimeOff[]
   documents          Document[]
   rightToWorkChecks  RightToWorkCheck[]
+  dbsChecks          DbsCheck[]
 
   @@unique([agencyId, employeeId])
   @@index([agencyId])
@@ -813,4 +814,53 @@ model RightToWorkCheck {
   @@index([staffProfileId, checkedOn])
   @@index([agencyId, followUpOn])
   @@map("right_to_work_checks")
+}
+
+/// A DBS certificate (S2-02). Number, date, level and result only: never a copy, never what it says (DBS code of
+/// practice). The newest certificate drives the `dbs_enhanced` credential.
+model DbsCheck {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId          String    @map("agency_id") @db.Uuid
+  staffProfileId    String    @map("staff_profile_id") @db.Uuid
+  certificateNumber String    @map("certificate_number") @db.VarChar(12)
+  issueDate         DateTime  @map("issue_date") @db.Date
+  /// @alora/shared DBS_LEVELS
+  level             String    @db.VarChar(30)
+  /// clear | information
+  result            String    @db.VarChar(12)
+  /// For "information": a manager's risk-assessment decision, approved | not_approved.
+  decision          String?   @db.VarChar(12)
+  decidedById       String?   @map("decided_by_id") @db.Uuid
+  decidedAt         DateTime? @map("decided_at") @db.Timestamptz(6)
+  updateService     Boolean   @default(false) @map("update_service")
+  /// A status check reported new information: this certificate no longer counts.
+  statusChanged     Boolean   @default(false) @map("status_changed")
+  /// Next status check (Update Service) or new check.
+  nextDueOn         DateTime  @map("next_due_on") @db.Date
+  recordedById      String    @map("recorded_by_id") @db.Uuid
+  notes             String?
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile     @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+  statusChecks DbsStatusCheck[]
+
+  @@index([staffProfileId, issueDate])
+  @@index([agencyId, nextDueOn])
+  @@map("dbs_checks")
+}
+
+/// An Update Service status check on a certificate (S2-02).
+model DbsStatusCheck {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dbsCheckId  String   @map("dbs_check_id") @db.Uuid
+  checkedOn   DateTime @map("checked_on") @db.Date
+  /// no_change | new_information
+  result      String   @db.VarChar(16)
+  checkedById String   @map("checked_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  dbsCheck DbsCheck @relation(fields: [dbsCheckId], references: [id], onDelete: Cascade)
+
+  @@index([dbsCheckId])
+  @@map("dbs_status_checks")
 }

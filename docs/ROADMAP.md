@@ -23,7 +23,7 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
   interview booking, notes and scores, candidate emails; **hire** creates the staff member and starts onboarding.
 
 ## Stage 2 — Onboarding & compliance (weeks 3–4)
-- [ ] **S2-01** `agent` Right to Work: share-code (eVisa) and manual document checks recorded with who/when/how,
+- [x] **S2-01** `agent` Right to Work: share-code (eVisa) and manual document checks recorded with who/when/how,
   time-limited permission follow-up dates and reminders. Digital ID (IDSP) later.
 - [ ] **S2-02** `agent` DBS: enhanced with adult barred list — certificate number and date only (no copies),
   Update Service subscription and status-check reminders.

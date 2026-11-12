@@ -166,6 +166,21 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
         { staffProfileId: profile.id, credentialType: 'moving_handling', credentialName: 'Moving & handling', expiryDate: toDate(addDays(today, rand.int(-10, 365))) },
       ];
       await prisma.staffCredential.createMany({ data: rows });
+      // The DBS certificate behind that credential (S2-02): on the Update Service, status check due on the expiry date.
+      await prisma.dbsCheck.create({
+        data: {
+          agencyId: DEMO_AGENCY_ID,
+          staffProfileId: profile.id,
+          certificateNumber: rows[0]!.credentialNumber!,
+          issueDate: toDate(addDays(dbsExpiry, -365))!,
+          level: 'enhanced_barred_adults',
+          result: 'clear',
+          updateService: true,
+          nextDueOn: toDate(dbsExpiry)!,
+          recordedById: coordinatorId,
+          notes: 'FAKE demo certificate',
+        },
+      });
       // The Right to Work check behind that credential (S2-01): time-limited share code checks for some, passports for the rest.
       const rtwExpiry = rows[1]!.expiryDate;
       await prisma.rightToWorkCheck.create({
