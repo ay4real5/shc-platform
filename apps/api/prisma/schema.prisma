@@ -19,25 +19,13 @@ datasource db {
 model Agency {
   id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                   String   @db.VarChar(255)
-  npi                    String?  @unique @db.VarChar(10)
-  taxId                  String?  @map("tax_id") @db.VarChar(20)
   phone                  String?  @db.VarChar(20)
-  fax                    String?  @db.VarChar(20)
   email                  String?  @db.VarChar(255)
   addressLine1           String?  @map("address_line1") @db.VarChar(255)
   addressLine2           String?  @map("address_line2") @db.VarChar(255)
-  city                   String?  @db.VarChar(100)
-  state                  String?  @db.VarChar(2)
-  zip                    String?  @db.VarChar(10)
-  timezone               String   @default("America/New_York") @db.VarChar(50)
-  /// Last EDI interchange control number used for outbound files (ISA13/GS06), advanced atomically (D-076).
-  ediControlNumber       Int      @default(0) @map("edi_control_number")
-  medicareProviderNumber String?  @map("medicare_provider_number") @db.VarChar(20)
-  medicaidProviderNumber String?  @map("medicaid_provider_number") @db.VarChar(20)
-  evvStateConfig         Json?    @map("evv_state_config")
-  /// Payroll (D-064): default mileage reimbursement per mile, and the day FLSA workweeks start (0 = Sunday).
-  payrollMileageRate     Decimal  @default(0.70) @map("payroll_mileage_rate") @db.Decimal(6, 4)
-  workweekStartDay       Int      @default(0) @map("workweek_start_day")
+  town                   String?  @db.VarChar(100)
+  postcode               String?  @db.VarChar(10)
+  timezone               String   @default("Europe/London") @db.VarChar(50)
   settings               Json     @default("{}")
   isActive               Boolean  @default(true) @map("is_active")
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -223,31 +211,30 @@ model StaffProfile {
   userId              String    @unique @map("user_id") @db.Uuid
   agencyId            String    @map("agency_id") @db.Uuid
   employeeId          String?   @map("employee_id") @db.VarChar(50)
-  /// Digits a caregiver keys in when clocking in/out by phone (IVR, D-073). Unique per agency; never returned by the API.
-  ivrCode             String?   @map("ivr_code") @db.VarChar(8)
+  /// Job role (care_worker, team_leader, …; @alora/shared DISCIPLINES).
   discipline          String    @db.VarChar(20)
   hireDate            DateTime? @map("hire_date") @db.Date
   terminationDate     DateTime? @map("termination_date") @db.Date
   employmentType      String    @default("full_time") @map("employment_type") @db.VarChar(20)
   hourlyRate          Decimal?  @map("hourly_rate") @db.Decimal(10, 2)
-  perVisitRate        Decimal?  @map("per_visit_rate") @db.Decimal(10, 2)
   overtimeRate        Decimal?  @map("overtime_rate") @db.Decimal(10, 2)
+  /// Pounds per mile, e.g. 0.45.
   mileageRate         Decimal?  @map("mileage_rate") @db.Decimal(6, 4)
-  ssnEncrypted        Bytes?    @map("ssn_encrypted")
-  taxFilingStatus     String?   @map("tax_filing_status") @db.VarChar(20)
+  /// National Insurance number, encrypted (PhiContext.StaffNiNumber); only the last characters are ever returned.
+  niNumberEncrypted   Bytes?    @map("ni_number_encrypted")
+  dateOfBirth         DateTime? @map("date_of_birth") @db.Date
   addressLine1        String?   @map("address_line1") @db.VarChar(255)
-  city                String?   @db.VarChar(100)
-  state               String?   @db.VarChar(2)
-  zip                 String?   @db.VarChar(10)
-  serviceAreaZipCodes String[]  @map("service_area_zip_codes")
-  maxPatients         Int?      @map("max_patients")
+  addressLine2        String?   @map("address_line2") @db.VarChar(255)
+  town                String?   @db.VarChar(100)
+  postcode            String?   @db.VarChar(10)
+  emergencyContactName         String? @map("emergency_contact_name") @db.VarChar(200)
+  emergencyContactPhone        String? @map("emergency_contact_phone") @db.VarChar(20)
+  emergencyContactRelationship String? @map("emergency_contact_relationship") @db.VarChar(50)
+  /// Has a licence and car they can use for work (insurance is tracked as a check).
+  canDrive            Boolean   @default(false) @map("can_drive")
   skills              String[]
   languages           String[]
-  /// Caregiver matching (D-094): optional; female | male.
   gender              String?   @db.VarChar(10)
-  /// Home location for distance, entered by the office (optional).
-  latitude            Decimal?  @db.Decimal(10, 8)
-  longitude           Decimal?  @db.Decimal(11, 8)
   notes               String?
   isActive            Boolean   @default(true) @map("is_active")
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -262,7 +249,6 @@ model StaffProfile {
   documents          Document[]
 
   @@unique([agencyId, employeeId])
-  @@unique([agencyId, ivrCode])
   @@index([agencyId])
   @@index([agencyId, discipline])
   @@map("staff_profiles")

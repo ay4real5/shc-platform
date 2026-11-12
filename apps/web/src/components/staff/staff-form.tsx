@@ -10,7 +10,10 @@ import { SelectField, TextAreaField } from '@/components/ui/form-controls';
 import { disciplineLabel, humanize } from '@/lib/labels';
 import type { StaffCandidate, StaffDetail } from '@/lib/types/people';
 
-const TEXT = ['employeeId', 'discipline', 'employmentType', 'hireDate', 'addressLine1', 'city', 'zip', 'notes', 'gender'] as const;
+const TEXT = [
+  'employeeId', 'discipline', 'employmentType', 'hireDate', 'dateOfBirth', 'addressLine1', 'addressLine2', 'town', 'postcode',
+  'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelationship', 'niNumber', 'notes', 'gender',
+] as const;
 const MONEY = ['hourlyRate', 'overtimeRate', 'mileageRate'] as const;
 const LISTS = ['skills', 'languages'] as const;
 
@@ -47,6 +50,7 @@ export function StaffForm({
       const value = String(form.get(key) ?? '').trim();
       if (value) body[key] = Number(value);
     }
+    body.canDrive = form.get('canDrive') === 'on';
     for (const key of LISTS) {
       const raw = form.get(key);
       if (raw === null) continue;
@@ -105,17 +109,34 @@ export function StaffForm({
       </Card>
 
       <Card className="grid gap-4 p-5 sm:grid-cols-2">
-        <h2 className="text-base font-semibold text-slate-900 sm:col-span-2">Skills and contact</h2>
-        <Field label="Skills" name="skills" defaultValue={staff?.skills.join(', ') ?? ''} hint="Comma-separated, e.g. dementia care, PEG feeding." />
-        <Field label="Languages" name="languages" defaultValue={staff?.languages.join(', ') ?? ''} hint="Comma-separated." />
-        <Field label="Home address" name="addressLine1" defaultValue={v('addressLine1')} />
-        <Field label="Town or city" name="city" defaultValue={v('city')} />
-        <Field label="Postcode" name="zip" defaultValue={v('zip')} />
+        <h2 className="text-base font-semibold text-slate-900 sm:col-span-2">Personal details</h2>
+        <Field label="Date of birth" name="dateOfBirth" type="date" defaultValue={v('dateOfBirth')} />
         <SelectField label="Gender (optional)" name="gender" defaultValue={v('gender')}>
           <option value="">Not recorded</option>
           <option value="female">Female</option>
           <option value="male">Male</option>
         </SelectField>
+        <Field label="Address line 1" name="addressLine1" defaultValue={v('addressLine1')} />
+        <Field label="Address line 2" name="addressLine2" defaultValue={v('addressLine2')} />
+        <Field label="Town or city" name="town" defaultValue={v('town')} />
+        <Field label="Postcode" name="postcode" defaultValue={v('postcode')} />
+        <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
+          <input type="checkbox" name="canDrive" defaultChecked={staff?.canDrive ?? false} className="size-4 rounded border-slate-300" />
+          Can drive for work (licence and car)
+        </label>
+      </Card>
+
+      <Card className="grid gap-4 p-5 sm:grid-cols-2">
+        <h2 className="text-base font-semibold text-slate-900 sm:col-span-2">Emergency contact</h2>
+        <Field label="Contact name" name="emergencyContactName" defaultValue={staff?.emergencyContact.name ?? ''} />
+        <Field label="Relationship" name="emergencyContactRelationship" defaultValue={staff?.emergencyContact.relationship ?? ''} hint="e.g. partner, parent." />
+        <Field label="Contact phone" name="emergencyContactPhone" type="tel" defaultValue={staff?.emergencyContact.phone ?? ''} />
+      </Card>
+
+      <Card className="grid gap-4 p-5 sm:grid-cols-2">
+        <h2 className="text-base font-semibold text-slate-900 sm:col-span-2">Skills</h2>
+        <Field label="Skills" name="skills" defaultValue={staff?.skills.join(', ') ?? ''} hint="Comma-separated, e.g. dementia care, PEG feeding." />
+        <Field label="Languages" name="languages" defaultValue={staff?.languages.join(', ') ?? ''} hint="Comma-separated." />
       </Card>
 
       {showPay && (
@@ -123,6 +144,12 @@ export function StaffForm({
           <h2 className="text-base font-semibold text-slate-900 sm:col-span-2">Pay (only people who can see pay rates)</h2>
           <Field label="Hourly rate (£)" name="hourlyRate" type="number" step="0.01" min={0} defaultValue={staff?.pay?.hourlyRate ?? ''} />
           <Field label="Overtime rate (£)" name="overtimeRate" type="number" step="0.01" min={0} defaultValue={staff?.pay?.overtimeRate ?? ''} />
+          <Field
+            label="National Insurance number"
+            name="niNumber"
+            autoComplete="off"
+            hint={staff?.pay?.niNumberEnding ? `On file, ending ${staff.pay.niNumberEnding}. Leave blank to keep it.` : 'e.g. AB 12 34 56 C. Stored encrypted.'}
+          />
           <Field label="Mileage rate (£ per mile)" name="mileageRate" type="number" step="0.01" min={0} defaultValue={staff?.pay?.mileageRate ?? ''} hint="HMRC approved rate is 45p for the first 10,000 miles." />
         </Card>
       )}

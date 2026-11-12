@@ -16,7 +16,7 @@ interface StaffMe {
   email: string;
   phone: string | null;
   hireDate: string | null;
-  hasPhoneCheckInCode: boolean;
+  emergencyContact: { name: string | null; phone: string | null };
 }
 
 interface Credential {
@@ -117,9 +117,9 @@ export default function ProfileScreen() {
           <ListRow icon="mail-outline" label="Email" value={staff?.email ?? '…'} />
           <ListRow icon="call-outline" label="Phone" value={staff ? (staff.phone ?? 'Not set') : '…'} />
           <ListRow
-            icon="keypad-outline"
-            label="Phone check-in code"
-            value={staff ? (staff.hasPhoneCheckInCode ? 'Set' : 'Ask your office') : '…'}
+            icon="people-outline"
+            label="Emergency contact"
+            value={staff ? (staff.emergencyContact.name ?? 'Ask your office') : '…'}
             last
           />
         </Card>

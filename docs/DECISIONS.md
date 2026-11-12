@@ -2028,3 +2028,22 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   holds a new starter back), time_off_decided, application_received, system.
 - **UK phone numbers**: `toE164` turns 07…/01…/02… numbers into +44. US numbers without +1 are no longer guessed.
 
+
+### S-003 — UK staff record
+2026-11-12 · Claude Code
+- **Removed from `staff_profiles`**: `ssn_encrypted`, `tax_filing_status`, `state`, `ivr_code` (phone clock-in),
+  `per_visit_rate`, `max_patients`, `service_area_zip_codes`, `latitude`/`longitude`. The `?zip=` staff-list filter went
+  with them.
+- **Renamed** (data kept): `city` → `town`, `zip` → `postcode` (validated as a UK postcode, stored upper-case).
+- **Added**: `ni_number_encrypted` (National Insurance number, AES-GCM with context
+  `staff_profiles.ni_number_encrypted`, HMRC format check; only the last three characters, `pay.niNumberEnding`,
+  are returned and only to `pay:read` holders and the person), `date_of_birth`, `address_line2`, emergency contact
+  (name, phone, relationship), `can_drive`.
+- **Onboarding checklist**: the optional "phone check-in code" item is now an optional "emergency contact" item;
+  the pay-rate item is the hourly rate only; "Hire date" is shown as "Start date".
+- Tests use the dummy NI number `AB 12 34 56 C`; `QQ` is HMRC's documentation-only prefix and is rejected.
+- Unused PHI contexts `PatientSsn`/`StaffSsn`/`AgencyTaxId` removed (none had stored data in this database).
+- **Company record (`agencies`)**: dropped `npi`, `tax_id`, `fax`, `state`, `edi_control_number`,
+  `medicare/medicaid_provider_number`, `evv_state_config`, `payroll_mileage_rate`, `workweek_start_day` (none were
+  used any more); `city`/`zip` renamed `town`/`postcode`; the timezone default is `Europe/London`. The
+  `agency:create` script and the "Create agency" workflow no longer take a US state and only offer Europe/London.

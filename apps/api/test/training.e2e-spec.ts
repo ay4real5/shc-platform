@@ -31,7 +31,7 @@ const COURSE = {
   ],
 };
 
-describe.skipIf(!hasDb)('Primordial Academy (e2e)', () => {
+describe.skipIf(!hasDb)('SHC Academy (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let agencyId: string;
@@ -106,7 +106,7 @@ describe.skipIf(!hasDb)('Primordial Academy (e2e)', () => {
     const pass = (await http().post(api(`/training/my/${course.id}/submit`)).set(aide.auth).send({ answers: [1, 0, 1, 1] }).expect(200)).body.data;
     expect(pass).toMatchObject({ scorePercent: 75, passed: true, credentialRecorded: true });
     const credential = await prisma.staffCredential.findFirstOrThrow({ where: { staffProfileId: aide.staffId!, credentialType: 'infection_control' } });
-    expect(credential).toMatchObject({ credentialName: 'Infection control basics', issuingAuthority: 'Primordial Academy' });
+    expect(credential).toMatchObject({ credentialName: 'Infection control basics', issuingAuthority: 'SHC Academy' });
     expect(credential.expiryDate!.getTime() - credential.issueDate!.getTime()).toBeGreaterThan(364 * 86_400_000);
     const status = (await http().get(api('/training/my')).set(aide.auth).expect(200)).body.data[0];
     expect(status).toMatchObject({ status: 'passed', validUntil: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });

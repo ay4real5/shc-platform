@@ -7,8 +7,6 @@ import {
   IsBoolean,
   IsIn,
   IsInt,
-  IsLatitude,
-  IsLongitude,
   IsNotEmpty,
   IsNumber,
   IsObject,
@@ -23,9 +21,13 @@ import {
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
 import { IsDateOnly } from '../../../common/validators/is-date-only.js';
-import { trimmed, upperTrimmed, US_STATE, US_ZIP } from '../../../common/validators/fields.js';
+import { trimmed, upperTrimmed, UK_POSTCODE } from '../../../common/validators/fields.js';
 
-const SSN = /^(?!000|666|9\d\d)\d{3}-?(?!00)\d{2}-?(?!0000)\d{4}$/;
+/** HMRC format: two prefix letters (not D, F, I, Q, U, V first; not D, F, I, O, Q, U, V second; not BG/GB/NK/KN/TN/NT/ZZ), six digits, A-D. */
+const NI_NUMBER = /^(?!BG|GB|NK|KN|TN|NT|ZZ)[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z]\d{6}[A-D]$/;
+const niNumber = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.replace(/\s+/g, '').toUpperCase() : value);
+/** Digits with optional +, spaces, brackets and dashes. */
+const PHONE = /^\+?[\d\s()-]{10,20}$/;
 const MONEY = { maxDecimalPlaces: 2 } as const;
 const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -39,11 +41,6 @@ export class CreateStaffDto {
   @IsString()
   @MaxLength(50)
   employeeId?: string;
-
-  /** Digits keyed in to clock in/out by phone from the patient's home line (D-073). 4–8 digits; 6+ recommended. */
-  @IsOptional()
-  @Matches(/^\d{4,8}$/, { message: 'The phone check-in code must be 4 to 8 digits' })
-  ivrCode?: string;
 
   @IsIn(DISCIPLINES)
   discipline!: (typeof DISCIPLINES)[number];
@@ -65,30 +62,25 @@ export class CreateStaffDto {
   @IsOptional()
   @IsNumber(MONEY)
   @Min(0)
-  @Max(5000)
-  perVisitRate?: number;
-
-  @IsOptional()
-  @IsNumber(MONEY)
-  @Min(0)
   @Max(1500)
   overtimeRate?: number;
 
-  /** Dollars per mile, e.g. 0.67. */
+  /** Pounds per mile, e.g. 0.45. */
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 4 })
   @Min(0)
   @Max(5)
   mileageRate?: number;
 
-  /** Stored encrypted; only the last 4 digits are ever returned, and only to payroll. */
+  /** National Insurance number, e.g. AB 12 34 56 C. Stored encrypted; only the last characters are ever returned, and only to pay viewers. */
   @IsOptional()
-  @Matches(SSN, { message: 'ssn must be a valid Social Security number' })
-  ssn?: string;
+  @Transform(niNumber)
+  @Matches(NI_NUMBER, { message: 'niNumber must be a National Insurance number like AB 12 34 56 C' })
+  niNumber?: string;
 
   @IsOptional()
-  @IsIn(['single', 'married', 'married_separately', 'head_of_household'])
-  taxFilingStatus?: string;
+  @IsDateOnly()
+  dateOfBirth?: string;
 
   @IsOptional()
   @Transform(trimmed)
@@ -99,47 +91,45 @@ export class CreateStaffDto {
   @IsOptional()
   @Transform(trimmed)
   @IsString()
+  @MaxLength(255)
+  addressLine2?: string;
+
+  @IsOptional()
+  @Transform(trimmed)
+  @IsString()
   @MaxLength(100)
-  city?: string;
+  town?: string;
 
   @IsOptional()
   @Transform(upperTrimmed)
-  @Matches(US_STATE, { message: 'state must be a two-letter state code' })
-  state?: string;
+  @Matches(UK_POSTCODE, { message: 'postcode must be a UK postcode, e.g. M1 1AA' })
+  postcode?: string;
 
   @IsOptional()
-  @Matches(US_ZIP, { message: 'zip must be 12345 or 12345-6789' })
-  zip?: string;
-
-  /** Caregiver matching (D-094): home location for distance to patients (WGS84), optional. */
-  @IsOptional()
-  @Type(() => Number)
-  @IsLatitude()
-  latitude?: number;
+  @Transform(trimmed)
+  @IsString()
+  @MaxLength(200)
+  emergencyContactName?: string;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsLongitude()
-  longitude?: number;
+  @Transform(trimmed)
+  @Matches(PHONE, { message: 'emergencyContactPhone must be a phone number' })
+  emergencyContactPhone?: string;
 
-  /** Caregiver matching (D-094): for patients who prefer a caregiver gender. Optional. */
+  @IsOptional()
+  @Transform(trimmed)
+  @IsString()
+  @MaxLength(50)
+  emergencyContactRelationship?: string;
+
+  /** Has a licence and a car they can use for work. */
+  @IsOptional()
+  @IsBoolean()
+  canDrive?: boolean;
+
   @IsOptional()
   @IsIn(['female', 'male'])
   gender?: 'female' | 'male';
-
-  /** ZIP codes this person will travel to. */
-  @IsOptional()
-  @IsArray()
-  @ArrayMaxSize(200)
-  @Matches(/^\d{5}$/, { each: true, message: 'serviceAreaZipCodes must be 5-digit ZIP codes' })
-  serviceAreaZipCodes?: string[];
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(500)
-  maxPatients?: number;
 
   @IsOptional()
   @IsArray()
@@ -186,14 +176,10 @@ export class ListStaffQueryDto extends PaginationQueryDto {
   @IsBoolean()
   isActive?: boolean;
 
-  /** Staff who serve this ZIP code. */
-  @IsOptional()
-  @Matches(/^\d{5}$/)
-  zip?: string;
 }
 
 export class CreateCredentialDto {
-  /** e.g. license, certification, cpr, tb_test, background_check, drivers_license, training */
+  /** e.g. right_to_work, dbs_enhanced, care_certificate, first_aid, driving_licence */
   @Transform(trimmed)
   @IsString()
   @IsNotEmpty()
@@ -305,7 +291,7 @@ export class DecideTimeOffDto {
   status!: 'approved' | 'denied' | 'cancelled';
 }
 
-/** Credential types each discipline needs before working (D-101), e.g. `{ "HHA": ["hha_certificate", "cpr"] }`. */
+/** Credential types each job role needs before working (D-101), e.g. `{ "care_worker": ["dbs_enhanced", "care_certificate"] }`. */
 export class OnboardingRequirementsDto {
   @IsObject()
   requirements!: Record<string, string[]>;

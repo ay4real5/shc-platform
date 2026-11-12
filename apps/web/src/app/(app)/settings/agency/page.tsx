@@ -14,12 +14,12 @@ interface Agency {
   phone: string | null;
   addressLine1: string | null;
   addressLine2: string | null;
-  city: string | null;
-  zip: string | null;
+  town: string | null;
+  postcode: string | null;
   timezone: string;
 }
 
-const FIELDS = ['name', 'phone', 'addressLine1', 'addressLine2', 'city', 'zip'] as const;
+const FIELDS = ['name', 'phone', 'addressLine1', 'addressLine2', 'town', 'postcode'] as const;
 
 /** The agency profile claims are billed under (D-053). Admins edit; the timezone is fixed. */
 export default function AgencySettingsPage() {
@@ -61,8 +61,8 @@ export default function AgencySettingsPage() {
             <Field label="Phone" name="phone" defaultValue={a.phone ?? ''} disabled={!editable} className="sm:col-span-2" />
             <Field label="Street address" name="addressLine1" defaultValue={a.addressLine1 ?? ''} disabled={!editable} className="sm:col-span-2" />
             <Field label="Address line 2" name="addressLine2" defaultValue={a.addressLine2 ?? ''} disabled={!editable} className="sm:col-span-2" />
-            <Field label="Town or city" name="city" defaultValue={a.city ?? ''} disabled={!editable} />
-            <Field label="Postcode" name="zip" defaultValue={a.zip ?? ''} disabled={!editable} hint="e.g. M1 1AA" />
+            <Field label="Town or city" name="town" defaultValue={a.town ?? ''} disabled={!editable} />
+            <Field label="Postcode" name="postcode" defaultValue={a.postcode ?? ''} disabled={!editable} hint="e.g. M1 1AA" />
             <p className="text-sm text-slate-600 sm:col-span-2">Timezone: {a.timezone}</p>
             {editable && (
               <div className="flex flex-col gap-2 sm:col-span-2">

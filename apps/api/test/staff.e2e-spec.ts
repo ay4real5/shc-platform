@@ -83,12 +83,13 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
           userId: user.id,
           discipline: 'care_worker',
           employeeId: `E-${randomUUID().slice(0, 6)}`,
-          hourlyRate: 21.5,
-          mileageRate: 0.67,
-          ssn: '234-56-7801',
-          serviceAreaZipCodes: ['62701', '62702'],
+          hourlyRate: 12.6,
+          mileageRate: 0.45,
+          niNumber: 'ab 12 34 56 c',
+          town: 'Manchester',
+          postcode: 'm1 1aa',
           skills: ['dementia care'],
-          languages: ['English', 'Spanish'],
+          languages: ['English', 'Polish'],
           ...overrides,
         })
         .expect(201)
@@ -97,17 +98,19 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
   }
 
   describe('profiles', () => {
-    it('creates a profile; pay and SSN (last 4) are visible to payroll and to the person only', async () => {
+    it('creates a profile; pay and the NI number ending are visible to pay viewers and to the person only', async () => {
       const cg = await caregiver();
-      expect(cg.profile).toMatchObject({ discipline: 'care_worker', isActive: true, firstName: 'Casey' });
-      expect(cg.profile.pay).toMatchObject({ hourlyRate: '21.50', mileageRate: '0.6700', ssnLast4: '7801' });
-      expect(JSON.stringify(cg.profile)).not.toContain('234-56-7801');
+      expect(cg.profile).toMatchObject({ discipline: 'care_worker', isActive: true, firstName: 'Casey', postcode: 'M1 1AA' });
+      expect(cg.profile.pay).toMatchObject({ hourlyRate: '12.60', mileageRate: '0.4500', niNumberEnding: '56C' });
+      expect(JSON.stringify(cg.profile)).not.toContain('AB123456C');
+      const row = await prisma.staffProfile.findUniqueOrThrow({ where: { id: cg.profileId } });
+      expect(Buffer.from(row.niNumberEncrypted!).toString('latin1')).not.toContain('AB123456C'); // stored encrypted
 
       const asOffice = (await http().get(`/api/v1/staff/${cg.profileId}`).set(office.auth).expect(200)).body.data;
       expect(asOffice).not.toHaveProperty('pay'); // office staff manage people, not payroll
 
       const asSelf = (await http().get('/api/v1/staff/me').set(cg.auth).expect(200)).body.data;
-      expect(asSelf.pay.hourlyRate).toBe('21.50');
+      expect(asSelf.pay.hourlyRate).toBe('12.60');
       await http().get(`/api/v1/staff/${cg.profileId}`).set(cg.auth).expect(200);
     });
 
@@ -127,10 +130,11 @@ describe.skipIf(!hasDb)('Staff (e2e)', () => {
       expect(dup.body.error.message).toMatch(/employee ID/);
     });
 
-    it('lists with filters (discipline, service ZIP, search) and hides other agencies', async () => {
-      const cg = await caregiver({ serviceAreaZipCodes: ['99501'] });
-      const byZip = await http().get('/api/v1/staff?zip=99501').set(office.auth).expect(200);
-      expect(byZip.body.data.map((s: { id: string }) => s.id)).toEqual([cg.profileId]);
+    it('lists with filters (job role, search) and hides other agencies', async () => {
+      const cg = await caregiver({ discipline: 'team_leader' });
+      const byRole = await http().get('/api/v1/staff?discipline=team_leader&limit=100').set(office.auth).expect(200);
+      expect(byRole.body.data.map((s: { id: string }) => s.id)).toContain(cg.profileId);
+      expect(byRole.body.data.every((s: { discipline: string }) => s.discipline === 'team_leader')).toBe(true);
 
       const byEmployeeId = await http().get(`/api/v1/staff?search=${cg.profile.employeeId}`).set(office.auth).expect(200);
       expect(byEmployeeId.body.data).toHaveLength(1);

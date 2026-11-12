@@ -82,7 +82,7 @@ describe.skipIf(!hasDb)('Onboarding checklist (e2e)', () => {
     await prisma.user.update({ where: { id: aide.id }, data: { phone: '07700 900110' } });
     await prisma.staffProfile.update({
       where: { id: aide.staffId! },
-      data: { addressLine1: '1 Main Street', city: 'Manchester', zip: 'M1 1AA', hireDate: toDate(today), hourlyRate: 12.6 },
+      data: { addressLine1: '1 Main Street', town: 'Manchester', postcode: 'M1 1AA', hireDate: toDate(today), hourlyRate: 12.6 },
     });
     await prisma.staffAvailability.create({ data: { staffProfileId: aide.staffId!, dayOfWeek: 1, startTime: toTime('08:00'), endTime: toTime('16:00') } });
     for (const t of ['Right_To_Work', 'Care Certificate']) {

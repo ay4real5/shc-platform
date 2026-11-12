@@ -44,28 +44,24 @@ export interface StaffSummary {
 export interface StaffDetail extends StaffSummary {
   email: string;
   phone: string | null;
-  /** Whether a phone check-in (IVR) code is set; the code itself is never returned (D-073). */
-  hasPhoneCheckInCode: boolean;
   hireDate: string | null;
   terminationDate: string | null;
+  dateOfBirth: string | null;
   addressLine1: string | null;
-  city: string | null;
-  state: string | null;
-  zip: string | null;
-  latitude: number | null;
-  longitude: number | null;
+  addressLine2: string | null;
+  town: string | null;
+  postcode: string | null;
+  emergencyContact: { name: string | null; phone: string | null; relationship: string | null };
+  canDrive: boolean;
   gender: string | null;
-  serviceAreaZipCodes: string[];
-  maxPatients: number | null;
   notes: string | null;
-  /** Only for payroll roles and the staff member themselves. Money as decimal strings, e.g. "32.50". */
+  /** Only for pay viewers and the staff member themselves. Money as decimal strings, e.g. "12.60". */
   pay?: {
     hourlyRate: string | null;
-    perVisitRate: string | null;
     overtimeRate: string | null;
     mileageRate: string | null;
-    taxFilingStatus: string | null;
-    ssnLast4: string | null;
+    /** Last three characters of the NI number, e.g. "56C"; never the whole number. */
+    niNumberEnding: string | null;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -108,7 +104,6 @@ export class StaffService {
       agencyId: caller.agencyId,
       ...(query.discipline ? { discipline: query.discipline } : {}),
       ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
-      ...(query.zip ? { serviceAreaZipCodes: { has: query.zip } } : {}),
       ...(query.search
         ? {
             OR: [
@@ -332,34 +327,33 @@ export class StaffService {
   private async toDetail(caller: AuthUser, profile: Profile): Promise<StaffDetail> {
     const access = await this.permissions.forUser(caller);
     const showPay = profile.userId === caller.userId || access.permissions.has('pay:read');
-    const ssn = showPay && profile.ssnEncrypted ? this.crypto.decrypt(profile.ssnEncrypted, PhiContext.StaffSsn) : null;
+    const ni = showPay && profile.niNumberEncrypted ? this.crypto.decrypt(profile.niNumberEncrypted, PhiContext.StaffNiNumber) : null;
     return {
       ...toSummary(profile),
       email: profile.user.email,
       phone: profile.user.phone,
-      // The code itself is never sent back (it's a PIN); only whether one is set.
-      hasPhoneCheckInCode: profile.ivrCode !== null,
       hireDate: fromDate(profile.hireDate),
       terminationDate: fromDate(profile.terminationDate),
+      dateOfBirth: fromDate(profile.dateOfBirth),
       addressLine1: profile.addressLine1,
-      city: profile.city,
-      state: profile.state,
-      zip: profile.zip,
-      latitude: profile.latitude === null ? null : Number(profile.latitude),
-      longitude: profile.longitude === null ? null : Number(profile.longitude),
+      addressLine2: profile.addressLine2,
+      town: profile.town,
+      postcode: profile.postcode,
+      emergencyContact: {
+        name: profile.emergencyContactName,
+        phone: profile.emergencyContactPhone,
+        relationship: profile.emergencyContactRelationship,
+      },
+      canDrive: profile.canDrive,
       gender: profile.gender,
-      serviceAreaZipCodes: profile.serviceAreaZipCodes,
-      maxPatients: profile.maxPatients,
       notes: profile.notes,
       ...(showPay
         ? {
             pay: {
               hourlyRate: profile.hourlyRate?.toFixed(2) ?? null,
-              perVisitRate: profile.perVisitRate?.toFixed(2) ?? null,
               overtimeRate: profile.overtimeRate?.toFixed(2) ?? null,
               mileageRate: profile.mileageRate?.toFixed(4) ?? null,
-              taxFilingStatus: profile.taxFilingStatus,
-              ssnLast4: ssn ? ssn.slice(-4) : null,
+              niNumberEnding: ni ? ni.slice(-3) : null,
             },
           }
         : {}),
@@ -371,13 +365,14 @@ export class StaffService {
   private fields(dto: UpdateStaffDto): Prisma.StaffProfileUncheckedUpdateInput {
     const data: Record<string, unknown> = {};
     const copy = [
-      'employeeId', 'ivrCode', 'discipline', 'employmentType', 'hourlyRate', 'perVisitRate', 'overtimeRate', 'mileageRate',
-      'taxFilingStatus', 'addressLine1', 'city', 'state', 'zip', 'latitude', 'longitude', 'gender', 'serviceAreaZipCodes', 'maxPatients', 'skills',
-      'languages', 'notes',
+      'employeeId', 'discipline', 'employmentType', 'hourlyRate', 'overtimeRate', 'mileageRate', 'addressLine1', 'addressLine2',
+      'town', 'postcode', 'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelationship', 'canDrive', 'gender',
+      'skills', 'languages', 'notes',
     ] as const;
     for (const key of copy) if (dto[key] !== undefined) data[key] = dto[key];
     if (dto.hireDate !== undefined) data.hireDate = toDate(dto.hireDate);
-    if (dto.ssn !== undefined) data.ssnEncrypted = this.crypto.encrypt(dto.ssn.replaceAll('-', ''), PhiContext.StaffSsn);
+    if (dto.dateOfBirth !== undefined) data.dateOfBirth = toDate(dto.dateOfBirth);
+    if (dto.niNumber !== undefined) data.niNumberEncrypted = this.crypto.encrypt(dto.niNumber, PhiContext.StaffNiNumber);
     return data;
   }
 
@@ -386,7 +381,7 @@ export class StaffService {
       return await save();
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ConflictException('Another staff member in this agency already has this employee ID or phone check-in code');
+        throw new ConflictException('Another staff member already has this employee ID');
       }
       throw error;
     }

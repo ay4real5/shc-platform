@@ -9,11 +9,11 @@ const service = (env: Record<string, unknown>) =>
 describe('PhiCryptoService', () => {
   it('encrypts and decrypts with the configured key, as bytes Prisma can store', () => {
     const svc = service({ PHI_ENCRYPTION_KEY: key() });
-    const blob = svc.encrypt('123-45-6789', PhiContext.PatientSsn);
+    const blob = svc.encrypt('QQ123456C', PhiContext.StaffNiNumber);
     expect(blob).toBeInstanceOf(Uint8Array);
-    expect(svc.decrypt(blob, PhiContext.PatientSsn)).toBe('123-45-6789');
-    expect(svc.encryptOptional(null, PhiContext.PatientSsn)).toBeNull();
-    expect(svc.decryptOptional(undefined, PhiContext.PatientSsn)).toBeNull();
+    expect(svc.decrypt(blob, PhiContext.StaffNiNumber)).toBe('QQ123456C');
+    expect(svc.encryptOptional(null, PhiContext.StaffNiNumber)).toBeNull();
+    expect(svc.decryptOptional(undefined, PhiContext.StaffNiNumber)).toBeNull();
   });
 
   it('decrypts values written before a key rotation', () => {
@@ -30,6 +30,6 @@ describe('PhiCryptoService', () => {
 
   it('can be constructed without a key but refuses to touch PHI', () => {
     const svc = service({});
-    expect(() => svc.encrypt('x', PhiContext.PatientSsn)).toThrow(/PHI_ENCRYPTION_KEY is not set/);
+    expect(() => svc.encrypt('x', PhiContext.StaffNiNumber)).toThrow(/PHI_ENCRYPTION_KEY is not set/);
   });
 });

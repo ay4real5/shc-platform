@@ -66,7 +66,15 @@ export default function StaffMemberPage() {
             ['Employment ended', formatDate(s.terminationDate)],
             ['Skills', s.skills.join(', ')],
             ['Languages', s.languages.join(', ')],
-            ['Home', [s.addressLine1, s.city, s.state, s.zip].filter(Boolean).join(', ')],
+            ['Date of birth', formatDate(s.dateOfBirth)],
+            ['Home', [s.addressLine1, s.addressLine2, s.town, s.postcode].filter(Boolean).join(', ')],
+            ['Drives for work', s.canDrive ? 'Yes' : 'No'],
+            [
+              'Emergency contact',
+              [s.emergencyContact.name, s.emergencyContact.relationship && `(${s.emergencyContact.relationship})`, s.emergencyContact.phone]
+                .filter(Boolean)
+                .join(' '),
+            ],
           ]}
         />
       </Card>
@@ -81,7 +89,7 @@ export default function StaffMemberPage() {
               ['Hourly', s.pay.hourlyRate && `£${s.pay.hourlyRate}`],
               ['Overtime', s.pay.overtimeRate && `£${s.pay.overtimeRate}`],
               ['Mileage', s.pay.mileageRate && `£${s.pay.mileageRate} per mile`],
-              ['Tax filing status', s.pay.taxFilingStatus && humanize(s.pay.taxFilingStatus)],
+              ['NI number', s.pay.niNumberEnding && `ending ${s.pay.niNumberEnding}`],
             ]}
           />
         </Card>

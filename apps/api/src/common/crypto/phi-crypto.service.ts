@@ -9,10 +9,8 @@ import { buildPhiKeyring } from './phi-keyring.js';
  * Changing a label makes existing values undecryptable, so never rename one.
  */
 export const PhiContext = {
-  PatientSsn: 'patients.ssn_encrypted',
-  StaffSsn: 'staff_profiles.ssn_encrypted',
+  StaffNiNumber: 'staff_profiles.ni_number_encrypted',
   UserTwoFaSecret: 'users.two_fa_secret',
-  AgencyTaxId: 'agencies.tax_id',
 } as const;
 export type PhiContext = (typeof PhiContext)[keyof typeof PhiContext];
 

@@ -2,8 +2,8 @@
  * Creates a real agency and its first administrator — the way to start a production (or staging) database, where
  * the demo seed must never run (D-081).
  *
- *   DATABASE_URL=... npm run agency:create -w @alora/api -- --name "Sunrise Home Health" \
- *     --email owner@sunrise.example --first Ada --last Owner [--timezone America/New_York] [--state VA] [--invite]
+ *   DATABASE_URL=... npm run agency:create -w @alora/api -- --name "Sunrise Care Ltd" \
+ *     --email owner@sunrise.example --first Ada --last Owner [--timezone Europe/London] [--invite]
  *
  * Prints a one-time temporary password: the admin must choose their own at first sign-in, then set up two-factor
  * authentication (both enforced by the API). Refuses if the email already has an account.
@@ -34,8 +34,7 @@ const { values } = parseArgs({
     email: { type: 'string' },
     first: { type: 'string' },
     last: { type: 'string' },
-    timezone: { type: 'string', default: 'America/New_York' },
-    state: { type: 'string', default: 'VA' },
+    timezone: { type: 'string', default: 'Europe/London' },
     invite: { type: 'boolean', default: false },
   },
 });
@@ -86,7 +85,7 @@ try {
   const token = randomBytes(32).toString('base64url');
   const agency = await prisma.$transaction(async (tx) => {
     const created = await tx.agency.create({
-      data: { name: values.name!.trim(), timezone: values.timezone!, state: values.state!.trim().toUpperCase().slice(0, 2) },
+      data: { name: values.name!.trim(), timezone: values.timezone! },
     });
     const user = await tx.user.create({
       data: {

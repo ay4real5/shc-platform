@@ -26,24 +26,13 @@ on:
         description: Administrator's last name
         required: true
         type: string
-      state:
-        description: State (two letters)
-        required: true
-        default: VA
-        type: string
       timezone:
         description: Time zone
         required: true
-        default: America/New_York
+        default: Europe/London
         type: choice
         options:
-          - America/New_York
-          - America/Chicago
-          - America/Denver
-          - America/Phoenix
-          - America/Los_Angeles
-          - America/Anchorage
-          - Pacific/Honolulu
+          - Europe/London
 
 permissions:
   id-token: write
@@ -105,7 +94,6 @@ jobs:
           ADMIN_EMAIL: ${{ inputs.admin_email }}
           ADMIN_FIRST: ${{ inputs.admin_first_name }}
           ADMIN_LAST: ${{ inputs.admin_last_name }}
-          STATE: ${{ inputs.state }}
           TIMEZONE: ${{ inputs.timezone }}
         run: |
           set -euo pipefail
@@ -118,4 +106,4 @@ jobs:
           docker run --rm --env-file email.env -e DATABASE_URL "$IMAGE" \
             node apps/api/dist/seed/create-agency.js --invite \
               --name "$AGENCY_NAME" --email "$ADMIN_EMAIL" --first "$ADMIN_FIRST" --last "$ADMIN_LAST" \
-              --state "$STATE" --timezone "$TIMEZONE"
+              --timezone "$TIMEZONE"

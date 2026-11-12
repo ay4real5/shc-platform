@@ -41,7 +41,7 @@ export interface MeResult {
   is2faEnabled: boolean;
   /** The user's role requires 2FA (D-045); if it's off, only 2FA setup works until it's on. */
   is2faRequired: boolean;
-  /** IANA timezone of the user's agency, e.g. America/Chicago — clients use it for "today". */
+  /** IANA timezone of the user's agency, e.g. Europe/London — clients use it for "today". */
   agencyTimezone: string;
   agency: { name: string; phone: string | null };
   /** The password was never set or is too old — only this endpoint and change-password work until it changes. */

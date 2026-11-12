@@ -37,13 +37,13 @@ export class UpdateAgencyDto {
   @Transform(trimmed)
   @IsString()
   @MaxLength(100)
-  city?: string;
+  town?: string;
 
-  /** UK postcode (stored in the `zip` column). */
+  /** UK postcode. */
   @IsOptional()
   @Transform(upperTrimmed)
-  @Matches(UK_POSTCODE, { message: 'zip must be a UK postcode, e.g. M1 1AA' })
-  zip?: string;
+  @Matches(UK_POSTCODE, { message: 'postcode must be a UK postcode, e.g. M1 1AA' })
+  postcode?: string;
 
   /** Show staff recognition badges in the app (D-097). Off by default. */
   @IsOptional()
@@ -57,8 +57,8 @@ export interface AgencyView {
   phone: string | null;
   addressLine1: string | null;
   addressLine2: string | null;
-  city: string | null;
-  zip: string | null;
+  town: string | null;
+  postcode: string | null;
   timezone: string;
   recognitionBadges: boolean;
 }
@@ -69,8 +69,8 @@ const SELECT = {
   phone: true,
   addressLine1: true,
   addressLine2: true,
-  city: true,
-  zip: true,
+  town: true,
+  postcode: true,
   timezone: true,
   settings: true,
 } as const;
@@ -98,7 +98,6 @@ export class AgencyService {
     return view(await this.prisma.agency.findUniqueOrThrow({ where: { id: caller.agencyId }, select: SELECT }));
   }
 
-  /** An NPI already used by another agency → 409 (unique). */
   async update(caller: AuthUser, dto: UpdateAgencyDto): Promise<AgencyView> {
     const { recognitionBadges, ...fields } = dto;
     let settings: Prisma.InputJsonObject | undefined;

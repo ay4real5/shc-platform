@@ -42,7 +42,7 @@ export interface OnboardingFacts {
   hasHireDate: boolean;
   hasPayRate: boolean;
   hasAvailability: boolean;
-  hasPhoneCheckInCode: boolean;
+  hasEmergencyContact: boolean;
   /** Credential types (lower-case) with an active, unexpired credential. */
   validCredentialTypes: string[];
   /** Credential types on file but expired. */
@@ -81,10 +81,10 @@ export function onboardingChecklist(facts: OnboardingFacts, requiredCredentials:
   const items: OnboardingItem[] = [
     item('signed_in', 'Signed in to the app', facts.signedIn, 'caregiver', 'Send the welcome email again from Users if they lost it.'),
     item('phone', 'Phone number', facts.hasPhone, 'office'),
-    item('address', 'Home address', facts.hasAddress, 'office', 'Used for travel distance when matching visits.'),
-    item('hire_date', 'Hire date', facts.hasHireDate, 'office'),
-    item('pay_rate', 'Pay rate', facts.hasPayRate, 'office', 'Hourly or per-visit rate, for payroll.'),
-    item('availability', 'Weekly availability', facts.hasAvailability, 'office', 'When they can work, for scheduling.'),
+    item('address', 'Home address', facts.hasAddress, 'office', 'Needed for their staff file and payroll.'),
+    item('hire_date', 'Start date', facts.hasHireDate, 'office'),
+    item('pay_rate', 'Pay rate', facts.hasPayRate, 'office', 'Hourly rate, for payroll.'),
+    item('availability', 'Weekly availability', facts.hasAvailability, 'office', 'When they can work, for rotas.'),
     ...requiredCredentials.map((type) =>
       item(
         `credential:${type}`,
@@ -94,7 +94,7 @@ export function onboardingChecklist(facts: OnboardingFacts, requiredCredentials:
         expired.has(type) ? 'On file but expired — add the renewed one.' : 'Not on file — add it under Credentials.',
       ),
     ),
-    item('phone_check_in', 'Phone check-in code', facts.hasPhoneCheckInCode, 'office', 'Only needed for clocking in by phone.', false),
+    item('emergency_contact', 'Emergency contact', facts.hasEmergencyContact, 'office', 'Who to call if something happens at work.', false),
   ];
   const required = items.filter((i) => i.required);
   const done = required.filter((i) => i.done).length;

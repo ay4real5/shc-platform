@@ -87,8 +87,8 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       phone: '07700 900100',
       email: `office@${DEMO_EMAIL_DOMAIN}`,
       addressLine1: '1 Demo Street',
-      city: 'Manchester',
-      zip: 'M1 1AA',
+      town: 'Manchester',
+      postcode: 'M1 1AA',
       timezone,
     },
   });
@@ -144,8 +144,12 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
           employmentType: rand.pick(['full_time', 'full_time', 'part_time', 'zero_hours', 'bank']),
           hireDate: toDate(addDays(today, -rand.int(30, 1500))),
           hourlyRate: plan.discipline === 'care_worker' || plan.discipline === 'support_worker' ? 12.6 + rand.int(0, 2) : 14 + rand.int(0, 3),
-          city: 'Manchester',
-          zip: rand.pick(['M1 2AB', 'M4 5CD', 'M14 6EF', 'M20 7GH']),
+          town: 'Manchester',
+          postcode: rand.pick(['M1 2AB', 'M4 5CD', 'M14 6EF', 'M20 7GH']),
+          canDrive: rand.next() < 0.5,
+          ...(staffNo % 3 === 0
+            ? { emergencyContactName: 'Demo Contact (FAKE)', emergencyContactPhone: '07700 900999', emergencyContactRelationship: 'Partner' }
+            : {}),
           languages: rand.next() < 0.3 ? ['English', 'Yoruba'] : ['English'],
         },
       });

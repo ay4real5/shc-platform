@@ -1,23 +1,7 @@
 /**
- * Staff, user and physician shapes as returned by the API (see apps/api/src/modules/{staff,users,physicians}).
+ * Staff and user shapes as returned by the API (see apps/api/src/modules/{staff,users}).
  * Kept in sync by hand for now (DECISIONS D-035).
  */
-
-export interface Physician {
-  id: string;
-  npi: string | null;
-  firstName: string;
-  lastName: string;
-  phone: string | null;
-  fax: string | null;
-  email: string | null;
-  practiceName: string | null;
-  addressLine1: string | null;
-  city: string | null;
-  state: string | null;
-  zip: string | null;
-  isActive: boolean;
-}
 
 export interface RoleOption {
   id: string;
@@ -67,29 +51,24 @@ export interface StaffSummary {
 export interface StaffDetail extends StaffSummary {
   email: string;
   phone: string | null;
-  /** A phone check-in (IVR) code is set; the code itself is never sent (D-073). */
-  hasPhoneCheckInCode: boolean;
   hireDate: string | null;
   terminationDate: string | null;
+  dateOfBirth: string | null;
   addressLine1: string | null;
-  city: string | null;
-  state: string | null;
-  zip: string | null;
-  /** Caregiver matching (D-094): home location and gender, optional. */
-  latitude: number | null;
-  longitude: number | null;
+  addressLine2: string | null;
+  town: string | null;
+  postcode: string | null;
+  emergencyContact: { name: string | null; phone: string | null; relationship: string | null };
+  canDrive: boolean;
   gender: string | null;
-  serviceAreaZipCodes: string[];
-  maxPatients: number | null;
   notes: string | null;
-  /** Only present for payroll roles and the person themselves. */
+  /** Only present for people who can see pay, and the person themselves. */
   pay?: {
     hourlyRate: string | null;
-    perVisitRate: string | null;
     overtimeRate: string | null;
     mileageRate: string | null;
-    taxFilingStatus: string | null;
-    ssnLast4: string | null;
+    /** Last three characters of the NI number, e.g. "56C"; the full number is never sent. */
+    niNumberEnding: string | null;
   };
 }
 

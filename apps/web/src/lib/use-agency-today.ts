@@ -7,5 +7,5 @@ import { useAuth } from './auth/auth-provider';
  */
 export function useAgencyToday(): string {
   const { user } = useAuth();
-  return todayInTimeZone(user?.agencyTimezone ?? 'America/New_York');
+  return todayInTimeZone(user?.agencyTimezone ?? 'Europe/London');
 }
