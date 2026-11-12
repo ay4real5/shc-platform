@@ -2143,6 +2143,289 @@
         ]
       }
     },
+    "/api/v1/documents/{id}/signature-requests": {
+      "post": {
+        "operationId": "SignaturesController_send",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendForSignatureDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      },
+      "get": {
+        "operationId": "SignaturesController_forDocument",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/signature-requests": {
+      "get": {
+        "operationId": "SignaturesController_forStaff",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/onboarding-pack": {
+      "post": {
+        "operationId": "SignaturesController_sendPack",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/signature-requests/mine": {
+      "get": {
+        "operationId": "SignaturesController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/signature-requests/{id}/file": {
+      "get": {
+        "operationId": "SignaturesController_file",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/signature-requests/{id}/sign": {
+      "post": {
+        "operationId": "SignaturesController_sign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/signature-requests/{id}/cancel": {
+      "post": {
+        "operationId": "SignaturesController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/onboarding-packs": {
+      "get": {
+        "operationId": "SignaturesController_packs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      },
+      "post": {
+        "operationId": "SignaturesController_createPack",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/onboarding-packs/{id}": {
+      "patch": {
+        "operationId": "SignaturesController_updatePack",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      },
+      "delete": {
+        "operationId": "SignaturesController_deletePack",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
     "/api/v1/messages/contacts": {
       "get": {
         "operationId": "MessagingController_contacts",
@@ -4461,6 +4744,18 @@
         "required": [
           "reason"
         ]
+      },
+      "SendForSignatureDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SignRequestDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "PackDto": {
+        "type": "object",
+        "properties": {}
       },
       "CreateConversationDto": {
         "type": "object",

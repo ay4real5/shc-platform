@@ -2137,3 +2137,24 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Credential**: the newest certificate (by issue date) drives the single `dbs_enhanced` credential.
   - If it doesn't clear them, the credential expires today, so onboarding shows not ready and alerts fire.
   - It is never shown as cleared by mistake.
+
+### S-008 — References
+2026-11-12 · Claude Code
+- **Requests**: the office sends a request per referee from the application.
+  - Each request has a one-time 30-day link (`/reference#token=…`). Only the SHA-256 is stored, and only the newest
+    link per referee works.
+  - Without email set up, the office is shown the link to pass on.
+  - The applicant's "contact only after an offer" choice blocks the request until the application is at Offer or
+    Hired (409 with the referee's name).
+- **The referee's page**: no sign-in, with the token sent in the request body and never in a URL path.
+  - It shows only the candidate's name, the company and the referee's name.
+  - Answers: who is answering, dates employed, job title, reason for leaving, reliability and attitude (1–5),
+    disciplinary action and safeguarding concerns (a "yes" requires details), would they re-employ, suitable for
+    care work, comments, declaration.
+  - The referee can decline instead.
+  - The answer is a guarded update, so it can't be overwritten. A second submit gets 410.
+- **Flagged**: any "yes" to disciplinary or safeguarding, or "no" to re-employ or suitable, flags the reference for
+  careful reading.
+- **Verified**: the office records how it confirmed the reference (CQC expects references to be verified).
+- References stay on the application, which links to the hire (`hired_user_id`). The CQC "ready to start"
+  checklist (S2-06) will count two satisfactory, verified references.

@@ -253,6 +253,7 @@ model StaffProfile {
   documents          Document[]
   rightToWorkChecks  RightToWorkCheck[]
   dbsChecks          DbsCheck[]
+  signatureRequests  SignatureRequest[]
 
   @@unique([agencyId, employeeId])
   @@index([agencyId])
@@ -370,6 +371,7 @@ model Document {
   @@index([agencyId, documentType])
   @@index([staffId])
   @@map("documents")
+  signatureRequests SignatureRequest[]
 }
 
 /// A document's file, encrypted (AES-256-GCM, bound to the document id) — the database storage driver (D-056).
@@ -895,4 +897,46 @@ model ReferenceRequest {
 
   @@index([applicationId])
   @@map("reference_requests")
+}
+
+/// A document sent to one person to sign (S2-04): their contract, or a company policy many people sign.
+model SignatureRequest {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String    @map("agency_id") @db.Uuid
+  documentId     String    @map("document_id") @db.Uuid
+  staffProfileId String    @map("staff_profile_id") @db.Uuid
+  requestedById  String    @map("requested_by_id") @db.Uuid
+  requestedAt    DateTime  @default(now()) @map("requested_at") @db.Timestamptz(6)
+  dueOn          DateTime? @map("due_on") @db.Date
+  /// pending | signed | cancelled
+  status         String    @default("pending") @db.VarChar(10)
+  signedAt       DateTime? @map("signed_at") @db.Timestamptz(6)
+  /// The name they typed to sign.
+  signedName     String?   @map("signed_name") @db.VarChar(200)
+  /// SHA-256 of exactly the file they signed.
+  contentHash    String?   @map("content_hash") @db.VarChar(64)
+  ip             String?   @db.VarChar(64)
+  userAgent      String?   @map("user_agent") @db.VarChar(255)
+
+  document     Document     @relation(fields: [documentId], references: [id])
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([staffProfileId, status])
+  @@index([documentId])
+  @@map("signature_requests")
+}
+
+/// A set of company documents every new starter in some job roles must sign (S2-04). Sent automatically on hire.
+model OnboardingPack {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId    String   @map("agency_id") @db.Uuid
+  name        String   @db.VarChar(150)
+  /// Job roles it applies to; empty = everyone.
+  disciplines String[]
+  documentIds String[] @map("document_ids") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([agencyId])
+  @@map("onboarding_packs")
 }

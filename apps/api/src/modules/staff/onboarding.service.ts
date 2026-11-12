@@ -20,6 +20,7 @@ const SELECT = {
   user: { select: { firstName: true, lastName: true, phone: true, lastLoginAt: true } },
   _count: { select: { availability: true } },
   credentials: { where: { status: 'active' }, select: { credentialType: true, expiryDate: true } },
+  signatureRequests: { where: { status: { not: 'cancelled' } }, select: { status: true } },
 } as const;
 type Row = Prisma.StaffProfileGetPayload<{ select: typeof SELECT }>;
 
@@ -78,6 +79,8 @@ export class OnboardingService {
         hasPayRate: row.hourlyRate !== null,
         hasAvailability: row._count.availability > 0,
         hasEmergencyContact: Boolean(row.emergencyContactName && row.emergencyContactPhone),
+        documentsToSign: row.signatureRequests.length,
+        documentsSigned: row.signatureRequests.filter((r) => r.status === 'signed').length,
         validCredentialTypes: valid,
         expiredCredentialTypes: expired.filter((t) => !valid.includes(t)),
       },

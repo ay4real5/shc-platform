@@ -76,6 +76,7 @@ export interface ApplicationDetail extends ApplicationSummary {
     explanation: string | null;
   }[];
   referees: {
+    id: string;
     name: string;
     organisation: string | null;
     relationship: string;
@@ -217,6 +218,7 @@ export class RecruitmentService {
         explanation: h.explanation,
       })),
       referees: row.referees.map((r) => ({
+        id: r.id,
         name: r.name,
         organisation: r.organisation,
         relationship: r.relationship,

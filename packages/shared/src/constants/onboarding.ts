@@ -43,6 +43,9 @@ export interface OnboardingFacts {
   hasPayRate: boolean;
   hasAvailability: boolean;
   hasEmergencyContact: boolean;
+  /** Contracts and policies sent for signature (S2-04), and how many are signed. Optional: 0 when none were sent. */
+  documentsToSign?: number;
+  documentsSigned?: number;
   /** Credential types (lower-case) with an active, unexpired credential. */
   validCredentialTypes: string[];
   /** Credential types on file but expired. */
@@ -94,6 +97,17 @@ export function onboardingChecklist(facts: OnboardingFacts, requiredCredentials:
         expired.has(type) ? 'On file but expired — add the renewed one.' : 'Not on file — add it under Credentials.',
       ),
     ),
+    ...((facts.documentsToSign ?? 0) > 0
+      ? [
+          item(
+            'documents_signed',
+            'Contracts and policies signed',
+            (facts.documentsSigned ?? 0) >= facts.documentsToSign!,
+            'caregiver',
+            `${facts.documentsToSign! - (facts.documentsSigned ?? 0)} of ${facts.documentsToSign} still to sign.`,
+          ),
+        ]
+      : []),
     item('emergency_contact', 'Emergency contact', facts.hasEmergencyContact, 'office', 'Who to call if something happens at work.', false),
   ];
   const required = items.filter((i) => i.required);

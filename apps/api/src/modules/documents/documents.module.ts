@@ -22,6 +22,7 @@ import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import { DatabaseDocumentStorage, DocumentStorage } from './document-storage.js';
+import { SignaturesController, SignaturesService } from './signatures.js';
 import { DocumentsService, type UploadedFile as File } from './documents.service.js';
 import {
   DeleteDocumentDto,
@@ -117,8 +118,8 @@ export class DocumentsController {
 }
 
 @Module({
-  controllers: [DocumentsController],
-  providers: [DocumentsService, { provide: DocumentStorage, useClass: DatabaseDocumentStorage }],
-  exports: [DocumentsService],
+  controllers: [DocumentsController, SignaturesController],
+  providers: [DocumentsService, SignaturesService, { provide: DocumentStorage, useClass: DatabaseDocumentStorage }],
+  exports: [DocumentsService, SignaturesService],
 })
 export class DocumentsModule {}

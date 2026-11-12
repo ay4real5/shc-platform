@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { AvailabilityEditor, CredentialsPanel, TimeOffPanel } from '@/components/staff/staff-panels';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { StaffDocumentsPanel } from '@/components/documents/signing';
 import { DbsPanel } from '@/components/staff/dbs-panel';
 import { OnboardingCard } from '@/components/staff/onboarding-card';
 import { RightToWorkPanel } from '@/components/staff/right-to-work-panel';
@@ -99,6 +100,7 @@ export default function StaffMemberPage() {
 
       <RightToWorkPanel staffId={id} canEdit={canEdit} />
       <DbsPanel staffId={id} canEdit={canEdit} isSelf={isSelf} />
+      <StaffDocumentsPanel staffId={id} />
       <CredentialsPanel staffId={id} canEdit={canEdit} />
       <div className="grid gap-6 lg:grid-cols-2">
         <AvailabilityEditor staffId={id} canEdit={isSelf || canEdit} />

@@ -15,6 +15,7 @@ import { toDate } from '../../common/utils/dates.js';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { PasswordService } from '../auth/password.service.js';
+import { SignaturesService } from '../documents/signatures.js';
 import { EmailSender } from '../notifications/delivery/senders.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
 import { formatInterviewTime, interviewInviteEmail, rejectionEmail, welcomeEmail } from './candidate-emails.js';
@@ -51,6 +52,8 @@ export interface HireResult {
   staffProfileId: string;
   /** False when email isn't set up: give them a starting password from Users instead. */
   welcomeEmailSent: boolean;
+  /** Documents from their onboarding pack sent for signature. */
+  documentsToSign: number;
 }
 
 /**
@@ -67,6 +70,7 @@ export class PipelineService {
     private readonly passwords: PasswordService,
     private readonly permissions: PermissionsService,
     private readonly config: ConfigService<EnvironmentVariables, true>,
+    private readonly signatures: SignaturesService,
   ) {}
 
   async timeline(caller: AuthUser, applicationId: string): Promise<{ events: TimelineEntry[]; interviews: InterviewView[] }> {
@@ -252,7 +256,14 @@ export class PipelineService {
     });
 
     const welcomeEmailSent = await this.sendWelcome(caller, app.id, result.userId, app.email, app.firstName);
-    return { ...result, welcomeEmailSent };
+    // Their onboarding pack (contracts and policies for their job role) goes out straight away.
+    let documentsToSign = 0;
+    try {
+      documentsToSign = (await this.signatures.sendPacks(caller.agencyId, caller.userId, result.staffProfileId)).created;
+    } catch (error) {
+      this.logger.error(`Onboarding pack failed for a new hire: ${(error as Error).name}`);
+    }
+    return { ...result, welcomeEmailSent, documentsToSign };
   }
 
   // ---------- helpers ----------

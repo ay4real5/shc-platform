@@ -7,6 +7,7 @@ import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import { Public } from '../../common/decorators/public.decorator.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { ComplianceModule } from '../compliance/compliance.module.js';
+import { DocumentsModule } from '../documents/documents.module.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import {
   AddNoteDto,
@@ -141,7 +142,7 @@ export class CareersController {
 }
 
 @Module({
-  imports: [NotificationsModule, ComplianceModule, AuthModule],
+  imports: [NotificationsModule, ComplianceModule, AuthModule, DocumentsModule],
   controllers: [RecruitmentController, CareersController, ReferencesController, PublicReferencesController],
   providers: [RecruitmentService, PipelineService, ReferencesService],
 })

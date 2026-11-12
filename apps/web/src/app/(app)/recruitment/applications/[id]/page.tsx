@@ -4,6 +4,7 @@ import { RIGHT_TO_WORK_LABELS, type RightToWorkAnswer } from '@alora/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { InterviewsPanel, StagePanel, TimelinePanel } from '@/components/recruitment/pipeline-panels';
+import { ReferencesPanel } from '@/components/recruitment/references-panel';
 import { ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
@@ -70,20 +71,8 @@ export default function ApplicationPage() {
           ))}
         </ol>
       </Card>
-      <Card className="p-5">
-        <h2 className="mb-3 text-base font-semibold text-slate-900">Referees</h2>
-        <ul className="grid gap-3 sm:grid-cols-2">
-          {a.referees.map((r, i) => (
-            <li key={i} className="rounded-xl border border-slate-200 p-3 text-sm">
-              <p className="font-medium text-slate-900">{r.name}</p>
-              <p className="text-slate-600">{[r.relationship, r.organisation].filter(Boolean).join(' · ')}</p>
-              <p className="text-slate-700">{r.email}{r.phone ? ` · ${r.phone}` : ''}</p>
-              <p className="text-xs text-slate-500">{r.contactBeforeOffer ? 'Can be contacted before an offer' : 'Contact only after an offer'}</p>
-            </li>
-          ))}
-        </ul>
-      </Card>
       <InterviewsPanel app={a} />
+      <ReferencesPanel app={a} />
       <TimelinePanel app={a} />
       <div>
         <ButtonLink href="/recruitment" variant="secondary">

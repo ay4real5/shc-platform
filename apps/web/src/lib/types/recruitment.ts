@@ -63,6 +63,7 @@ export interface ApplicationDetail extends ApplicationSummary {
     explanation: string | null;
   }[];
   referees: {
+    id: string;
     name: string;
     organisation: string | null;
     relationship: string;
