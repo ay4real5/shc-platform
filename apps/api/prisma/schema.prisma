@@ -219,6 +219,10 @@ model StaffProfile {
   /// Job role (care_worker, team_leader, …; @alora/shared DISCIPLINES).
   discipline          String    @db.VarChar(20)
   hireDate            DateTime? @map("hire_date") @db.Date
+  /// Contracted working days a week (S3-03), for statutory holiday (5.6 weeks, max 28 days). Null = 5.
+  daysPerWeek         Decimal?  @map("days_per_week") @db.Decimal(3, 1)
+  /// Holiday days a full leave year, set by the office: irregular hours, or a contract above statutory. Null = statutory.
+  holidayDaysOverride Decimal?  @map("holiday_days_override") @db.Decimal(4, 1)
   terminationDate     DateTime? @map("termination_date") @db.Date
   employmentType      String    @default("full_time") @map("employment_type") @db.VarChar(20)
   hourlyRate          Decimal?  @map("hourly_rate") @db.Decimal(10, 2)
@@ -316,6 +320,8 @@ model StaffTimeOff {
   startDate      DateTime @map("start_date") @db.Date
   endDate        DateTime @map("end_date") @db.Date
   type           String   @db.VarChar(20)
+  /// Working days it uses (S3-03): counted on their availability pattern, or entered (half days). Null = not counted (older rows).
+  days           Decimal? @db.Decimal(4, 1)
   status         String   @default("pending") @db.VarChar(20)
   approvedById   String?  @map("approved_by") @db.Uuid
   notes          String?

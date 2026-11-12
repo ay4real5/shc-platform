@@ -9,6 +9,7 @@ import { ErrorAlert, StatusBadge, formatDate } from '@/components/ui/data-displa
 import { Field } from '@/components/ui/field';
 import { SelectField } from '@/components/ui/form-controls';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { HolidaySummaryBlock } from './holiday';
 import { dayName, humanize } from '@/lib/labels';
 import type { AvailabilitySlot, Credential, TimeOff } from '@/lib/types/people';
 
@@ -188,7 +189,7 @@ export function TimeOffPanel({
   canApprove: boolean;
   isSelf: boolean;
 }) {
-  const { request } = useAuth();
+  const { request, can } = useAuth();
   const { run, error, busy } = useStaffAction(staffId);
   const list = useQuery({
     queryKey: ['staff', staffId, 'time-off'],
@@ -200,24 +201,28 @@ export function TimeOffPanel({
     const formEl = event.currentTarget;
     const form = new FormData(formEl);
     const notes = String(form.get('notes') ?? '').trim();
+    const days = String(form.get('days') ?? '').trim();
     const ok = await run('/time-off', 'POST', {
       startDate: form.get('startDate'),
       endDate: form.get('endDate'),
       type: form.get('type'),
+      ...(days ? { days: Number(days) } : {}),
       ...(notes ? { notes } : {}),
     });
     if (ok) formEl.reset();
   };
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-4 text-base font-semibold text-slate-900">Time off</h2>
+    <Card id="time-off" className="scroll-mt-6 p-5">
+      <h2 className="mb-4 text-base font-semibold text-slate-900">Holiday and time off</h2>
+      <HolidaySummaryBlock staffId={staffId} canEdit={!isSelf && can('staff:update')} />
       <ErrorAlert error={error ?? list.error} />
       <ul className="mb-4 divide-y divide-slate-100 text-sm">
         {list.data?.map((t) => (
           <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
             <span>
               {formatDate(t.startDate)} – {formatDate(t.endDate)} · {humanize(t.type)}
+              {t.workingDays !== null && <span className="text-slate-500"> · {t.workingDays} working day{t.workingDays === 1 ? '' : 's'}</span>}
             </span>
             <span className="flex items-center gap-2">
               <StatusBadge status={t.status} />
@@ -245,16 +250,17 @@ export function TimeOffPanel({
         <form onSubmit={(e) => void submit(e)} className="grid gap-3 sm:grid-cols-2">
           <Field label="From" name="startDate" type="date" required />
           <Field label="To" name="endDate" type="date" required />
-          <SelectField label="Time-off type" name="type" defaultValue="vacation">
+          <SelectField label="Type" name="type" defaultValue="annual_leave">
             {TIME_OFF_TYPES.map((t) => (
               <option key={t} value={t}>
                 {humanize(t)}
               </option>
             ))}
           </SelectField>
-          <Field label="Notes" name="notes" />
+          <Field label="Working days it uses (optional)" name="days" type="number" min={0.5} max={60} step={0.5} hint="Leave blank to count working days. Use 0.5 for a half day." />
+          <Field label="Notes" name="notes" hint={isSelf ? undefined : 'For sickness, keep medical details out: just the dates.'} />
           <Button type="submit" variant="secondary" disabled={busy} className="sm:justify-self-start">
-            Request time off
+            {isSelf ? 'Request time off' : can('time_off:approve') ? 'Record time off (approved)' : 'Record time off'}
           </Button>
         </form>
       )}

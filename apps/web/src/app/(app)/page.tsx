@@ -6,6 +6,7 @@ import { Bell, ClipboardCheck, GraduationCap, ShieldAlert, UserPlus, Users, type
 import { useSyncExternalStore } from 'react';
 import { ToSignCard } from '@/components/documents/signing';
 import { HealthPromptCard } from '@/components/staff/health';
+import { HolidayBalanceCard } from '@/components/staff/holiday';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { useAgencyToday } from '@/lib/use-agency-today';
@@ -133,6 +134,7 @@ export default function DashboardPage() {
       </div>
       <ToSignCard />
       <HealthPromptCard />
+      <HolidayBalanceCard />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {can('staff:read') && (
           <>

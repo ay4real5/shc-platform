@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader } from '@/components/ui/data-display';
 import { Field } from '@/components/ui/field';
+import { SelectField } from '@/components/ui/form-controls';
 import { useAuth } from '@/lib/auth/auth-provider';
 
 interface Agency {
@@ -18,7 +19,10 @@ interface Agency {
   postcode: string | null;
   timezone: string;
   careersSlug: string | null;
+  leaveYearStartMonth: number;
 }
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const FIELDS = ['name', 'phone', 'addressLine1', 'addressLine2', 'town', 'postcode', 'careersSlug'] as const;
 
@@ -32,7 +36,7 @@ export default function AgencySettingsPage() {
     queryFn: async () => (await request<Agency>('/agency')).data,
   });
   const save = useMutation({
-    mutationFn: (body: Record<string, string>) => request<Agency>('/agency', { method: 'PATCH', body }),
+    mutationFn: (body: Record<string, string | number>) => request<Agency>('/agency', { method: 'PATCH', body }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agency'] }),
   });
 
@@ -43,11 +47,13 @@ export default function AgencySettingsPage() {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const body: Record<string, string> = {};
+    const body: Record<string, string | number> = {};
     for (const key of FIELDS) {
       const value = String(form.get(key) ?? '').trim();
       if (value && value !== (a?.[key] ?? '')) body[key] = value;
     }
+    const month = Number(form.get('leaveYearStartMonth'));
+    if (month && month !== a?.leaveYearStartMonth) body.leaveYearStartMonth = month;
     save.mutate(body);
   };
 
@@ -77,6 +83,13 @@ export default function AgencySettingsPage() {
                   : 'Lower-case letters, numbers and dashes, e.g. your-company. Your jobs then appear at /careers/your-company.'
               }
             />
+            <SelectField label="Holiday leave year starts" name="leaveYearStartMonth" defaultValue={String(a.leaveYearStartMonth)} disabled={!editable} className="sm:col-span-2">
+              {MONTHS.map((m, i) => (
+                <option key={m} value={i + 1}>
+                  1 {m}
+                </option>
+              ))}
+            </SelectField>
             <p className="text-sm text-slate-600 sm:col-span-2">Timezone: {a.timezone}</p>
             {editable && (
               <div className="flex flex-col gap-2 sm:col-span-2">

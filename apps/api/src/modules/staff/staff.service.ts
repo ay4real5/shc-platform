@@ -15,6 +15,7 @@ import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
+import { HolidayService } from './holiday.js';
 import type {
   CreateStaffDto,
   CreateTimeOffDto,
@@ -77,6 +78,8 @@ export interface TimeOffView {
   id: string;
   startDate: string;
   endDate: string;
+  /** Working days it uses (S3-03); null on older requests. */
+  workingDays: number | null;
   type: string;
   status: string;
   notes: string | null;
@@ -97,6 +100,7 @@ export class StaffService {
     private readonly permissions: PermissionsService,
     private readonly notifications: NotificationsService,
     private readonly clock: AgencyClockService,
+    private readonly holiday: HolidayService,
   ) {}
 
   async list(caller: AuthUser, query: ListStaffQueryDto): Promise<Paginated<StaffSummary>> {
@@ -241,8 +245,14 @@ export class StaffService {
     return requests.map(toTimeOff);
   }
 
+  /**
+   * Someone asks for their own time off (pending; annual leave must fit their balance), or the office records it for
+   * them (S3-03): approved straight away when the recorder can approve time off, e.g. sickness or agreed leave.
+   */
   async requestTimeOff(caller: AuthUser, id: string, dto: CreateTimeOffDto): Promise<TimeOffView> {
-    await this.assertSelfOr(caller, await this.find(caller, id), 'staff:update');
+    const profile = await this.find(caller, id);
+    await this.assertSelfOr(caller, profile, 'staff:update');
+    const isSelf = profile.userId === caller.userId;
     if (dto.endDate < dto.startDate) throw new BadRequestException('endDate cannot be before startDate');
     const overlapping = await this.prisma.staffTimeOff.count({
       where: {
@@ -253,6 +263,9 @@ export class StaffService {
       },
     });
     if (overlapping) throw new ConflictException('This overlaps an existing time-off request');
+    const days = await this.holiday.daysFor(id, dto);
+    if (isSelf && dto.type === 'annual_leave') await this.holiday.assertBalance(caller.agencyId, id, dto.startDate, days);
+    const recordedApproved = !isSelf && (await this.permissions.forUser(caller)).permissions.has('time_off:approve');
     return toTimeOff(
       await this.prisma.staffTimeOff.create({
         data: {
@@ -260,7 +273,9 @@ export class StaffService {
           startDate: toDate(dto.startDate)!,
           endDate: toDate(dto.endDate)!,
           type: dto.type,
+          days,
           notes: dto.notes ?? null,
+          ...(recordedApproved ? { status: 'approved', approvedById: caller.userId } : {}),
         },
       }),
     );
@@ -408,6 +423,7 @@ function toTimeOff(r: {
   startDate: Date;
   endDate: Date;
   type: string;
+  days: unknown;
   status: string;
   notes: string | null;
   approvedById: string | null;
@@ -417,6 +433,7 @@ function toTimeOff(r: {
     id: r.id,
     startDate: fromDate(r.startDate)!,
     endDate: fromDate(r.endDate)!,
+    workingDays: r.days === null || r.days === undefined ? null : Number(r.days),
     type: r.type,
     status: r.status,
     notes: r.notes,

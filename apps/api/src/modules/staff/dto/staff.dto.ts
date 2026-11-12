@@ -1,24 +1,7 @@
 import { DISCIPLINES, EMPLOYMENT_TYPES, TIME_OFF_TYPES } from '@alora/shared';
 import { OmitType, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import {
-  ArrayMaxSize,
-  IsArray,
-  IsBoolean,
-  IsIn,
-  IsInt,
-  IsNotEmpty,
-  IsNumber,
-  IsObject,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Matches,
-  Max,
-  MaxLength,
-  Min,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateNested } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
 import { IsDateOnly } from '../../../common/validators/is-date-only.js';
 import { trimmed, upperTrimmed, UK_POSTCODE } from '../../../common/validators/fields.js';
@@ -278,6 +261,13 @@ export class CreateTimeOffDto {
 
   @IsIn(TIME_OFF_TYPES)
   type!: (typeof TIME_OFF_TYPES)[number];
+
+  /** Working days it uses, in half days (e.g. 0.5 for a half day). Left out: counted on their working pattern. */
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 1 })
+  @Min(0.5)
+  @Max(60)
+  days?: number;
 
   @IsOptional()
   @IsString()

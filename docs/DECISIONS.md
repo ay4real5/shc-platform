@@ -2253,3 +2253,23 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   is in progress the cell shows standards done (e.g. 7/16). Training still comes from credentials, so classroom
   certificates (added on the staff page) and Academy passes both count.
 - New credential types: `infection_control`, `health_safety`, `fire_safety`.
+
+### S-014 — Holiday and absence (S3-03)
+- **Allowance:** statutory 5.6 weeks × days worked a week, capped at 28 days, bank holidays included
+  (`statutoryHolidayDays`). Days a week is on the staff record (`days_per_week`, half days; blank = 5 assumed and
+  flagged). The office can set a yearly figure instead (`holiday_days_override`): irregular-hours and bank staff
+  (12.07% of hours worked, which the platform can't see without rostering), or contracts above statutory.
+- **Leave year:** a company setting (`settings.leaveYearStartMonth`, default April). Joiners get a pro-rata share of
+  the year from their start date, rounded up to the next half day. Leave counts in the leave year it starts in.
+- **Working days per request** (`staff_time_off.days`): entered (half days allowed) or counted on the person's
+  availability weekdays (Monday to Friday if none). If the dates miss their pattern entirely, every day counts.
+  Older rows without `days` are counted on the fly.
+- **Balance check:** annual leave that someone asks for themselves must fit what's left in that leave year, counting
+  requests still waiting. The office can record over it (agreed extra, carry-over).
+- **Office-recorded time off is approved at once** when the recorder holds `time_off:approve` (sickness is recorded,
+  not requested). Self-requests stay pending as before. Notes on sickness should hold dates, not medical details.
+- **Absence:** approved sickness over the last 52 weeks: spells, days and the Bradford factor (spells² × days), with
+  common bands (under 51 low, under 250 review, 250+ high) as a prompt only; the company's own absence policy decides.
+- **Report:** `GET /holiday/report` (`staff:read`), the "Holiday & absence" page, sortable by holiday left or Bradford
+  score. Staff see their balance on the home page.
+- Not included: Statutory Sick Pay, carry-over between leave years, leavers' holiday pay. Raise with Michael if needed.

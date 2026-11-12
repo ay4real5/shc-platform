@@ -103,6 +103,8 @@ export interface TimeOff {
   id: string;
   startDate: string;
   endDate: string;
+  /** Working days it uses; null on older requests. */
+  workingDays: number | null;
   type: string;
   status: string;
   notes: string | null;

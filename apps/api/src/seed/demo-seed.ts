@@ -147,7 +147,8 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
           employeeId: `D${String(staffNo).padStart(4, '0')}`,
           discipline: plan.discipline,
           employmentType: rand.pick(['full_time', 'full_time', 'part_time', 'zero_hours', 'bank']),
-          hireDate: toDate(addDays(today, ccInProgress ? -rand.int(20, 70) : -rand.int(30, 1500))),
+          hireDate: toDate(addDays(today, ccInProgress ? -rand.int(20, 70) : i === 0 ? -rand.int(400, 1500) : -rand.int(30, 1500))),
+          daysPerWeek: i === 0 ? 5 : rand.pick([5, 5, 4, 3, 2.5]), // demo logins: full time, for stable tests
           hourlyRate: plan.discipline === 'care_worker' || plan.discipline === 'support_worker' ? 12.6 + rand.int(0, 2) : 14 + rand.int(0, 3),
           town: 'Manchester',
           postcode: rand.pick(['M1 2AB', 'M4 5CD', 'M14 6EF', 'M20 7GH']),
@@ -176,6 +177,24 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
         rows.push({ staffProfileId: profile.id, credentialType: 'care_certificate', credentialName: 'Care Certificate', issueDate: toDate(addDays(today, -rand.int(30, 600))), expiryDate: null } as (typeof rows)[number]);
       }
       await prisma.staffCredential.createMany({ data: rows });
+      // Holiday and sickness (S3-03): some leave taken, some booked, and a few sickness spells (one person with many).
+      const leave = [
+        { startDate: addDays(today, -rand.int(20, 120)), length: rand.int(2, 5), type: 'annual_leave' },
+        { startDate: addDays(today, rand.int(14, 90)), length: rand.int(1, 5), type: 'annual_leave' },
+        ...(staffNo === 3 ? [-30, -75, -130, -200].map((d) => ({ startDate: addDays(today, d), length: rand.int(1, 2), type: 'sickness' })) : []),
+        ...(staffNo % 4 === 0 ? [{ startDate: addDays(today, -rand.int(30, 300)), length: rand.int(1, 4), type: 'sickness' }] : []),
+      ];
+      await prisma.staffTimeOff.createMany({
+        data: leave.map((l) => ({
+          staffProfileId: profile.id,
+          startDate: toDate(l.startDate)!,
+          endDate: toDate(addDays(l.startDate, l.length - 1))!,
+          days: l.length,
+          type: l.type,
+          status: 'approved',
+          approvedById: coordinatorId,
+        })),
+      });
       if (ccInProgress) {
         const done = rand.int(3, 12);
         await prisma.careCertificateSignOff.createMany({

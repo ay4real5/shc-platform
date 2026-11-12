@@ -54,15 +54,15 @@ test('an admin adds a user, turns them into staff, and manages credentials, avai
   await page.getByRole('button', { name: 'Save availability' }).click();
   await page.reload();
   await expect(page.getByText('No availability set')).toHaveCount(0);
-  await expect(page.getByLabel('Day')).toHaveValue('1');
+  await expect(page.getByLabel('Day', { exact: true })).toHaveValue('1');
 
-  // 5. Time off: request (admin on their behalf), then approve.
+  // 5. Time off: the admin records it for them, approved at once (S3-03), and it comes off their holiday balance.
+  await expect(page.getByText(/days? holiday left/)).toBeVisible();
   await page.getByLabel('From', { exact: true }).last().fill('2027-03-01');
   await page.getByLabel('To', { exact: true }).last().fill('2027-03-03');
-  await page.getByRole('button', { name: 'Request time off' }).click();
-  await expect(page.getByText('pending', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Approve' }).click();
+  await page.getByRole('button', { name: 'Record time off (approved)' }).click();
   await expect(page.getByText('approved', { exact: true })).toBeVisible();
+  await expect(page.getByText(/working days?$/).first()).toBeVisible(); // counted on their availability pattern
 });
 
 test('team leaders see their people but never pay, and cannot open Users', async ({ page }) => {

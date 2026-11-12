@@ -37,7 +37,7 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 - [x] **S3-01** `agent` Expiry alerts for Right to Work, DBS, training, driving licence and insurance (reuse the
   credential expiry job).
 - [x] **S3-02** `agent` Training and Care Certificate tracking (reuse Academy courses and credentials).
-- [ ] **S3-03** `agent` Holiday (5.6-week statutory entitlement, pro-rata) and absence.
+- [x] **S3-03** `agent` Holiday (5.6-week statutory entitlement, pro-rata) and absence.
 - [ ] **S3-04** `agent` Supervisions and appraisals: schedule, record, remind.
 - [ ] **S3-05** `agent` Manager dashboard: who can't work yet and why, what expires this month, hiring at a glance.
 - [ ] **S3-06** `agent` Staff phone app (reuse the caregiver app): documents, training, holiday, messages.

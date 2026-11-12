@@ -1,5 +1,6 @@
 import {
   Briefcase,
+  CalendarDays,
   Building2,
   ClipboardCheck,
   FileText,
@@ -26,6 +27,7 @@ export const NAVIGATION: readonly { href: string; label: string; permission: str
   { href: '/staff', label: 'Staff', permission: 'staff:read', icon: Users, group: 'People' },
   { href: '/staff/onboarding', label: 'Onboarding', permission: 'staff:read', icon: ClipboardCheck, group: 'People' },
   { href: '/staff/credentials', label: 'Checks & expiries', permission: 'staff:read', icon: ShieldCheck, group: 'People' },
+  { href: '/staff/holiday', label: 'Holiday & absence', permission: 'staff:read', icon: CalendarDays, group: 'People' },
   { href: '/training/matrix', label: 'Training matrix', permission: 'staff:read', icon: Grid3x3, group: 'People' },
   { href: '/training', label: 'Academy', permission: 'training:manage', icon: GraduationCap, group: 'People' },
   { href: '/documents', label: 'Documents', permission: 'documents:read', icon: FileText, group: 'Compliance' },

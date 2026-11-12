@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Injectable, Module, Patch } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { DEFAULT_LEAVE_YEAR_START_MONTH } from '@alora/shared';
+import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
@@ -55,6 +56,13 @@ export class UpdateAgencyDto {
   @IsOptional()
   @IsBoolean()
   recognitionBadges?: boolean;
+
+  /** First month of the holiday leave year, 1–12 (S3-03). April by default. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  leaveYearStartMonth?: number;
 }
 
 export interface AgencyView {
@@ -68,6 +76,7 @@ export interface AgencyView {
   timezone: string;
   careersSlug: string | null;
   recognitionBadges: boolean;
+  leaveYearStartMonth: number;
 }
 
 const SELECT = {
@@ -91,7 +100,8 @@ function recognitionEnabled(settings: unknown): boolean {
 const isObject = (v: unknown): v is Prisma.JsonObject => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 function view({ settings, ...agency }: Prisma.AgencyGetPayload<{ select: typeof SELECT }>): AgencyView {
-  return { ...agency, recognitionBadges: recognitionEnabled(settings) };
+  const month = isObject(settings) ? settings.leaveYearStartMonth : undefined;
+  return { ...agency, recognitionBadges: recognitionEnabled(settings), leaveYearStartMonth: typeof month === 'number' ? month : DEFAULT_LEAVE_YEAR_START_MONTH };
 }
 
 /**
@@ -107,11 +117,15 @@ export class AgencyService {
   }
 
   async update(caller: AuthUser, dto: UpdateAgencyDto): Promise<AgencyView> {
-    const { recognitionBadges, ...fields } = dto;
+    const { recognitionBadges, leaveYearStartMonth, ...fields } = dto;
     let settings: Prisma.InputJsonObject | undefined;
-    if (recognitionBadges !== undefined) {
+    if (recognitionBadges !== undefined || leaveYearStartMonth !== undefined) {
       const current = await this.prisma.agency.findUniqueOrThrow({ where: { id: caller.agencyId }, select: { settings: true } });
-      settings = { ...(isObject(current.settings) ? current.settings : {}), recognitionBadges };
+      settings = {
+        ...(isObject(current.settings) ? current.settings : {}),
+        ...(recognitionBadges !== undefined ? { recognitionBadges } : {}),
+        ...(leaveYearStartMonth !== undefined ? { leaveYearStartMonth } : {}),
+      };
     }
     return view(await this.prisma.agency.update({ where: { id: caller.agencyId }, data: { ...fields, ...(settings ? { settings } : {}) }, select: SELECT }));
   }

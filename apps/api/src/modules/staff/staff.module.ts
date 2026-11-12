@@ -1,3 +1,5 @@
+import { HolidayService } from './holiday.js';
+import { HolidayController } from './holiday.controller.js';
 import { CareCertificateController, CareCertificateService } from './care-certificate.js';
 import { Module } from '@nestjs/common';
 import { CredentialsService } from './credentials.service.js';
@@ -11,8 +13,8 @@ import { TimeOffController } from './time-off.controller.js';
 import { TimeOffService } from './time-off.service.js';
 
 @Module({
-  controllers: [CareCertificateController, RightToWorkController, DbsController, HealthController, StaffController, TimeOffController],
-  providers: [CareCertificateService, StaffService, CredentialsService, TimeOffService, OnboardingService, RightToWorkService, DbsService, HealthService],
+  controllers: [CareCertificateController, HolidayController, RightToWorkController, DbsController, HealthController, StaffController, TimeOffController],
+  providers: [CareCertificateService, HolidayService, StaffService, CredentialsService, TimeOffService, OnboardingService, RightToWorkService, DbsService, HealthService],
   exports: [StaffService, TimeOffService, OnboardingService],
 })
 export class StaffModule {}

@@ -1,6 +1,6 @@
 import { TIME_OFF_STATUSES, TIME_OFF_TYPES } from '@alora/shared';
 import { Transform } from 'class-transformer';
-import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
 import { IsDateOnly } from '../../../common/validators/is-date-only.js';
 import { trimmed } from '../../../common/validators/fields.js';
@@ -18,6 +18,13 @@ export class RequestTimeOffDto {
 
   @IsIn(TIME_OFF_TYPES)
   type!: (typeof TIME_OFF_TYPES)[number];
+
+  /** Working days it uses, in half days (e.g. 0.5 for a half day). Left out: counted on their working pattern. */
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 1 })
+  @Min(0.5)
+  @Max(60)
+  days?: number;
 
   /** For the office; keep it short and don't include patient details. */
   @IsOptional()

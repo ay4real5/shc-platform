@@ -7,6 +7,7 @@ import { PrismaService } from '../../database/prisma.service.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { PermissionsService } from '../rbac/permissions.service.js';
+import { HolidayService } from './holiday.js';
 import { MAX_TIME_OFF_DAYS, type DecideTimeOffDto, type ListTimeOffQueryDto, type RequestTimeOffDto } from './dto/time-off.dto.js';
 
 const INCLUDE = {
@@ -20,7 +21,10 @@ export interface TimeOffView {
   staff: { id: string; userId: string; firstName: string; lastName: string; discipline: string };
   startDate: string;
   endDate: string;
+  /** Calendar days, first to last. */
   days: number;
+  /** Working days it uses (S3-03); null on older requests. */
+  workingDays: number | null;
   type: string;
   status: string;
   notes: string | null;
@@ -28,8 +32,8 @@ export interface TimeOffView {
   createdAt: Date;
 }
 
-/** "Sep 3" — alerts carry dates only, never patient details. */
-const shortDate = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+/** "3 Sep": alerts carry dates only. */
+const shortDate = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 const inclusiveDays = (start: string, end: string) => Math.round((toDate(end)!.getTime() - toDate(start)!.getTime()) / 86_400_000) + 1;
 
 /**
@@ -44,6 +48,7 @@ export class TimeOffService {
     private readonly clock: AgencyClockService,
     private readonly permissions: PermissionsService,
     private readonly notifications: NotificationsService,
+    private readonly holiday: HolidayService,
   ) {}
 
   async list(caller: AuthUser, query: ListTimeOffQueryDto): Promise<Paginated<TimeOffView>> {
@@ -88,12 +93,15 @@ export class TimeOffService {
       },
     });
     if (overlapping) throw new ConflictException('You already have time off requested for some of those days');
+    const days = await this.holiday.daysFor(staffId, dto);
+    if (dto.type === 'annual_leave') await this.holiday.assertBalance(caller.agencyId, staffId, dto.startDate, days);
     const row = await this.prisma.staffTimeOff.create({
       data: {
         staffProfileId: staffId,
         startDate: toDate(dto.startDate)!,
         endDate: toDate(dto.endDate)!,
         type: dto.type,
+        days,
         notes: dto.notes || null,
       },
       include: INCLUDE,
@@ -180,6 +188,7 @@ function toView(r: Row): TimeOffView {
     startDate,
     endDate,
     days: inclusiveDays(startDate, endDate),
+    workingDays: r.days === null ? null : Number(r.days),
     type: r.type,
     status: r.status,
     notes: r.notes,

@@ -874,6 +874,121 @@
         ]
       }
     },
+    "/api/v1/staff/{id}/holiday": {
+      "get": {
+        "operationId": "HolidayController_summary",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Holiday allowance and balance this leave year. The person themselves, or staff:read.",
+        "tags": [
+          "staff"
+        ]
+      },
+      "patch": {
+        "operationId": "HolidayController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HolidaySettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/absence": {
+      "get": {
+        "operationId": "HolidayController_absence",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Sickness over the last 52 weeks, with the Bradford factor. The person themselves, or staff:read.",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/holiday/report": {
+      "get": {
+        "operationId": "HolidayController_report",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Everyone's holiday balance and sickness, for the office.",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
     "/api/v1/staff/right-to-work/follow-ups": {
       "get": {
         "operationId": "RightToWorkController_followUps",
@@ -4418,6 +4533,10 @@
         "type": "object",
         "properties": {}
       },
+      "HolidaySettingsDto": {
+        "type": "object",
+        "properties": {}
+      },
       "RecordRightToWorkDto": {
         "type": "object",
         "properties": {}
@@ -4850,6 +4969,12 @@
               "other"
             ]
           },
+          "days": {
+            "type": "number",
+            "description": "Working days it uses, in half days (e.g. 0.5 for a half day). Left out: counted on their working pattern.",
+            "minimum": 0.5,
+            "maximum": 60
+          },
           "notes": {
             "type": "string",
             "maxLength": 1000
@@ -4894,6 +5019,12 @@
               "unpaid",
               "other"
             ]
+          },
+          "days": {
+            "type": "number",
+            "description": "Working days it uses, in half days (e.g. 0.5 for a half day). Left out: counted on their working pattern.",
+            "minimum": 0.5,
+            "maximum": 60
           },
           "notes": {
             "type": "string",
