@@ -7,10 +7,12 @@ test('forgot password: from sign-in to a neutral answer; the reset page needs th
   await page.getByLabel('Email').fill('nobody@demo.shc.test');
   await page.getByRole('button', { name: 'Send reset link' }).click();
   // Same answer whether or not the account exists; which one depends on whether email is connected (not in CI).
-  await expect(page.getByRole('status')).toContainText(/If that address belongs to an Primordial Health account|isn’t set up for your agency/);
+  await expect(page.getByRole('status')).toContainText(/If that address belongs to an SHC account|isn’t set up for your agency/);
 
   await page.goto('/reset-password');
   await expect(page.getByText('This page needs the link from your reset email.')).toBeVisible();
+  // Opening the emailed link is a fresh page load (a hash-only change on the same page isn't).
+  await page.goto('about:blank');
   await page.goto('/reset-password#token=abc');
   await expect(page.getByLabel('New password', { exact: true })).toBeVisible();
 });

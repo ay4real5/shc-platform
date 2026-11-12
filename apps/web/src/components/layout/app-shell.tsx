@@ -58,7 +58,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         if (!groupItems.length) return null;
         return (
           <div key={group} className="flex flex-col gap-0.5">
-            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-300/80">{group}</p>
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-200">{group}</p>
             {groupItems.map((item) => {
               const active = item.href === activeHref;
               const Icon = item.icon;
