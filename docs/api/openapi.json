@@ -2774,6 +2774,194 @@
         ]
       }
     },
+    "/api/v1/recruitment/applications/{id}/timeline": {
+      "get": {
+        "operationId": "RecruitmentController_timeline",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "recruitment"
+        ]
+      }
+    },
+    "/api/v1/recruitment/applications/{id}/stage": {
+      "post": {
+        "operationId": "RecruitmentController_moveStage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveStageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "recruitment"
+        ]
+      }
+    },
+    "/api/v1/recruitment/applications/{id}/notes": {
+      "post": {
+        "operationId": "RecruitmentController_addNote",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddNoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "recruitment"
+        ]
+      }
+    },
+    "/api/v1/recruitment/applications/{id}/interviews": {
+      "post": {
+        "operationId": "RecruitmentController_bookInterview",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookInterviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "recruitment"
+        ]
+      }
+    },
+    "/api/v1/recruitment/interviews/{id}": {
+      "patch": {
+        "operationId": "RecruitmentController_updateInterview",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInterviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "recruitment"
+        ]
+      }
+    },
+    "/api/v1/recruitment/applications/{id}/hire": {
+      "post": {
+        "operationId": "RecruitmentController_hire",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HireDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "recruitment"
+        ]
+      }
+    },
     "/api/v1/careers/{slug}": {
       "get": {
         "operationId": "CareersController_page",
@@ -4164,6 +4352,157 @@
             "type": "string",
             "nullable": true,
             "description": "Last day applications are accepted (company time)."
+          }
+        }
+      },
+      "MoveStageDto": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "screened",
+              "interview",
+              "offer",
+              "rejected",
+              "withdrawn"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "description": "Shown on the timeline (e.g. why rejected). Not sent to the applicant.",
+            "maxLength": 1000
+          },
+          "notifyApplicant": {
+            "type": "boolean",
+            "description": "Email the applicant (rejection: a polite \"not this time\")."
+          }
+        },
+        "required": [
+          "stage"
+        ]
+      },
+      "AddNoteDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "BookInterviewDto": {
+        "type": "object",
+        "properties": {
+          "startsAt": {
+            "type": "string",
+            "description": "ISO date-time with offset, e.g. 2026-11-20T10:00:00Z."
+          },
+          "durationMinutes": {
+            "type": "number",
+            "minimum": 10,
+            "maximum": 240
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "in_person",
+              "video",
+              "phone"
+            ]
+          },
+          "location": {
+            "type": "string",
+            "description": "Address, video link or phone number, as told to the applicant.",
+            "maxLength": 500
+          },
+          "interviewerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notifyApplicant": {
+            "type": "boolean",
+            "description": "Email the applicant the date, time and place."
+          }
+        },
+        "required": [
+          "startsAt",
+          "mode"
+        ]
+      },
+      "UpdateInterviewDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "completed",
+              "cancelled",
+              "no_show"
+            ]
+          },
+          "score": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 5
+          },
+          "outcome": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "pass",
+              "fail"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "startsAt": {
+            "type": "string"
+          }
+        }
+      },
+      "HireDto": {
+        "type": "object",
+        "properties": {
+          "discipline": {
+            "type": "string",
+            "description": "Defaults to the job advert's role (or care_worker for a general application).",
+            "enum": [
+              "care_worker",
+              "senior_care_worker",
+              "support_worker",
+              "team_leader",
+              "nurse",
+              "care_coordinator",
+              "manager",
+              "office"
+            ]
+          },
+          "employmentType": {
+            "type": "string",
+            "enum": [
+              "full_time",
+              "part_time",
+              "zero_hours",
+              "bank",
+              "contractor"
+            ]
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "hourlyRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
           }
         }
       },

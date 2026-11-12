@@ -2,6 +2,8 @@ import {
   APPLICATION_STAGES,
   DISCIPLINES,
   EMPLOYMENT_TYPES,
+  INTERVIEW_MODES,
+  INTERVIEW_STATUSES,
   JOB_STATUSES,
   PAY_PERIODS,
   RIGHT_TO_WORK_ANSWERS,
@@ -16,6 +18,8 @@ import {
   IsBoolean,
   IsEmail,
   IsIn,
+  IsInt,
+  IsISO8601,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -302,4 +306,111 @@ export class ApplyDto {
   @IsString()
   @MaxLength(200)
   website?: string;
+}
+
+// ---------- Pipeline (S1-05) ----------
+
+export class MoveStageDto {
+  @IsIn(APPLICATION_STAGES.filter((s) => s !== 'hired'))
+  stage!: (typeof APPLICATION_STAGES)[number];
+
+  /** Shown on the timeline (e.g. why rejected). Not sent to the applicant. */
+  @IsOptional()
+  @Transform(trimmed)
+  @IsString()
+  @MaxLength(1000)
+  note?: string;
+
+  /** Email the applicant (rejection: a polite "not this time"). */
+  @IsOptional()
+  @IsBoolean()
+  notifyApplicant?: boolean;
+}
+
+export class AddNoteDto {
+  @Transform(trimmed)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(5000)
+  text!: string;
+}
+
+export class BookInterviewDto {
+  /** ISO date-time with offset, e.g. 2026-11-20T10:00:00Z. */
+  @IsISO8601({ strict: true })
+  startsAt!: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(10)
+  @Max(240)
+  durationMinutes?: number;
+
+  @IsIn(INTERVIEW_MODES)
+  mode!: (typeof INTERVIEW_MODES)[number];
+
+  /** Address, video link or phone number, as told to the applicant. */
+  @IsOptional()
+  @Transform(trimmed)
+  @IsString()
+  @MaxLength(500)
+  location?: string;
+
+  @IsOptional()
+  @IsUUID()
+  interviewerId?: string;
+
+  /** Email the applicant the date, time and place. */
+  @IsOptional()
+  @IsBoolean()
+  notifyApplicant?: boolean;
+}
+
+export class UpdateInterviewDto {
+  @IsOptional()
+  @IsIn(INTERVIEW_STATUSES)
+  status?: (typeof INTERVIEW_STATUSES)[number];
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  score?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsIn(['pass', 'fail'])
+  outcome?: 'pass' | 'fail' | null;
+
+  @IsOptional()
+  @Transform(trimmed)
+  @IsString()
+  @MaxLength(10_000)
+  notes?: string;
+
+  @IsOptional()
+  @IsISO8601({ strict: true })
+  startsAt?: string;
+}
+
+export class HireDto {
+  /** Defaults to the job advert's role (or care_worker for a general application). */
+  @IsOptional()
+  @IsIn(DISCIPLINES)
+  discipline?: (typeof DISCIPLINES)[number];
+
+  @IsOptional()
+  @IsIn(EMPLOYMENT_TYPES)
+  employmentType?: (typeof EMPLOYMENT_TYPES)[number];
+
+  @IsOptional()
+  @IsDateOnly()
+  startDate?: string;
+
+  @IsOptional()
+  @IsNumber(MONEY)
+  @Min(0)
+  @Max(1000)
+  hourlyRate?: number;
 }

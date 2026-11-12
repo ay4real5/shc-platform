@@ -52,6 +52,7 @@ describe.skipIf(!hasDb)('Recruitment and careers page (e2e)', () => {
   let otherAgencyId: string;
   const slug = `careers-${randomUUID().slice(0, 8)}`;
   let recruiter: { id: string; auth: Auth };
+  let coordinator: { id: string; auth: Auth };
   let teamLeader: { id: string; auth: Auth };
   let outsider: { id: string; auth: Auth };
   const http = () => request(app.getHttpServer());
@@ -69,6 +70,7 @@ describe.skipIf(!hasDb)('Recruitment and careers page (e2e)', () => {
     recruiter = await seedUser('recruiter');
     teamLeader = await seedUser('team_leader');
     outsider = await seedUser('recruiter', otherAgencyId);
+    coordinator = await seedUser('care_coordinator');
   });
 
   afterAll(async () => {
@@ -197,4 +199,88 @@ describe.skipIf(!hasDb)('Recruitment and careers page (e2e)', () => {
     expect((await http().get('/api/v1/recruitment/applications').set(outsider.auth).expect(200)).body.data).toEqual([]);
   });
 
+
+  // ---------- pipeline (S1-05) ----------
+
+  /** Applies through the public form and returns the new application's id. */
+  async function applied(overrides: Record<string, unknown> = {}) {
+    const job = await openJob();
+    const res = await http().post(`/api/v1/careers/${slug}/applications`).send(application({ jobPostingId: job.id, ...overrides })).expect(201);
+    return (await prisma.application.findUniqueOrThrow({ where: { reference: res.body.data.reference } })).id;
+  }
+
+  it('moves an application through stages with notes, keeps a timeline, and can reopen a rejection', async () => {
+    const id = await applied();
+    const move = (stage: string, extra: Record<string, unknown> = {}) =>
+      http().post(`/api/v1/recruitment/applications/${id}/stage`).set(recruiter.auth).send({ stage, ...extra });
+
+    await move('screened', { note: 'Good phone screen' }).expect(201);
+    await http().post(`/api/v1/recruitment/applications/${id}/notes`).set(recruiter.auth).send({ text: 'Prefers mornings' }).expect(201);
+    await move('screened').expect(409); // already there
+    await move('hired').expect(400); // only the hire action does that
+    const rejected = (await move('rejected', { notifyApplicant: true }).expect(201)).body.data;
+    expect(rejected.emailSent).toBe(false); // no email provider in tests: recorded, not sent
+    await move('screened').expect(201); // reopened
+
+    const timeline = (await http().get(`/api/v1/recruitment/applications/${id}/timeline`).set(recruiter.auth).expect(200)).body.data;
+    const kinds = timeline.events.map((e: { kind: string; toStage: string | null; text: string | null }) => `${e.kind}:${e.toStage ?? e.text}`);
+    expect(kinds).toEqual([
+      'stage:screened',
+      expect.stringMatching(/^email:Not sent .*Your application to/),
+      'stage:rejected',
+      'note:Prefers mornings',
+      'stage:screened',
+    ]);
+    expect(timeline.events[0].actor.name).toMatch(/^Casey /);
+    await http().post(`/api/v1/recruitment/applications/${id}/stage`).set(teamLeader.auth).send({ stage: 'offer' }).expect(403);
+  });
+
+  it('books and scores an interview; booking moves the application to the interview stage', async () => {
+    const id = await applied();
+    const booked = (
+      await http()
+        .post(`/api/v1/recruitment/applications/${id}/interviews`)
+        .set(recruiter.auth)
+        .send({ startsAt: '2030-01-15T10:00:00Z', mode: 'in_person', location: '1 Demo Street', interviewerId: coordinator.id, notifyApplicant: true })
+        .expect(201)
+    ).body.data;
+    expect(booked).toMatchObject({ status: 'scheduled', durationMinutes: 30, interviewer: { id: coordinator.id }, emailSent: false });
+    expect((await prisma.application.findUniqueOrThrow({ where: { id } })).stage).toBe('interview');
+
+    const scored = (await http().patch(`/api/v1/recruitment/interviews/${booked.id}`).set(recruiter.auth).send({ status: 'completed', score: 4, outcome: 'pass', notes: 'Warm and patient' }).expect(200)).body.data;
+    expect(scored).toMatchObject({ status: 'completed', score: 4, outcome: 'pass' });
+    await http().patch(`/api/v1/recruitment/interviews/${booked.id}`).set(recruiter.auth).send({ score: 9 }).expect(400);
+    await http().patch(`/api/v1/recruitment/interviews/${booked.id}`).set(outsider.auth).send({ score: 3 }).expect(404);
+    await http()
+      .post(`/api/v1/recruitment/applications/${id}/interviews`)
+      .set(recruiter.auth)
+      .send({ startsAt: '2030-01-16T10:00:00Z', mode: 'video', interviewerId: outsider.id })
+      .expect(400); // interviewer from another company
+  });
+
+  it('hiring creates the login and staff record once; recruiters cannot hire and nobody hands out more access than they have', async () => {
+    const id = await applied();
+    await http().post(`/api/v1/recruitment/applications/${id}/stage`).set(recruiter.auth).send({ stage: 'offer' }).expect(201);
+    await http().post(`/api/v1/recruitment/applications/${id}/hire`).set(recruiter.auth).send({}).expect(403); // no staff:create
+    await http().post(`/api/v1/recruitment/applications/${id}/hire`).set(coordinator.auth).send({ discipline: 'manager' }).expect(403); // registered manager role
+
+    const hired = (await http().post(`/api/v1/recruitment/applications/${id}/hire`).set(coordinator.auth).send({ startDate: '2030-02-01', hourlyRate: 12.6 }).expect(201)).body.data;
+    expect(hired.welcomeEmailSent).toBe(false);
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: hired.userId }, include: { userRoles: { include: { role: true } }, staffProfile: true } });
+    expect(user).toMatchObject({ agencyId, firstName: 'Robin', isActive: true });
+    expect(user.userRoles.map((r) => r.role.name)).toEqual(['care_worker']);
+    expect(user.staffProfile).toMatchObject({ id: hired.staffProfileId, discipline: 'care_worker', employmentType: 'part_time', postcode: 'M14 6EF', canDrive: true });
+    expect((await prisma.application.findUniqueOrThrow({ where: { id } })).hiredUserId).toBe(hired.userId);
+
+    // Their onboarding checklist exists straight away.
+    const onboarding = (await http().get(`/api/v1/staff/${hired.staffProfileId}/onboarding`).set(coordinator.auth).expect(200)).body.data;
+    expect(onboarding.percent).toBeLessThan(100);
+
+    await http().post(`/api/v1/recruitment/applications/${id}/hire`).set(coordinator.auth).send({}).expect(409);
+    await http().post(`/api/v1/recruitment/applications/${id}/stage`).set(recruiter.auth).send({ stage: 'rejected' }).expect(409);
+
+    // Same email applying again can't be hired twice into two logins.
+    const again = await applied({ email: user.email });
+    await http().post(`/api/v1/recruitment/applications/${again}/hire`).set(coordinator.auth).send({}).expect(409);
+  });
 });

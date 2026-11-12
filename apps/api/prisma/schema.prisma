@@ -666,6 +666,8 @@ model Application {
   /// e.g. "careers_page", "indeed", "referral".
   source                String?   @db.VarChar(50)
   declarationAcceptedAt DateTime  @map("declaration_accepted_at") @db.Timestamptz(6)
+  /// Set when the applicant is hired: their new login (S1-05).
+  hiredUserId           String?   @unique @map("hired_user_id") @db.Uuid
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -673,6 +675,8 @@ model Application {
   jobPosting JobPosting?             @relation(fields: [jobPostingId], references: [id])
   history    ApplicationHistory[]
   referees   ApplicationReferee[]
+  events     ApplicationEvent[]
+  interviews Interview[]
 
   @@index([agencyId, stage])
   @@index([agencyId, createdAt])
@@ -722,4 +726,53 @@ model ApplicationReferee {
 
   @@index([applicationId])
   @@map("application_referees")
+}
+
+/// The application's timeline (S1-05): stage changes, notes and emails sent. Append-only.
+model ApplicationEvent {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  applicationId String   @map("application_id") @db.Uuid
+  /// stage | note | email | interview
+  kind          String   @db.VarChar(20)
+  fromStage     String?  @map("from_stage") @db.VarChar(20)
+  toStage       String?  @map("to_stage") @db.VarChar(20)
+  /// Note text, email subject, or a short description.
+  text          String?
+  actorUserId   String?  @map("actor_user_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
+  @@map("application_events")
+}
+
+/// An interview booked for an application (S1-05).
+model Interview {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  applicationId   String   @map("application_id") @db.Uuid
+  agencyId        String   @map("agency_id") @db.Uuid
+  startsAt        DateTime @map("starts_at") @db.Timestamptz(6)
+  durationMinutes Int      @default(30) @map("duration_minutes")
+  /// in_person | video | phone
+  mode            String   @default("in_person") @db.VarChar(10)
+  /// Address, video link or phone number, as told to the applicant.
+  location        String?  @db.VarChar(500)
+  interviewerId   String?  @map("interviewer_id") @db.Uuid
+  /// scheduled | completed | cancelled | no_show
+  status          String   @default("scheduled") @db.VarChar(12)
+  /// 1 (poor) to 5 (excellent)
+  score           Int?
+  /// pass | fail
+  outcome         String?  @db.VarChar(10)
+  notes           String?
+  createdById     String?  @map("created_by_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([agencyId, startsAt])
+  @@map("interviews")
 }

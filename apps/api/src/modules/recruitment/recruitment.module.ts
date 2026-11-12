@@ -5,15 +5,22 @@ import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
 import { Public } from '../../common/decorators/public.decorator.js';
+import { AuthModule } from '../auth/auth.module.js';
 import { ComplianceModule } from '../compliance/compliance.module.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import {
+  AddNoteDto,
   ApplyDto,
+  BookInterviewDto,
   CreateJobDto,
+  HireDto,
   ListApplicationsQueryDto,
   ListJobsQueryDto,
+  MoveStageDto,
+  UpdateInterviewDto,
   UpdateJobDto,
 } from './dto/recruitment.dto.js';
+import { PipelineService } from './pipeline.service.js';
 import { RecruitmentService } from './recruitment.service.js';
 
 /** Applying: a handful per IP per minute is plenty for a person and slows down spam. */
@@ -23,7 +30,10 @@ const APPLY_LIMIT = { default: { limit: 5, ttl: 60_000 } };
 @ApiTags('recruitment')
 @Controller('recruitment')
 export class RecruitmentController {
-  constructor(private readonly recruitment: RecruitmentService) {}
+  constructor(
+    private readonly recruitment: RecruitmentService,
+    private readonly pipeline: PipelineService,
+  ) {}
 
   @Permissions('recruitment:read')
   @Get('jobs')
@@ -61,6 +71,46 @@ export class RecruitmentController {
   getApplication(@CurrentUser() caller: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.recruitment.getApplication(caller, id);
   }
+
+  /** Stage changes, notes, emails and interviews, newest first. */
+  @Permissions('recruitment:read')
+  @Get('applications/:id/timeline')
+  timeline(@CurrentUser() caller: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.pipeline.timeline(caller, id);
+  }
+
+  @Permissions('recruitment:manage')
+  @Audit({ action: 'MOVE_APPLICATION', resourceType: 'applications' })
+  @Post('applications/:id/stage')
+  moveStage(@CurrentUser() caller: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: MoveStageDto) {
+    return this.pipeline.moveStage(caller, id, dto);
+  }
+
+  @Permissions('recruitment:manage')
+  @Post('applications/:id/notes')
+  addNote(@CurrentUser() caller: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: AddNoteDto) {
+    return this.pipeline.addNote(caller, id, dto.text);
+  }
+
+  @Permissions('recruitment:manage')
+  @Post('applications/:id/interviews')
+  bookInterview(@CurrentUser() caller: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: BookInterviewDto) {
+    return this.pipeline.bookInterview(caller, id, dto);
+  }
+
+  @Permissions('recruitment:manage')
+  @Patch('interviews/:id')
+  updateInterview(@CurrentUser() caller: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateInterviewDto) {
+    return this.pipeline.updateInterview(caller, id, dto);
+  }
+
+  /** Creates the login and staff record. Needs staff:create as well: it adds a person to the company. */
+  @Permissions('recruitment:manage', 'staff:create')
+  @Audit({ action: 'HIRE_APPLICANT', resourceType: 'applications' })
+  @Post('applications/:id/hire')
+  hire(@CurrentUser() caller: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: HireDto) {
+    return this.pipeline.hire(caller, id, dto);
+  }
 }
 
 /** The public careers page: open jobs and the application form. No sign-in. */
@@ -90,8 +140,8 @@ export class CareersController {
 }
 
 @Module({
-  imports: [NotificationsModule, ComplianceModule],
+  imports: [NotificationsModule, ComplianceModule, AuthModule],
   controllers: [RecruitmentController, CareersController],
-  providers: [RecruitmentService],
+  providers: [RecruitmentService, PipelineService],
 })
 export class RecruitmentModule {}

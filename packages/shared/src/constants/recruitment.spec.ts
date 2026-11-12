@@ -43,3 +43,17 @@ describe('findHistoryGaps', () => {
     ]);
   });
 });
+
+describe('canMoveStage', () => {
+  it('moves freely between open stages, never into or out of hired, and reopens rejected ones', async () => {
+    const { canMoveStage } = await import('./recruitment.js');
+    expect(canMoveStage('applied', 'interview')).toBe(true);
+    expect(canMoveStage('offer', 'screened')).toBe(true);
+    expect(canMoveStage('interview', 'rejected')).toBe(true);
+    expect(canMoveStage('rejected', 'screened')).toBe(true);
+    expect(canMoveStage('offer', 'hired')).toBe(false);
+    expect(canMoveStage('hired', 'applied')).toBe(false);
+    expect(canMoveStage('applied', 'applied')).toBe(false);
+    expect(canMoveStage('applied', 'nonsense')).toBe(false);
+  });
+});

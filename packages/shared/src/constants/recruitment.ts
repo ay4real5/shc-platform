@@ -78,3 +78,33 @@ export function findHistoryGaps(entries: HistoryEntry[], today: string): History
   if (tail > GAP_TOLERANCE_DAYS) gaps.push({ from: toDay(coveredTo + DAY), to: today, days: tail });
   return gaps;
 }
+
+// ---------- Pipeline (S1-05) ----------
+
+export const INTERVIEW_MODES = ['in_person', 'video', 'phone'] as const;
+export type InterviewMode = (typeof INTERVIEW_MODES)[number];
+export const INTERVIEW_MODE_LABELS: Record<InterviewMode, string> = { in_person: 'In person', video: 'Video call', phone: 'Phone' };
+
+export const INTERVIEW_STATUSES = ['scheduled', 'completed', 'cancelled', 'no_show'] as const;
+export type InterviewStatus = (typeof INTERVIEW_STATUSES)[number];
+
+/**
+ * Whether an application may move from one stage to another by hand. "hired" is never set by hand: the hire action
+ * creates the staff member. A hired application is final; rejected and withdrawn ones can be reopened.
+ */
+export function canMoveStage(from: string, to: string): boolean {
+  if (from === to || to === 'hired' || from === 'hired') return false;
+  return (APPLICATION_STAGES as readonly string[]).includes(to);
+}
+
+/** The built-in login role a new hire gets from their job role (changeable later in Users). */
+export const DISCIPLINE_DEFAULT_ROLE: Record<string, string> = {
+  care_worker: 'care_worker',
+  senior_care_worker: 'senior_care_worker',
+  support_worker: 'support_worker',
+  team_leader: 'team_leader',
+  nurse: 'senior_care_worker',
+  care_coordinator: 'care_coordinator',
+  manager: 'registered_manager',
+  office: 'care_coordinator',
+};
