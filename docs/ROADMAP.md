@@ -12,14 +12,14 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 ## Stage 1 — Foundation and recruitment (weeks 1–2)
 - [x] **S1-01** `agent` Copy the Primordial foundation; remove patient, visit, EVV, billing, clinical, payroll,
   portal, referral, report, insight and assistant code from the API; fresh migrations on a separate database.
-- [ ] **S1-02** `agent` Remove the same features from the web dashboard and the mobile app; clean `@alora/shared`
+- [x] **S1-02** `agent` Remove the same features from the web dashboard and the mobile app; clean `@alora/shared`
   (permissions, roles, notification types) of home-health items.
-- [ ] **S1-03** `agent` UK basics: care roles (registered manager, care coordinator, recruiter, team leader,
+- [x] **S1-03** `agent` UK basics: care roles (registered manager, care coordinator, recruiter, team leader,
   senior care worker, care/support worker), job categories, £, dd/mm/yyyy, National Insurance number, UK
   postcodes and phone numbers, Europe/London default, SHC/product branding.
-- [ ] **S1-04** `agent` Jobs and the public careers page (embeddable on the company website); mobile-friendly
+- [x] **S1-04** `agent` Jobs and the public careers page (embeddable on the company website); mobile-friendly
   application form capturing full employment history with gaps explained (CQC Schedule 3).
-- [ ] **S1-05** `agent` Applicant pipeline: applied → screened → interview → offer → hired (or rejected/withdrawn),
+- [x] **S1-05** `agent` Applicant pipeline: applied → screened → interview → offer → hired (or rejected/withdrawn),
   interview booking, notes and scores, candidate emails; **hire** creates the staff member and starts onboarding.
 
 ## Stage 2 — Onboarding & compliance (weeks 3–4)

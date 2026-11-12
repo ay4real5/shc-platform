@@ -14,38 +14,43 @@
   - "Demo Care Services (FAKE DATA)", Europe/London, logins `*@demo.shc.test`, password `Demo-Password-1!`.
   - Admins have 2FA with the demo key in `demo-seed.ts`.
   - Careers page at `/careers/demo-care`, with 2 open jobs, 1 draft and 6 fake applications.
-- Last full runs (12 Nov):
+- Earlier runs (12 Nov):
   - API unit 82/82 and API e2e 144/144, after S1-03.
   - The 5 recruitment e2e tests pass on their own.
   - Shared tests 24/24.
   - Web typecheck and lint are clean.
 
 ## In progress
-**S1-04**: jobs and the public careers page (branch `main`). The API and web code are done and pushed.
-- Left:
-  1. **Run the browser tests** (`npm run test:e2e -w @alora/web`): they have never run on SHC.
-     - Start the API built (`npm run build -w @alora/api`, then `node dist/main` from `apps/api`) with
-       `RATE_LIMITS_DISABLED=true JOBS_ENABLED=false`.
-     - Start the web app with `npm run dev -w @alora/web`.
-     - The last attempt exited with Playwright code 4 before any test ran. Check `apps/web/e2e/global-setup.ts`
-       first; it re-seeds the demo company.
-     - New or changed specs: `careers.spec.ts` and `csp.spec.ts`. Older ones: S1-02 moved them to SHC
-       logins/pages.
-  2. Re-run the full API e2e suite with `recruitment.e2e-spec.ts` included.
-  3. Tick S1-02, S1-03 and S1-04 in ROADMAP once the browser tests pass.
-- Known limits:
-  - `CAREERS_FRAME_ANCESTORS` is one list per deployment, not per company.
-  - The root layout sets `noindex` on every page, careers pages included. Revisit when a company wants
-    Google to list its jobs.
+Nothing. **Stage 1 (foundation and recruitment) is done.** Recruitment works end to end:
+- a job advert, then the public careers page and application form (with explained gaps and referees);
+- screening, interviews with scores, the offer;
+- hire, which creates the login and staff record and starts onboarding.
+
+Tests at the end of S1-05 (12 Nov):
+- API unit 85/85 and API e2e 152/152;
+- shared 25/25;
+- browser suite 16/16;
+- typecheck and lint clean.
+
+How to run the browser suite locally:
+1. Build the API: `npm run build -w @alora/api`.
+2. Start it from `apps/api` with `RATE_LIMITS_DISABLED=true JOBS_ENABLED=false node dist/main`.
+3. Start the web app: `npm run dev -w @alora/web`.
+4. Run the tests: `npm run test:e2e -w @alora/web`.
 
 ## Next up
-**S1-05**: the applicant pipeline.
-- Stage moves: screened, interview, offer, hired, rejected, withdrawn.
-- Interview booking, notes and scores.
-- Candidate emails.
-- **Hire** creates the user and staff record and starts onboarding.
+**S2-01**: Right to Work (share code / eVisa and manual document checks, follow-up dates and reminders). After that:
+- S2-02: DBS;
+- S2-03: automatic reference requests (the referees are already on each application);
+- S2-04: contracts and policies;
+- S2-05: health declaration;
+- S2-06: the CQC "ready to start" checklist.
 
-Recruitment must be live by week 2.
+Open items:
+- Retention schedule for unsuccessful applicants (six months; S-004).
+- `CAREERS_FRAME_ANCESTORS` is one list per deployment.
+- Careers pages are `noindex` like the rest of the app.
+- Optional: an "application received" email to the applicant.
 
 ## Blockers / waiting on Ayo
 See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and domain.
@@ -54,6 +59,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-12 | Claude Code | S1-05 | Hiring pipeline (stages, interviews, timeline, candidate emails, hire → login + staff record); API e2e 152/152, browser 16/16. |
 | 2026-11-12 | Claude Code | S1-03, S1-04 | UK staff/company records (S-003); recruitment API and careers pages; API e2e 144/144 plus recruitment 5/5; browser tests not yet run. |
 | 2026-11-11 | Claude Code | S1-02 | UK roles/permissions; web and staff app stripped and rebranded SHC. The API e2e suite was fully green only on 12 Nov, after the branding fixes. |
 | 2026-11-11 | Claude Code | S1-01 | Foundation imported; API stripped to the workforce core; separate dev DB with fresh migrations; tests rewritten. |

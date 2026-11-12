@@ -2047,3 +2047,50 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   `medicare/medicaid_provider_number`, `evv_state_config`, `payroll_mileage_rate`, `workweek_start_day` (none were
   used any more); `city`/`zip` renamed `town`/`postcode`; the timezone default is `Europe/London`. The
   `agency:create` script and the "Create agency" workflow no longer take a US state and only offer Europe/London.
+
+### S-004 — Recruitment: adverts, careers page and applications
+2026-11-12 · Claude Code
+- **Careers page**: `/careers/<careersSlug>` (set in Company settings). It is public with no sign-in, and shows only
+  `open` adverts whose closing date hasn't passed in the company's timezone. Pages under `/careers/` may be framed
+  by the sites in `CAREERS_FRAME_ANCESTORS` (one list per deployment for now). Every other page keeps
+  `X-Frame-Options: DENY`.
+- **Applying**: `POST /careers/:slug/applications`.
+  - Limited to 5 per IP per minute.
+  - A hidden `website` field is a spam trap: the API answers success and keeps nothing.
+  - The applicant gets a short reference, e.g. `A7K2-9QXD`, with no 0/O/1/I/L.
+- **Employment history (CQC Schedule 3)**:
+  - jobs plus explained gaps;
+  - `findHistoryGaps` in `@alora/shared` flags any uncovered period over 31 days, from the earliest entry to today;
+  - the form and the API use the same function, and the API answers `400 HISTORY_GAPS` with the gaps listed.
+- **Referees and declaration**: two to four referees, plus a required declaration.
+- **Right to work**: self-declared here only; the real check is S2-01.
+- **Notifications**: recruiters (`recruitment:manage`) get `application_received` with the job title only, never
+  the applicant's details.
+- Applicant data is personal data. A retention schedule for unsuccessful applicants (six months, as the rejection
+  email says) is still to build.
+
+### S-005 — Hiring pipeline
+2026-11-12 · Claude Code
+- **Stages**: applied → screened → interview → offer → hired, plus rejected and withdrawn.
+  - Moves are free between non-final stages.
+  - Rejected and withdrawn can be reopened.
+  - `hired` is final and is set only by the hire action.
+  - Moves are guarded updates, so two people can't both move the same application.
+- **Timeline**: `application_events` is append-only and records stage changes, notes, emails (subject and
+  sent/not-sent) and interview changes.
+- **Interviews**:
+  - Fields: date and time, length, how (in person, video or phone), where, interviewer (an active user in the
+    company), status, score 1–5, pass/fail and notes.
+  - Booking moves applied or screened applications to `interview`.
+- **Candidate emails**: interview invite and polite rejection, both optional, sent from the company's name through
+  `EmailSender`. When email isn't set up, the timeline says "Not sent".
+- **Hire**:
+  - Needs `recruitment:manage` and `staff:create`, so recruiters take people to offer and coordinators, managers or
+    admins hire.
+  - One transaction creates the login (role from `DISCIPLINE_DEFAULT_ROLE`, random unknown password) and the staff
+    record (address, postcode and can-drive copied from the application), and marks the application hired with
+    `hired_user_id`.
+  - A role with any permission the hirer lacks is refused (403). For example, a coordinator can't create a
+    registered manager.
+  - It then emails a 72-hour "choose your password" link, using the password-reset tokens. Without email set up,
+    the office gives a starting password in Users.
