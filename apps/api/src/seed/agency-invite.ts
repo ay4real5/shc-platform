@@ -1,5 +1,6 @@
 /** Helpers for `create-agency --invite` (D-084): the invite email and log-safe output. Pure, so they're unit-tested. */
 import { createHash } from 'node:crypto';
+import { PRODUCT_NAME } from '../common/brand.js';
 
 /** How long the first "choose your password" link works. Longer than a reset link: the new admin may not be expecting it. */
 export const INVITE_LINK_HOURS = 72;
@@ -20,11 +21,11 @@ export function inviteLink(frontendUrl: string, token: string): string {
 
 export function inviteEmail(agencyName: string, firstName: string, link: string): { subject: string; text: string } {
   return {
-    subject: 'Your Primordial Health administrator account',
+    subject: `Your ${PRODUCT_NAME} administrator account`,
     text: [
       `Hello ${firstName},`,
       '',
-      `An administrator account has been created for you for ${agencyName} on Primordial Health.`,
+      `An administrator account has been created for you for ${agencyName} on ${PRODUCT_NAME}.`,
       '',
       `Choose your password here (the link works once, for ${INVITE_LINK_HOURS} hours):`,
       link,

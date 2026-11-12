@@ -2,6 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 import { IS_PUBLIC_EXTENSION } from '../common/decorators/public.decorator.js';
 import { API_PREFIX } from '../config/api.constants.js';
+import { PRODUCT_NAME } from '../common/brand.js';
 
 export const DOCS_PATH = `${API_PREFIX}/docs`;
 
@@ -11,7 +12,7 @@ export const DOCS_PATH = `${API_PREFIX}/docs`;
  */
 export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
   const config = new DocumentBuilder()
-    .setTitle('Primordial Health API')
+    .setTitle(`${PRODUCT_NAME} API`)
     .setDescription(
       [
         'Home health agency management API. All routes are under `/api/v1`.',

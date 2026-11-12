@@ -19,7 +19,7 @@ import {
 const SETTINGS: Partial<EnvironmentVariables> = {
   TWILIO_ACCOUNT_SID: `AC${'0'.repeat(32)}`,
   TWILIO_AUTH_TOKEN: 'fake-token',
-  TWILIO_PHONE_NUMBER: '+15550100000',
+  TWILIO_PHONE_NUMBER: '+447700900000',
   SENDGRID_API_KEY: 'SG.fake',
   SENDGRID_FROM_EMAIL: 'alerts@example.test',
   PUSH_PROVIDER: 'expo',
@@ -71,23 +71,23 @@ describe('senders', () => {
   it('SMS: Twilio form post with a short PHI-free text; 4xx is final, 5xx retries', async () => {
     const sms = new SmsSender(config());
     sms.fetchImpl = fakeFetch(201, { sid: 'SM123' });
-    expect(await sms.send('+15550100001', MESSAGE)).toEqual({ ok: true, providerMessageId: 'SM123' });
+    expect(await sms.send('+447700900101', MESSAGE)).toEqual({ ok: true, providerMessageId: 'SM123' });
     const [url, init] = vi.mocked(sms.fetchImpl).mock.calls[0]!;
     expect(url).toBe(`https://api.twilio.com/2010-04-01/Accounts/AC${'0'.repeat(32)}/Messages.json`);
     const form = new URLSearchParams(String(init.body));
     expect(Object.fromEntries(form)).toEqual({
-      To: '+15550100001',
-      From: '+15550100000',
-      Body: 'Primordial Health: New shift assigned — Tomorrow at 9:00. Open the app for details.',
+      To: '+447700900101',
+      From: '+447700900000',
+      Body: 'SHC: Please sign your contract — Open the app to sign. Open the app for details.',
     });
     sms.fetchImpl = fakeFetch(400, { code: 21211 });
-    expect(await sms.send('+15550100001', MESSAGE)).toEqual({ ok: false, retry: false, error: 'twilio 400 code 21211' });
+    expect(await sms.send('+447700900101', MESSAGE)).toEqual({ ok: false, retry: false, error: 'twilio 400 code 21211' });
     sms.fetchImpl = fakeFetch(503, {});
-    expect(await sms.send('+15550100001', MESSAGE)).toMatchObject({ ok: false, retry: true });
+    expect(await sms.send('+447700900101', MESSAGE)).toMatchObject({ ok: false, retry: true });
     sms.fetchImpl = vi.fn<FetchLike>(async () => {
       throw new TypeError('fetch failed');
     });
-    expect(await sms.send('+15550100001', MESSAGE)).toEqual({ ok: false, retry: true, error: 'network: TypeError' });
+    expect(await sms.send('+447700900101', MESSAGE)).toEqual({ ok: false, retry: true, error: 'network: TypeError' });
   });
 
   it('email: SendGrid JSON with a link to the app and no tracking', async () => {
@@ -95,8 +95,8 @@ describe('senders', () => {
     email.fetchImpl = fakeFetch(202, {}, { 'x-message-id': 'abc' });
     expect(await email.send('aide@example.test', MESSAGE)).toEqual({ ok: true, providerMessageId: 'abc' });
     const body = JSON.parse(String(vi.mocked(email.fetchImpl).mock.calls[0]![1].body));
-    expect(body.subject).toBe('Primordial Health: New shift assigned');
-    expect(body.content[0].value).toContain('Open Primordial Health for details: https://app.example.test');
+    expect(body.subject).toBe('SHC: Please sign your contract');
+    expect(body.content[0].value).toContain('Open SHC for details: https://app.example.test');
     expect(body.content[1].type).toBe('text/html');
     expect(body.tracking_settings).toEqual({ click_tracking: { enable: false }, open_tracking: { enable: false } });
   });
@@ -110,7 +110,7 @@ describe('senders', () => {
       deadTokens: ['ExponentPushToken[bbbbbbbbbb]'],
     });
     const sent = JSON.parse(String(vi.mocked(push.fetchImpl).mock.calls[0]![1].body));
-    expect(sent[0]).toMatchObject({ to: 'ExponentPushToken[aaaaaaaaaa]', title: 'New shift assigned', data: { visitId: 'v1', notificationId: 'n1', type: 'shift_assigned' } });
+    expect(sent[0]).toMatchObject({ to: 'ExponentPushToken[aaaaaaaaaa]', title: 'Please sign your contract', data: { documentId: 'd1', notificationId: 'n1', type: 'document_signature' } });
   });
 
   it('phone numbers become E.164 or nothing', () => {
@@ -124,7 +124,7 @@ describe('senders', () => {
   });
 
   it('SMS text stays short and punctuated once', () => {
-    expect(smsText({ ...MESSAGE, title: 'Shift cancelled.', body: null })).toBe('Primordial Health: Shift cancelled. Open the app for details.');
+    expect(smsText({ ...MESSAGE, title: 'Contract signed.', body: null })).toBe('SHC: Contract signed. Open the app for details.');
     expect(smsText({ ...MESSAGE, body: 'x'.repeat(500) }).length).toBe(320);
   });
 });
@@ -139,17 +139,17 @@ describe('email through Amazon SES (D-078)', () => {
     expect(new EmailSender(config({ SENDGRID_API_KEY: undefined })).provider).toBeNull(); // nothing chosen → off
   });
 
-  it('sends plain text from "Primordial Health", and retries only throttling / server errors', async () => {
+  it('sends plain text from "SHC", and retries only throttling / server errors', async () => {
     const email = new EmailSender(sesConfig);
     const send = vi.fn(async (_command: unknown) => ({ MessageId: 'ses-1' }));
     email.ses = { send } as never;
     expect(await email.send('aide@example.test', MESSAGE)).toEqual({ ok: true, providerMessageId: 'ses-1' });
     const input = (send.mock.calls[0]![0] as { input: Record<string, any> }).input;
-    expect(input.FromEmailAddress).toBe('Primordial Health <alerts@example.test>');
+    expect(input.FromEmailAddress).toBe('SHC <alerts@example.test>');
     expect(input.Destination).toEqual({ ToAddresses: ['aide@example.test'] });
-    expect(input.Content.Simple.Subject.Data).toBe('Primordial Health: New shift assigned');
-    expect(input.Content.Simple.Body.Text.Data).toContain('Open Primordial Health for details: https://app.example.test');
-    expect(input.Content.Simple.Body.Html.Data).toContain('Primordial Health');
+    expect(input.Content.Simple.Subject.Data).toBe('SHC: Please sign your contract');
+    expect(input.Content.Simple.Body.Text.Data).toContain('Open SHC for details: https://app.example.test');
+    expect(input.Content.Simple.Body.Html.Data).toContain('SHC');
 
     const fail = (name: string, status: number) =>
       Object.assign(new Error(name), { name, $metadata: { httpStatusCode: status } });
@@ -203,10 +203,10 @@ describe('email through Azure Communication Services (D-085)', () => {
     expect(body).toMatchObject({
       senderAddress: 'DoNotReply@example.test',
       recipients: { to: [{ address: 'aide@example.test' }] },
-      content: { subject: 'Primordial Health: New shift assigned' },
+      content: { subject: 'SHC: Please sign your contract' },
       userEngagementTrackingDisabled: true,
     });
-    expect(body.content.plainText).toContain('Open Primordial Health for details: https://app.example.test');
+    expect(body.content.plainText).toContain('Open SHC for details: https://app.example.test');
     expect(body.content.html).toContain('<a href="https://app.example.test"');
     expect((init.headers as Record<string, string>).authorization).toMatch(/^HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=/);
 

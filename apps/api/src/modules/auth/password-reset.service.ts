@@ -8,6 +8,7 @@ import { EmailSender } from '../notifications/delivery/senders.js';
 import { normalizeEmail } from './auth.service.js';
 import { PasswordService } from './password.service.js';
 import { TokenService, type ClientInfo } from './token.service.js';
+import { PRODUCT_NAME } from '../../common/brand.js';
 
 /** How long a reset link works. */
 export const RESET_LINK_MINUTES = 30;
@@ -62,9 +63,9 @@ export class PasswordResetService {
     const link = `${this.config.get('FRONTEND_URL', { infer: true })!.replace(/\/$/, '')}/reset-password#token=${token}`;
     const sent = await this.email.sendText(
       user.email,
-      'Reset your Primordial Health password',
+      `Reset your ${PRODUCT_NAME} password`,
       [
-        'Someone — hopefully you — asked to reset the password for your Primordial Health account.',
+        `Someone — hopefully you — asked to reset the password for your ${PRODUCT_NAME} account.`,
         '',
         `Choose a new password here (the link works once, for ${RESET_LINK_MINUTES} minutes):`,
         link,

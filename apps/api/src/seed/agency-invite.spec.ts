@@ -18,8 +18,8 @@ describe('agency invite helpers', () => {
 
   it('writes a plain invite with the link on its own line', () => {
     const { subject, text } = inviteEmail('Sunrise Home Health', 'Ada', 'https://app.example.test/reset-password#token=abc');
-    expect(subject).toBe('Your Primordial Health administrator account');
-    expect(text).toContain('for Sunrise Home Health on Primordial Health');
+    expect(subject).toBe('Your SHC administrator account');
+    expect(text).toContain('for Sunrise Home Health on SHC');
     expect(text.split('\n')).toContain('https://app.example.test/reset-password#token=abc');
     expect(text).toContain('72 hours');
   });

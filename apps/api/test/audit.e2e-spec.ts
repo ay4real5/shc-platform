@@ -24,18 +24,18 @@ import { setupApp } from '../src/setup-app.js';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const PASSWORD = 'Correct-Horse-9!';
-const PHI_MARKERS = ['Smith', '123-45-6789', 'diabetes'];
+const PERSONAL_MARKERS = ['Smith', 'QQ123456C', 'diabetes'];
 const noThrottle = {
   increment: async () => ({ totalHits: 1, timeToExpire: 60, isBlocked: false, timeToBlockExpire: 0 }),
 };
 
-class CreateFakePatientDto {
+class CreateFakeStaffDto {
   @IsString()
   lastName!: string;
 
   @IsOptional()
   @IsString()
-  ssn?: string;
+  niNumber?: string;
 }
 
 class SearchQueryDto extends PaginationQueryDto {
@@ -46,8 +46,8 @@ class SearchQueryDto extends PaginationQueryDto {
 
 const CREATED_ID = randomUUID();
 
-/** Test-only routes shaped like the real patient endpoints will be. */
-@Controller('audit-probe/patients')
+/** Test-only routes shaped like the real staff-record endpoints. */
+@Controller('audit-probe/staff')
 class AuditProbeController {
   @Permissions('staff:read')
   @Get()
@@ -58,21 +58,21 @@ class AuditProbeController {
   @Permissions('staff:read')
   @Get(':id')
   get(@Param('id') id: string) {
-    if (id === '00000000-0000-4000-8000-000000000000') throw new NotFoundException('Patient not found');
+    if (id === '00000000-0000-4000-8000-000000000000') throw new NotFoundException('Staff member not found');
     return { id, lastName: 'Smith', diagnosis: 'diabetes' };
   }
 
   @Permissions('staff:create')
   @Post()
-  create(@Body() _dto: CreateFakePatientDto) {
+  create(@Body() _dto: CreateFakeStaffDto) {
     return { id: CREATED_ID };
   }
 
   @Permissions('staff:update')
-  @Audit({ action: 'DISCHARGE_PATIENT' })
-  @Post(':id/discharge')
-  discharge(@Param('id') id: string) {
-    return { id, status: 'discharged' };
+  @Audit({ action: 'SUSPEND_STAFF' })
+  @Post(':id/suspend')
+  suspend(@Param('id') id: string) {
+    return { id, status: 'suspended' };
   }
 
   @Permissions('staff:read')
@@ -145,70 +145,70 @@ describe.skipIf(!hasDb)('Audit trail (e2e)', () => {
 
   it('records a read of one record: who, what, which record, route pattern, correlation id', async () => {
     const id = randomUUID();
-    const res = await http().get(`/api/v1/audit-probe/patients/${id}`).set(auth).expect(200);
+    const res = await http().get(`/api/v1/audit-probe/staff/${id}`).set(auth).expect(200);
 
-    const [entry] = await entries('VIEW_PATIENTS');
-    expect(entry).toMatchObject({ agencyId, userId, resourceType: 'patients', resourceId: id });
+    const [entry] = await entries('VIEW_STAFF');
+    expect(entry).toMatchObject({ agencyId, userId, resourceType: 'staff', resourceId: id });
     expect(entry!.details).toMatchObject({
       outcome: 'success',
       method: 'GET',
-      route: '/api/v1/audit-probe/patients/:id',
+      route: '/api/v1/audit-probe/staff/:id',
       correlationId: res.headers['x-request-id'],
     });
     expect(entry!.ipAddress).toBeTruthy();
   });
 
   it('records list reads with a result count and query-parameter names, never their values', async () => {
-    await http().get('/api/v1/audit-probe/patients?search=Smith&page=1').set(auth).expect(200);
-    const [entry] = await entries('VIEW_PATIENTS');
+    await http().get('/api/v1/audit-probe/staff?search=Smith&page=1').set(auth).expect(200);
+    const [entry] = await entries('VIEW_STAFF');
     expect(entry!.resourceId).toBeNull();
     expect(entry!.details).toMatchObject({ resultCount: 2, queryKeys: ['page', 'search'] });
   });
 
   it('records creates with the new record id, and never stores the request body', async () => {
     await http()
-      .post('/api/v1/audit-probe/patients')
+      .post('/api/v1/audit-probe/staff')
       .set(auth)
-      .send({ lastName: 'Smith', ssn: '123-45-6789' })
+      .send({ lastName: 'Smith', niNumber: 'QQ123456C' })
       .expect(201);
-    const [entry] = await entries('CREATE_PATIENTS');
+    const [entry] = await entries('CREATE_STAFF');
     expect(entry!.resourceId).toBe(CREATED_ID);
   });
 
   it('records failures too (e.g. reading a record that does not exist)', async () => {
-    await http().get('/api/v1/audit-probe/patients/00000000-0000-4000-8000-000000000000').set(auth).expect(404);
-    const [entry] = await entries('VIEW_PATIENTS');
+    await http().get('/api/v1/audit-probe/staff/00000000-0000-4000-8000-000000000000').set(auth).expect(404);
+    const [entry] = await entries('VIEW_STAFF');
     expect(entry!.details).toMatchObject({ outcome: 'error', status: 404 });
   });
 
   it('uses @Audit to name the action', async () => {
     const id = randomUUID();
-    await http().post(`/api/v1/audit-probe/patients/${id}/discharge`).set(auth).expect(201);
-    const [entry] = await entries('DISCHARGE_PATIENT');
+    await http().post(`/api/v1/audit-probe/staff/${id}/suspend`).set(auth).expect(201);
+    const [entry] = await entries('SUSPEND_STAFF');
     expect(entry!.resourceId).toBe(id);
   });
 
   it('records denied access with the missing permission', async () => {
-    await http().get('/api/v1/audit-probe/patients/-/billing').set(auth).expect(403);
+    await http().get('/api/v1/audit-probe/staff/-/billing').set(auth).expect(403);
     const [entry] = await entries('ACCESS_DENIED');
     expect(entry!.details).toMatchObject({ missing: ['pay:read'] });
   });
 
   it('skips @SkipAudit routes and does not audit anonymous requests', async () => {
     const before = (await entries()).length;
-    await http().get('/api/v1/audit-probe/patients/-/poll').set(auth).expect(200);
-    await http().get('/api/v1/audit-probe/patients').expect(401);
+    await http().get('/api/v1/audit-probe/staff/-/poll').set(auth).expect(200);
+    await http().get('/api/v1/audit-probe/staff').expect(401);
     expect((await entries()).length).toBe(before);
   });
 
-  it('never writes PHI into the audit trail', async () => {
+  it('never writes personal data into the audit trail', async () => {
     const all = await prisma.auditLog.findMany({ where: { agencyId } });
     const text = JSON.stringify(all.map(({ details, userAgent }) => ({ details, userAgent })));
-    for (const marker of PHI_MARKERS) expect(text).not.toContain(marker);
+    for (const marker of PERSONAL_MARKERS) expect(text).not.toContain(marker);
   });
 
   it('tells browsers and proxies not to cache API responses', async () => {
-    const res = await http().get(`/api/v1/audit-probe/patients/${randomUUID()}`).set(auth).expect(200);
+    const res = await http().get(`/api/v1/audit-probe/staff/${randomUUID()}`).set(auth).expect(200);
     expect(res.headers['cache-control']).toContain('no-store');
     expect(res.headers.pragma).toBe('no-cache');
   });

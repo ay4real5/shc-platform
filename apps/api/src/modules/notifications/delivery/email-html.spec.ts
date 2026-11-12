@@ -7,13 +7,13 @@ describe('emailHtml', () => {
     expect(html).toContain('<title>Reset your password</title>');
     expect(html).toContain('<p style="margin:0 0 16px">Choose a new password here:</p>');
     expect(html).toContain('href="https://app.example.test/reset-password#token=abc"');
-    expect(html).toContain('Open Primordial Health</a>');
+    expect(html).toContain('Open SHC</a>');
     expect(html).toContain('Ignore it otherwise.');
   });
 
   it('links addresses inside a sentence', () => {
-    expect(emailHtml('s', 'Open Primordial Health for details: https://app.example.test')).toContain(
-      'Open Primordial Health for details: <a href="https://app.example.test" style="color:#6d28d9;word-break:break-all">https://app.example.test</a>',
+    expect(emailHtml('s', 'Open SHC for details: https://app.example.test')).toContain(
+      'Open SHC for details: <a href="https://app.example.test" style="color:#0f766e;word-break:break-all">https://app.example.test</a>',
     );
   });
 
@@ -27,6 +27,6 @@ describe('emailHtml', () => {
 
   it('adds nothing beyond the text but the brand header and the automated-message footer', () => {
     const visible = emailHtml('s', 'One line.').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    expect(visible).toBe('s Primordial Health One line. Primordial Health Services · This is an automated message; replies aren’t read.');
+    expect(visible).toBe('s SHC One line. SHC · This is an automated message; replies aren’t read.');
   });
 });

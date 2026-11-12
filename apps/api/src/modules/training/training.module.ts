@@ -39,6 +39,7 @@ import { trimmed } from '../../common/validators/fields.js';
 import { addMonths, fromDate, toDate } from '../../common/utils/dates.js';
 import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { PRODUCT_NAME } from '../../common/brand.js';
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -146,7 +147,7 @@ function assertAnswers(questions: QuestionDto[]) {
 export type CourseStatus = 'not_started' | 'failed' | 'passed' | 'expired';
 
 /**
- * Primordial Academy (D-102): agencies write short courses with a multiple-choice quiz; caregivers take them in the
+ * Academy (D-102): agencies write short courses with a multiple-choice quiz; caregivers take them in the
  * app. Passing records a credential when the course grants one, so it counts towards onboarding (D-101) and
  * credential expiry alerts like any other. Answers are checked on the server; the right answers are never sent out.
  */
@@ -315,7 +316,7 @@ export class TrainingService {
           staffProfileId: staff.id,
           credentialType: course.credentialType,
           credentialName: course.title,
-          issuingAuthority: 'Primordial Academy',
+          issuingAuthority: `${PRODUCT_NAME} Academy`,
           issueDate: toDate(today),
           expiryDate: course.validityMonths ? toDate(addMonths(today, course.validityMonths)) : null,
           notes: `Passed with ${scorePercent}%`,

@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import type { DeliveryChannel } from '@alora/shared';
 import type { EnvironmentVariables } from '../../../config/env.validation.js';
 import { emailHtml } from './email-html.js';
+import { PRODUCT_NAME } from '../../../common/brand.js';
 
 /**
  * Senders for the channels outside the app (DECISIONS D-071, D-078, D-085): Twilio SMS, Azure / Amazon SES / SendGrid
@@ -56,10 +57,10 @@ export function toE164(phone: string | null | undefined): string | null {
   return null;
 }
 
-/** "Primordial Health: New shift assigned — Open the app to see it." — one short, PHI-free SMS. */
+/** "SHC: Please sign your contract — Open the app for details." — one short SMS without personal details. */
 export function smsText(message: DeliveryMessage): string {
   const parts = [message.title, message.body].filter((p): p is string => Boolean(p?.trim())).map((p) => p.trim().replace(/[.!]+$/, ''));
-  return `Primordial Health: ${parts.join(' — ')}. Open the app for details.`.slice(0, 320);
+  return `${PRODUCT_NAME}: ${parts.join(' — ')}. Open the app for details.`.slice(0, 320);
 }
 
 @Injectable()
@@ -164,10 +165,10 @@ export class EmailSender extends Sender {
 
   async send(to: string, message: DeliveryMessage): Promise<SendOutcome> {
     const link = this.config.get('FRONTEND_URL', { infer: true });
-    const text = [message.title, message.body, '', link ? `Open Primordial Health for details: ${link}` : 'Open Primordial Health for details.', '', 'You can change which alerts you get by email under Notification settings.']
+    const text = [message.title, message.body, '', link ? `Open ${PRODUCT_NAME} for details: ${link}` : `Open ${PRODUCT_NAME} for details.`, '', 'You can change which alerts you get by email under Notification settings.']
       .filter((line) => line !== null)
       .join('\n');
-    return this.sendText(to, `Primordial Health: ${message.title}`, text);
+    return this.sendText(to, `${PRODUCT_NAME}: ${message.title}`, text);
   }
 
   /** An email from plain text (notifications, password reset links), sent with a matching HTML version. */
@@ -204,7 +205,7 @@ export class EmailSender extends Sender {
     try {
       const result = await this.ses.send(
         new SendEmailCommand({
-          FromEmailAddress: `Primordial Health <${this.from}>`,
+          FromEmailAddress: `${PRODUCT_NAME} <${this.from}>`,
           Destination: { ToAddresses: [to] },
           Content: { Simple: { Subject: { Data: subject, Charset: 'UTF-8' }, Body: { Text: { Data: text, Charset: 'UTF-8' }, Html: { Data: html, Charset: 'UTF-8' } } } },
         }),
@@ -223,7 +224,7 @@ export class EmailSender extends Sender {
       headers: { authorization: `Bearer ${this.config.get('SENDGRID_API_KEY', { infer: true })}`, 'content-type': 'application/json' },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
-        from: { email: this.from, name: 'Primordial Health' },
+        from: { email: this.from, name: PRODUCT_NAME },
         subject,
         content: [
           { type: 'text/plain', value: text },
