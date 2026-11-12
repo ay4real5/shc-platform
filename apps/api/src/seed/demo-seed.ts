@@ -172,7 +172,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
           agencyId: DEMO_AGENCY_ID,
           staffProfileId: profile.id,
           certificateNumber: rows[0]!.credentialNumber!,
-          issueDate: toDate(addDays(dbsExpiry, -365))!,
+          issueDate: toDate(addDays(dbsExpiry, -365) <= today ? addDays(dbsExpiry, -365) : addDays(today, -60))!, // never in the future
           level: 'enhanced_barred_adults',
           result: 'clear',
           updateService: true,

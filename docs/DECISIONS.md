@@ -2117,3 +2117,23 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - `GET /staff/right-to-work/follow-ups` lists due and overdue follow-ups, ready for a dashboard tile.
 - Evidence is uploaded as a staff document of type `right_to_work` from the same form. Home Office guidance: keep it
   for the employment plus two years.
+
+### S-007 — DBS checks
+2026-11-12 · Claude Code
+- **Records**: `dbs_checks` holds the certificate number (12 digits), issue date, level, result (clear or
+  information), Update Service subscription, next due date, who recorded it, and notes.
+  - Following the DBS code of practice: no copies of certificates, and never what a certificate says.
+  - The form tells people this.
+- **Cleared for care work** means:
+  - the level is enhanced with the adults' barred list (or both lists);
+  - and the result is clear, or a manager approved it after a risk assessment.
+  - The risk-assessment decision needs `compliance:update` (registered manager or admin) and can't be made on your
+    own check.
+- **Update Service**: `dbs_status_checks` records "no change" or "new information".
+  - No change moves the next due date to a year after the check (`DBS_STATUS_CHECK_MONTHS`).
+  - New information means the certificate stops counting.
+  - Without the Update Service, a new check is due three years after issue (`DBS_RECHECK_MONTHS`).
+  - Both periods are company-policy defaults that could become company settings.
+- **Credential**: the newest certificate (by issue date) drives the single `dbs_enhanced` credential.
+  - If it doesn't clear them, the credential expires today, so onboarding shows not ready and alerts fire.
+  - It is never shown as cleared by mistake.
