@@ -5,7 +5,7 @@ import { IsBoolean, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 
 import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
-import { PHONE, trimmed, UK_POSTCODE, upperTrimmed } from '../../common/validators/fields.js';
+import { lowerTrimmed, PHONE, trimmed, UK_POSTCODE, upperTrimmed } from '../../common/validators/fields.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../database/prisma.service.js';
 
@@ -45,6 +45,12 @@ export class UpdateAgencyDto {
   @Matches(UK_POSTCODE, { message: 'postcode must be a UK postcode, e.g. M1 1AA' })
   postcode?: string;
 
+  /** Public careers page address: /careers/<careersSlug>. Lower-case letters, digits and dashes. */
+  @IsOptional()
+  @Transform(lowerTrimmed)
+  @Matches(/^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])?$/, { message: 'careersSlug may use lower-case letters, digits and dashes' })
+  careersSlug?: string;
+
   /** Show staff recognition badges in the app (D-097). Off by default. */
   @IsOptional()
   @IsBoolean()
@@ -60,6 +66,7 @@ export interface AgencyView {
   town: string | null;
   postcode: string | null;
   timezone: string;
+  careersSlug: string | null;
   recognitionBadges: boolean;
 }
 
@@ -72,6 +79,7 @@ const SELECT = {
   town: true,
   postcode: true,
   timezone: true,
+  careersSlug: true,
   settings: true,
 } as const;
 

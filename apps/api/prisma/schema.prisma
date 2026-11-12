@@ -26,11 +26,15 @@ model Agency {
   town                   String?  @db.VarChar(100)
   postcode               String?  @db.VarChar(10)
   timezone               String   @default("Europe/London") @db.VarChar(50)
+  /// Public careers page address: /careers/<slug>. Unset = no careers page.
+  careersSlug            String?  @unique @map("careers_slug") @db.VarChar(60)
   settings               Json     @default("{}")
   isActive               Boolean  @default(true) @map("is_active")
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  jobPostings       JobPosting[]
+  applications      Application[]
   users             User[]
   roles             Role[]
   staffProfiles     StaffProfile[]
@@ -599,4 +603,123 @@ model TrainingCompletion {
   @@index([staffProfileId, courseId, completedAt])
   @@index([courseId])
   @@map("training_completions")
+}
+
+/// A job advert (S1-04). Open adverts appear on the company's public careers page.
+model JobPosting {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String    @map("agency_id") @db.Uuid
+  title          String    @db.VarChar(150)
+  /// Job role (@alora/shared DISCIPLINES); a hire gets this on their staff record.
+  discipline     String    @db.VarChar(20)
+  employmentType String    @default("full_time") @map("employment_type") @db.VarChar(20)
+  /// Where the work is, as shown to applicants, e.g. "Manchester (M14)".
+  location       String    @db.VarChar(150)
+  payFrom        Decimal?  @map("pay_from") @db.Decimal(10, 2)
+  payTo          Decimal?  @map("pay_to") @db.Decimal(10, 2)
+  /// hour | year
+  payPeriod      String    @default("hour") @map("pay_period") @db.VarChar(10)
+  /// e.g. "20 to 37.5 hours a week, days and weekends".
+  hours          String?   @db.VarChar(150)
+  summary        String?   @db.VarChar(300)
+  description    String
+  /// draft | open | closed
+  status         String    @default("draft") @db.VarChar(10)
+  closesOn       DateTime? @map("closes_on") @db.Date
+  publishedAt    DateTime? @map("published_at") @db.Timestamptz(6)
+  createdById    String?   @map("created_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency       Agency        @relation(fields: [agencyId], references: [id])
+  applications Application[]
+
+  @@index([agencyId, status])
+  @@map("job_postings")
+}
+
+/// A job application from the public careers page (S1-04), moved through the pipeline in S1-05.
+/// Personal data (UK GDPR): never logged; deleted on the retention schedule once recruitment ends.
+model Application {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId              String    @map("agency_id") @db.Uuid
+  /// Null for a general ("any suitable role") application.
+  jobPostingId          String?   @map("job_posting_id") @db.Uuid
+  /// Short reference shown to the applicant, e.g. "A7K2-9QXD".
+  reference             String    @unique @db.VarChar(12)
+  firstName             String    @map("first_name") @db.VarChar(100)
+  lastName              String    @map("last_name") @db.VarChar(100)
+  email                 String    @db.VarChar(255)
+  phone                 String    @db.VarChar(20)
+  addressLine1          String?   @map("address_line1") @db.VarChar(255)
+  town                  String?   @db.VarChar(100)
+  postcode              String    @db.VarChar(10)
+  /// @alora/shared RIGHT_TO_WORK_ANSWERS (self-declared; the real check happens at onboarding).
+  rightToWork           String    @map("right_to_work") @db.VarChar(30)
+  canDrive              Boolean   @default(false) @map("can_drive")
+  earliestStart         DateTime? @map("earliest_start") @db.Date
+  availability          String?   @db.VarChar(500)
+  coverNote             String?   @map("cover_note")
+  /// @alora/shared APPLICATION_STAGES
+  stage                 String    @default("applied") @db.VarChar(20)
+  stageChangedAt        DateTime  @default(now()) @map("stage_changed_at") @db.Timestamptz(6)
+  /// e.g. "careers_page", "indeed", "referral".
+  source                String?   @db.VarChar(50)
+  declarationAcceptedAt DateTime  @map("declaration_accepted_at") @db.Timestamptz(6)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agency     Agency                  @relation(fields: [agencyId], references: [id])
+  jobPosting JobPosting?             @relation(fields: [jobPostingId], references: [id])
+  history    ApplicationHistory[]
+  referees   ApplicationReferee[]
+
+  @@index([agencyId, stage])
+  @@index([agencyId, createdAt])
+  @@index([jobPostingId])
+  @@map("applications")
+}
+
+/// Employment history (CQC Schedule 3): jobs and explained gaps.
+model ApplicationHistory {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  applicationId    String    @map("application_id") @db.Uuid
+  position         Int
+  /// job | gap
+  kind             String    @db.VarChar(5)
+  employer         String?   @db.VarChar(200)
+  jobTitle         String?   @map("job_title") @db.VarChar(150)
+  startDate        DateTime  @map("start_date") @db.Date
+  /// Null = current job.
+  endDate          DateTime? @map("end_date") @db.Date
+  reasonForLeaving String?   @map("reason_for_leaving") @db.VarChar(500)
+  /// Worked with children or vulnerable adults (Schedule 3 asks why that work ended).
+  wasCareRole      Boolean   @default(false) @map("was_care_role")
+  /// For gaps: what they were doing.
+  explanation      String?   @db.VarChar(1000)
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("application_history")
+}
+
+/// Referees given on the application; requests go out in S2-03.
+model ApplicationReferee {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  applicationId String  @map("application_id") @db.Uuid
+  position      Int
+  name          String  @db.VarChar(200)
+  organisation  String? @db.VarChar(200)
+  /// e.g. "Line manager at Sunrise Care".
+  relationship  String  @db.VarChar(150)
+  email         String  @db.VarChar(255)
+  phone         String? @db.VarChar(20)
+  /// May we contact them before an offer?
+  contactBeforeOffer Boolean @default(false) @map("contact_before_offer")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("application_referees")
 }

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { MANDATORY_TWO_FACTOR_ROLES, todayInTimeZone, type Discipline, type Role } from '@alora/shared';
 import { hash } from '@node-rs/argon2';
 import { addDays, toDate, toTime } from '../common/utils/dates.js';
-import type { PrismaClient } from '../generated/prisma/client.js';
+import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
 import { purgeAuditLogs } from '../modules/audit/purge-audit-logs.js';
 
 /**
@@ -90,6 +90,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       town: 'Manchester',
       postcode: 'M1 1AA',
       timezone,
+      careersSlug: DEMO_CAREERS_SLUG,
     },
   });
 
@@ -171,12 +172,107 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
   }
 
   const messages = options.encryptMessage ? await seedMessages(prisma, options.encryptMessage) : 0;
+  const applications = await seedRecruitment(prisma, today);
   return {
     agencyId: DEMO_AGENCY_ID,
     logins,
     password,
-    counts: { users: logins.length + staffNo - STAFF_PLAN.length, staff: staffNo, credentials, messages },
+    counts: { users: logins.length + staffNo - STAFF_PLAN.length, staff: staffNo, credentials, messages, applications },
   };
+}
+
+/** The public careers page of the demo company: /careers/demo-care. */
+export const DEMO_CAREERS_SLUG = 'demo-care';
+
+/** Three adverts (two open, one draft) and a handful of FAKE applications at different stages. */
+async function seedRecruitment(prisma: PrismaClient, today: string): Promise<number> {
+  const recruiter = await prisma.user.findFirst({ where: { agencyId: DEMO_AGENCY_ID, email: `recruiter@${DEMO_EMAIL_DOMAIN}` }, select: { id: true } });
+  const job = (data: Omit<Prisma.JobPostingUncheckedCreateInput, 'agencyId'>) =>
+    prisma.jobPosting.create({ data: { ...data, agencyId: DEMO_AGENCY_ID, createdById: recruiter?.id ?? null }, select: { id: true } });
+  const careWorker = await job({
+    title: 'Care Worker',
+    discipline: 'care_worker',
+    employmentType: 'part_time',
+    location: 'Manchester (M14, M20)',
+    payFrom: 12.6,
+    payTo: 13.5,
+    payPeriod: 'hour',
+    hours: '16 to 37.5 hours a week, days and weekends',
+    summary: 'Help people live well in their own homes. Full training, paid inductions and mileage.',
+    description:
+      'We are looking for kind, reliable people to join our home care team.\n\nYou will support people with personal care, meals, medication and getting out and about.\n\nNo experience needed: we pay for your Care Certificate and DBS check.',
+    status: 'open',
+    publishedAt: new Date(),
+  });
+  await job({
+    title: 'Support Worker (Supported Living)',
+    discipline: 'support_worker',
+    employmentType: 'full_time',
+    location: 'Salford (M6)',
+    payFrom: 12.8,
+    payTo: 13.2,
+    payPeriod: 'hour',
+    hours: '37.5 hours a week, rota including sleep-ins',
+    summary: 'Support adults with learning disabilities to live independently.',
+    description: 'Join a small, friendly team in a supported living house.\n\nYou will help people with daily living, activities and community access.',
+    status: 'open',
+    publishedAt: new Date(),
+  });
+  await job({
+    title: 'Team Leader',
+    discipline: 'team_leader',
+    employmentType: 'full_time',
+    location: 'Manchester',
+    payFrom: 28000,
+    payTo: 30000,
+    payPeriod: 'year',
+    description: 'Lead a team of care workers, do spot checks and supervisions.',
+    status: 'draft',
+  });
+
+  const people: [string, string, string][] = [
+    ['Alex', 'Example', 'applied'],
+    ['Sam', 'Sample', 'applied'],
+    ['Jordan', 'Demo', 'screened'],
+    ['Taylor', 'Test', 'interview'],
+    ['Morgan', 'Fake', 'offer'],
+    ['Riley', 'Placeholder', 'rejected'],
+  ];
+  for (const [i, [firstName, lastName, stage]] of people.entries()) {
+    await prisma.application.create({
+      data: {
+        agencyId: DEMO_AGENCY_ID,
+        jobPostingId: careWorker.id,
+        reference: `DEMO-${String(i + 1).padStart(4, '0')}`,
+        firstName,
+        lastName: `${lastName} (FAKE)`,
+        email: `${firstName.toLowerCase()}.applicant@${DEMO_EMAIL_DOMAIN}`,
+        phone: `07700 900${String(500 + i)}`,
+        town: 'Manchester',
+        postcode: 'M14 6EF',
+        rightToWork: i === 3 ? 'settled_or_pre_settled' : 'british_or_irish',
+        canDrive: i % 2 === 0,
+        availability: 'Weekdays and every other weekend',
+        stage,
+        source: 'careers_page',
+        declarationAcceptedAt: new Date(),
+        createdAt: new Date(Date.parse(`${addDays(today, -(i * 2 + 1))}T10:00:00Z`)),
+        history: {
+          create: [
+            { position: 0, kind: 'job', employer: 'Fake Care Ltd (FAKE)', jobTitle: 'Care assistant', startDate: toDate(addDays(today, -900))!, endDate: null, wasCareRole: true },
+            { position: 1, kind: 'job', employer: 'Example Retail (FAKE)', jobTitle: 'Shop assistant', startDate: toDate(addDays(today, -2000))!, endDate: toDate(addDays(today, -901))!, reasonForLeaving: 'Moved into care' },
+          ],
+        },
+        referees: {
+          create: [
+            { position: 0, name: 'Referee One (FAKE)', relationship: 'Line manager at Fake Care Ltd', email: `referee.one@${DEMO_EMAIL_DOMAIN}` },
+            { position: 1, name: 'Referee Two (FAKE)', relationship: 'Manager at Example Retail', email: `referee.two@${DEMO_EMAIL_DOMAIN}` },
+          ],
+        },
+      },
+    });
+  }
+  return people.length;
 }
 
 async function seedMessages(prisma: PrismaClient, encrypt: (text: string, messageId: string) => Uint8Array<ArrayBuffer>): Promise<number> {
@@ -233,6 +329,8 @@ async function seedMessages(prisma: PrismaClient, encrypt: (text: string, messag
 export async function wipeDemoAgency(prisma: PrismaClient): Promise<void> {
   const where = { agencyId: DEMO_AGENCY_ID };
   await prisma.notification.deleteMany({ where });
+  await prisma.application.deleteMany({ where }); // history and referees cascade
+  await prisma.jobPosting.deleteMany({ where });
   await purgeAuditLogs(prisma, DEMO_AGENCY_ID);
   await prisma.conversation.deleteMany({ where }); // participants and messages cascade
   await prisma.document.deleteMany({ where }); // stored files cascade; version links are cleared

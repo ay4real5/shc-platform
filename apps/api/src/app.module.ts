@@ -20,6 +20,7 @@ import { AgencyModule } from './modules/agency/agency.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
 import { MessagingModule } from './modules/messaging/messaging.module.js';
 import { ComplianceModule } from './modules/compliance/compliance.module.js';
+import { RecruitmentModule } from './modules/recruitment/recruitment.module.js';
 import { TrainingModule } from './modules/training/training.module.js';
 import { AiModule } from './modules/ai/claude.service.js';
 
@@ -47,6 +48,7 @@ import { AiModule } from './modules/ai/claude.service.js';
     MessagingModule,
     ComplianceModule,
     TrainingModule,
+    RecruitmentModule,
     AiModule,
     NotificationsModule,
     RealtimeModule,
