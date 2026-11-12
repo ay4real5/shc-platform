@@ -21,6 +21,7 @@ import {
   UpdateJobDto,
 } from './dto/recruitment.dto.js';
 import { PipelineService } from './pipeline.service.js';
+import { PublicReferencesController, ReferencesController, ReferencesService } from './references.js';
 import { RecruitmentService } from './recruitment.service.js';
 
 /** Applying: a handful per IP per minute is plenty for a person and slows down spam. */
@@ -141,7 +142,7 @@ export class CareersController {
 
 @Module({
   imports: [NotificationsModule, ComplianceModule, AuthModule],
-  controllers: [RecruitmentController, CareersController],
-  providers: [RecruitmentService, PipelineService],
+  controllers: [RecruitmentController, CareersController, ReferencesController, PublicReferencesController],
+  providers: [RecruitmentService, PipelineService, ReferencesService],
 })
 export class RecruitmentModule {}

@@ -3256,6 +3256,143 @@
         "security": []
       }
     },
+    "/api/v1/recruitment/applications/{id}/references": {
+      "get": {
+        "operationId": "ReferencesController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "recruitment"
+        ]
+      },
+      "post": {
+        "operationId": "ReferencesController_send",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendReferencesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "recruitment"
+        ]
+      }
+    },
+    "/api/v1/recruitment/references/{id}/verify": {
+      "post": {
+        "operationId": "ReferencesController_verify",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyReferenceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "recruitment"
+        ]
+      }
+    },
+    "/api/v1/references/view": {
+      "post": {
+        "operationId": "PublicReferencesController_view",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "references"
+        ],
+        "security": []
+      }
+    },
+    "/api/v1/references/respond": {
+      "post": {
+        "operationId": "PublicReferencesController_respond",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceAnswersDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "references"
+        ],
+        "security": []
+      }
+    },
     "/api/v1/notifications": {
       "get": {
         "operationId": "NotificationsController_list",
@@ -4901,6 +5038,22 @@
           "referees",
           "declaration"
         ]
+      },
+      "SendReferencesDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "VerifyReferenceDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "ReferenceTokenDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "ReferenceAnswersDto": {
+        "type": "object",
+        "properties": {}
       },
       "NotificationPreferenceDto": {
         "type": "object",

@@ -679,6 +679,7 @@ model Application {
   referees   ApplicationReferee[]
   events     ApplicationEvent[]
   interviews Interview[]
+  referenceRequests ReferenceRequest[]
 
   @@index([agencyId, stage])
   @@index([agencyId, createdAt])
@@ -724,7 +725,8 @@ model ApplicationReferee {
   /// May we contact them before an offer?
   contactBeforeOffer Boolean @default(false) @map("contact_before_offer")
 
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  requests    ReferenceRequest[]
 
   @@index([applicationId])
   @@map("application_referees")
@@ -863,4 +865,34 @@ model DbsStatusCheck {
 
   @@index([dbsCheckId])
   @@map("dbs_status_checks")
+}
+
+/// A reference request to one referee (S2-03): a one-time link to a short form; the answers land here.
+model ReferenceRequest {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId        String    @map("agency_id") @db.Uuid
+  applicationId   String    @map("application_id") @db.Uuid
+  refereeId       String    @map("referee_id") @db.Uuid
+  /// SHA-256 of the link token; the token itself is only ever in the email / link.
+  tokenHash       String    @unique @map("token_hash") @db.VarChar(64)
+  /// sent | received | declined | cancelled
+  status          String    @default("sent") @db.VarChar(10)
+  sentAt          DateTime  @default(now()) @map("sent_at") @db.Timestamptz(6)
+  expiresAt       DateTime  @map("expires_at") @db.Timestamptz(6)
+  sentById        String    @map("sent_by_id") @db.Uuid
+  emailSent       Boolean   @default(false) @map("email_sent")
+  respondedAt     DateTime? @map("responded_at") @db.Timestamptz(6)
+  /// The referee's answers (see ReferenceAnswers in the API).
+  answers         Json?
+  verifiedById    String?   @map("verified_by_id") @db.Uuid
+  verifiedAt      DateTime? @map("verified_at") @db.Timestamptz(6)
+  /// How it was verified, e.g. "Phoned the care home switchboard and spoke to the referee".
+  verificationNote String?  @map("verification_note") @db.VarChar(500)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  application Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  referee     ApplicationReferee @relation(fields: [refereeId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("reference_requests")
 }
