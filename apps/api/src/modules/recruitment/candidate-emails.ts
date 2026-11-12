@@ -10,7 +10,8 @@ export interface InterviewFacts {
   /** e.g. "Thursday 20 November 2026 at 10:00" in the company's time zone. */
   when: string;
   durationMinutes: number;
-  mode: 'in_person' | 'video' | 'phone' | string;
+  /** in_person | video | phone */
+  mode: string;
   location: string | null;
 }
 

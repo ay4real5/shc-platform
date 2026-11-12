@@ -16,7 +16,7 @@ test('an admin signs in, sees live numbers, navigates and signs out', async ({ p
   await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
 
   const activeStaff = page.getByRole('link', { name: /Active staff/ });
-  await expect(activeStaff).toContainText('12'); // the demo company has 12 care staff
+  await expect(activeStaff).toContainText(/\D(1[2-9]|[2-9]\d)$/); // 12 seeded care staff, plus anyone other tests hired
 
   const nav = page.getByRole('navigation', { name: 'Main' });
   for (const item of ['Staff', 'Onboarding', 'Academy', 'Compliance', 'Users']) {

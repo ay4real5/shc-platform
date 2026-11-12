@@ -3,6 +3,7 @@
 import { RIGHT_TO_WORK_LABELS, type RightToWorkAnswer } from '@alora/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
+import { InterviewsPanel, StagePanel, TimelinePanel } from '@/components/recruitment/pipeline-panels';
 import { ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
@@ -31,6 +32,7 @@ export default function ApplicationPage() {
         }
         subtitle={`${a.job?.title ?? 'General application'} · applied ${formatDate(a.createdAt)} · ref ${a.reference}`}
       />
+      <StagePanel app={a} />
       <Card className="p-5">
         <DetailList
           items={[
@@ -81,6 +83,8 @@ export default function ApplicationPage() {
           ))}
         </ul>
       </Card>
+      <InterviewsPanel app={a} />
+      <TimelinePanel app={a} />
       <div>
         <ButtonLink href="/recruitment" variant="secondary">
           Back to recruitment
