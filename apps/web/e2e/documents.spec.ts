@@ -10,7 +10,9 @@ async function signIn(page: Page, email: string) {
 
 /** Sign-out is a full page load to /login; wait for it rather than racing it. */
 async function signOut(page: Page) {
+  const reloaded = page.waitForEvent('load');
   await page.getByRole('button', { name: 'Sign out' }).click();
+  await reloaded;
   await expect(page).toHaveURL(/\/login$/, { timeout: 20_000 });
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
 }

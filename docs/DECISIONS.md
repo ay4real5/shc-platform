@@ -2185,3 +2185,24 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   - Staff-page "Contracts and policies" panel, with "Upload a contract to sign".
   - "Documents to sign" card on everyone's home page, and the sign page.
   - The staff app gets the same in S3.
+
+### S-010 — Health questionnaire
+2026-11-12 · Claude Code
+- **Questions**: five yes/no questions, each "yes" needing details, plus optional vaccinations.
+  - The questions cover: a condition affecting the job, adjustments wanted, illness absence over two weeks in the
+    last two years, medication affecting work, and moving-and-handling limits.
+  - Only people with a staff record answer, so never before an offer (Equality Act 2010 s.60).
+  - CQC Schedule 3 asks for health information relevant to the role, after reasonable adjustments.
+- **Storage**: `health_declarations` holds one row per person.
+  - The answers and the review note are AES-256-GCM encrypted, with their own contexts
+    (`health_declarations.answers` and `.review_note`).
+  - A resubmission replaces the answers and clears the review.
+- **Access**: a new permission, `health:read`, which super admins, company admins and registered managers hold
+  (they have every permission); coordinators and recruiters don't.
+  - Reading the answers and reviewing are audited.
+  - Nobody reviews their own.
+  - The person sees their own answers and any note.
+  - Everyone else with `staff:read` sees the status only: none, submitted, cleared or referred.
+- **Review outcomes**: fit; fit with adjustments; referred to occupational health. Only the first two clear them.
+- **Onboarding**: a required "Health questionnaire" item, owned by the person until submitted and then by the office.
+  It is done when cleared.
