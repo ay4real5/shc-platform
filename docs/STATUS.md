@@ -2,41 +2,50 @@
 
 ## Current state
 - Repo created 11 Nov 2026 from the Primordial foundation (`ay4real5/Kayyo-alora_health-` @ 54cea0d).
-- **API stripped to the workforce core** (S1-01): auth/2FA, users, roles and custom roles, audit log, agency
-  settings, staff profiles, credentials with expiry alerts, availability, time off, onboarding checklist, Academy
-  training, documents (company/staff files, UK HR types, e-signing), secure messaging, notifications (email/push/
-  SMS outbox), real-time sockets, compliance (dashboard, audit-log search, UK GDPR security checklist).
-- Separate **dev database** `shc` on the same Neon server as Primordial's dev DB (never Primordial's data). Fresh
-  migrations: `20261111000000_init` + `20261111000100_audit_logs_partitioning`.
+- **API: the workforce core plus recruitment**:
+  - Workforce core: auth/2FA, users, roles, audit log, company settings, staff records (UK), credentials with
+    expiry alerts, availability, time off, onboarding checklist, Academy training, documents with e-signing,
+    messaging, notifications, compliance.
+  - Recruitment (S1-04): job adverts, the public careers page and applications.
+- Separate **dev database** `shc` on the Neon dev server. Migrations: `init`, `audit_logs_partitioning`,
+  `uk_staff_record`, `uk_company`, `recruitment`.
 - Local `.env` (not committed) has its own JWT secret and encryption key.
-- Demo seed: "Demo Care Services (FAKE DATA)", Europe/London, logins `*@demo.shc.test`, password
-  `Demo-Password-1!` (admins have 2FA with the demo key in `demo-seed.ts`).
+- Demo seed:
+  - "Demo Care Services (FAKE DATA)", Europe/London, logins `*@demo.shc.test`, password `Demo-Password-1!`.
+  - Admins have 2FA with the demo key in `demo-seed.ts`.
+  - Careers page at `/careers/demo-care`, with 2 open jobs, 1 draft and 6 fake applications.
+- Last full runs (12 Nov):
+  - API unit 82/82 and API e2e 144/144, after S1-03.
+  - The 5 recruitment e2e tests pass on their own.
+  - Shared tests 24/24.
+  - Web typecheck and lint are clean.
 
 ## In progress
-**S1-02** — strip the web dashboard and staff app (branch `main`, committed step by step).
-- Done:
-  - `@alora/shared`: UK roles (S-002), permissions, job roles, leave types, notification types and onboarding
-    checks.
-  - API: time off uses `time_off:*`, pay uses `pay:read`; live-monitor socket removed; SMS numbers are UK (+44);
-    company profile uses a UK postcode.
-  - Web: patient, visit, EVV, billing, portal, referral and report pages removed; SHC name and mark
-    (`src/lib/brand.ts`, `components/brand/logo.tsx`); staff-focused home page; UK labels (£, postcode, job
-    role).
-  - Staff app: Home tab (getting started, checks to renew, training); visit, pay and open-shift screens removed;
-    "SHC Staff" identity (`uk.shc.staff`, own icons, no Primordial Expo project, placeholder API URL in `eas.json`).
-  - Dev DB: old US built-in roles and permissions deleted (a one-off; the startup sync leaves roles that aren't in
-    code alone).
+**S1-04**: jobs and the public careers page (branch `main`). The API and web code are done and pushed.
 - Left:
-  - Run the browser tests (`npm run test:e2e -w @alora/web`) against a local API and dashboard; they were updated
-    but not yet run.
-  - The staff record (API + schema) is still US-shaped (`ssn_encrypted`, `state`, `tax_filing_status`,
-    `per_visit_rate`, `ivr_code`, `max_patients`, `service_area_zip_codes`, lat/lng). The web form hides those
-    fields. Reshape it into a UK record (NI number, right-to-work fields…) in S1-03.
-  - Mobile `lib/visits.ts`, `lib/offline*.ts`, `lib/reminders.ts` still carry visit-era helpers (harmless, unused
-    paths).
+  1. **Run the browser tests** (`npm run test:e2e -w @alora/web`): they have never run on SHC.
+     - Start the API built (`npm run build -w @alora/api`, then `node dist/main` from `apps/api`) with
+       `RATE_LIMITS_DISABLED=true JOBS_ENABLED=false`.
+     - Start the web app with `npm run dev -w @alora/web`.
+     - The last attempt exited with Playwright code 4 before any test ran. Check `apps/web/e2e/global-setup.ts`
+       first; it re-seeds the demo company.
+     - New or changed specs: `careers.spec.ts` and `csp.spec.ts`. Older ones: S1-02 moved them to SHC
+       logins/pages.
+  2. Re-run the full API e2e suite with `recruitment.e2e-spec.ts` included.
+  3. Tick S1-02, S1-03 and S1-04 in ROADMAP once the browser tests pass.
+- Known limits:
+  - `CAREERS_FRAME_ANCESTORS` is one list per deployment, not per company.
+  - The root layout sets `noindex` on every page, careers pages included. Revisit when a company wants
+    Google to list its jobs.
 
 ## Next up
-S1-03 (UK basics), then S1-04/S1-05 (careers page and applicant pipeline) — recruitment must be live by week 2.
+**S1-05**: the applicant pipeline.
+- Stage moves: screened, interview, offer, hired, rejected, withdrawn.
+- Interview booking, notes and scores.
+- Candidate emails.
+- **Hire** creates the user and staff record and starts onboarding.
+
+Recruitment must be live by week 2.
 
 ## Blockers / waiting on Ayo
 See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and domain.
@@ -45,5 +54,6 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
-| 2026-11-11 | Claude Code | S1-02 | UK roles/permissions; web and staff app stripped and rebranded SHC; API e2e green after role changes. |
+| 2026-11-12 | Claude Code | S1-03, S1-04 | UK staff/company records (S-003); recruitment API and careers pages; API e2e 144/144 plus recruitment 5/5; browser tests not yet run. |
+| 2026-11-11 | Claude Code | S1-02 | UK roles/permissions; web and staff app stripped and rebranded SHC. The API e2e suite was fully green only on 12 Nov, after the branding fixes. |
 | 2026-11-11 | Claude Code | S1-01 | Foundation imported; API stripped to the workforce core; separate dev DB with fresh migrations; tests rewritten. |
