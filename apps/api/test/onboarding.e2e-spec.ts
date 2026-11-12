@@ -66,8 +66,8 @@ describe.skipIf(!hasDb)('Onboarding checklist (e2e)', () => {
 
   it('lists what a new aide is missing, and fills up as the office completes it', async () => {
     const first = (await http().get(api(`/staff/${aide.staffId}/onboarding`)).set(office.auth).expect(200)).body.data;
-    // Care worker defaults: 6 profile items + 3 checks + health questionnaire = 10 required; only "signed in" is done.
-    expect(first).toMatchObject({ percent: 10, ready: false });
+    // Care worker defaults: 6 profile items + 3 checks + health + employment history + references = 12 required; only "signed in" is done.
+    expect(first).toMatchObject({ percent: 8, ready: false });
     expect(first.items.filter((i: { done: boolean; required: boolean }) => i.required && !i.done).map((i: { key: string }) => i.key)).toEqual([
       'phone',
       'address',
@@ -78,6 +78,8 @@ describe.skipIf(!hasDb)('Onboarding checklist (e2e)', () => {
       'credential:dbs_enhanced',
       'credential:care_certificate',
       'health_declaration',
+      'employment_history',
+      'references',
     ]);
 
     await prisma.user.update({ where: { id: aide.id }, data: { phone: '07700 900110' } });
@@ -86,7 +88,8 @@ describe.skipIf(!hasDb)('Onboarding checklist (e2e)', () => {
       data: { addressLine1: '1 Main Street', town: 'Manchester', postcode: 'M1 1AA', hireDate: toDate(today), hourlyRate: 12.6 },
     });
     await prisma.staffAvailability.create({ data: { staffProfileId: aide.staffId!, dayOfWeek: 1, startTime: toTime('08:00'), endTime: toTime('16:00') } });
-    for (const t of ['Right_To_Work', 'Care Certificate']) {
+    // Existing staff with paper files: history and references recorded as checks (S2-06).
+    for (const t of ['Right_To_Work', 'Care Certificate', 'employment_history', 'references']) {
       await prisma.staffCredential.create({ data: { staffProfileId: aide.staffId!, credentialType: t, credentialName: t } });
     }
     // A reviewed, cleared health questionnaire (the answers themselves don't matter to the checklist).
@@ -94,13 +97,13 @@ describe.skipIf(!hasDb)('Onboarding checklist (e2e)', () => {
     await prisma.staffCredential.create({ data: { staffProfileId: aide.staffId!, credentialType: 'dbs_enhanced', credentialName: 'Enhanced DBS', expiryDate: toDate(addDays(today, -1)) } });
 
     const later = (await http().get(api(`/staff/${aide.staffId}/onboarding`)).set(office.auth).expect(200)).body.data;
-    expect(later.percent).toBe(90); // 9 of 10 — the DBS check is expired
+    expect(later.percent).toBe(92); // 11 of 12 — the DBS check is expired
     expect(later.items.find((i: { key: string }) => i.key === 'credential:dbs_enhanced')).toMatchObject({ done: false, detail: expect.stringContaining('expired') });
 
     // The aide sees their own; the overview lists people least ready first.
-    expect((await http().get(api('/staff/me/onboarding')).set(aide.auth).expect(200)).body.data.percent).toBe(90);
+    expect((await http().get(api('/staff/me/onboarding')).set(aide.auth).expect(200)).body.data.percent).toBe(92);
     const overview = (await http().get(api('/staff/onboarding')).set(office.auth).expect(200)).body.data;
-    expect(overview.find((s: { staffId: string }) => s.staffId === aide.staffId)).toMatchObject({ percent: 90, missing: ['Enhanced DBS (adult barred list)'] });
+    expect(overview.find((s: { staffId: string }) => s.staffId === aide.staffId)).toMatchObject({ percent: 92, missing: ['Enhanced DBS (adult barred list)'] });
   });
 
   it('lets admins change what each discipline needs', async () => {

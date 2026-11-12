@@ -10,6 +10,7 @@ export type RequiredCredentials = Record<Discipline, string[]>;
 
 const SELECT = {
   id: true,
+  userId: true,
   discipline: true,
   hireDate: true,
   hourlyRate: true,
@@ -64,7 +65,19 @@ export class OnboardingService {
     return current;
   }
 
-  private checklist(row: Row, requirements: RequiredCredentials, today: string): OnboardingChecklist {
+  /**
+   * Recruitment facts per user (S2-06): hired through an application (so the history with gaps explained is on file),
+   * and how many of that application's references were received and verified.
+   */
+  private async recruitment(agencyId: string, userIds: string[]): Promise<Map<string, { fromApplication: boolean; verifiedReferences: number }>> {
+    const apps = await this.prisma.application.findMany({
+      where: { agencyId, hiredUserId: { in: userIds } },
+      select: { hiredUserId: true, referenceRequests: { where: { status: 'received', verifiedAt: { not: null } }, select: { refereeId: true } } },
+    });
+    return new Map(apps.map((a) => [a.hiredUserId!, { fromApplication: true, verifiedReferences: new Set(a.referenceRequests.map((r) => r.refereeId)).size }]));
+  }
+
+  private checklist(row: Row, requirements: RequiredCredentials, today: string, recruitment?: { fromApplication: boolean; verifiedReferences: number }): OnboardingChecklist {
     const valid: string[] = [];
     const expired: string[] = [];
     for (const c of row.credentials) {
@@ -84,6 +97,8 @@ export class OnboardingService {
         documentsToSign: row.signatureRequests.length,
         documentsSigned: row.signatureRequests.filter((r) => r.status === 'signed').length,
         health: healthStatus(row.healthDeclaration),
+        employmentHistory: recruitment?.fromApplication ?? false,
+        verifiedReferences: recruitment?.verifiedReferences ?? 0,
         validCredentialTypes: valid,
         expiredCredentialTypes: expired.filter((t) => !valid.includes(t)),
       },
@@ -94,14 +109,16 @@ export class OnboardingService {
   async forStaff(caller: AuthUser, staffId: string): Promise<OnboardingChecklist> {
     const row = await this.prisma.staffProfile.findFirst({ where: { id: staffId, agencyId: caller.agencyId }, select: SELECT });
     if (!row) throw new NotFoundException('Staff member not found');
-    return this.checklist(row, await this.requirements(caller.agencyId), await this.clock.todayString(caller.agencyId));
+    const facts = await this.recruitment(caller.agencyId, [row.userId]);
+    return this.checklist(row, await this.requirements(caller.agencyId), await this.clock.todayString(caller.agencyId), facts.get(row.userId));
   }
 
   /** The signed-in caregiver's own checklist (null when they have no staff profile). */
   async mine(caller: AuthUser): Promise<OnboardingChecklist | null> {
     const row = await this.prisma.staffProfile.findFirst({ where: { userId: caller.userId, agencyId: caller.agencyId }, select: SELECT });
     if (!row) return null;
-    return this.checklist(row, await this.requirements(caller.agencyId), await this.clock.todayString(caller.agencyId));
+    const facts = await this.recruitment(caller.agencyId, [row.userId]);
+    return this.checklist(row, await this.requirements(caller.agencyId), await this.clock.todayString(caller.agencyId), facts.get(row.userId));
   }
 
   /** Every active staff member's readiness, least ready first. */
@@ -111,9 +128,10 @@ export class OnboardingService {
       this.requirements(caller.agencyId),
       this.clock.todayString(caller.agencyId),
     ]);
+    const facts = await this.recruitment(caller.agencyId, rows.map((r) => r.userId));
     return rows
       .map((row) => {
-        const c = this.checklist(row, requirements, today);
+        const c = this.checklist(row, requirements, today, facts.get(row.userId));
         return {
           staffId: row.id,
           name: `${row.user.firstName} ${row.user.lastName}`,

@@ -2206,3 +2206,20 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Review outcomes**: fit; fit with adjustments; referred to occupational health. Only the first two clear them.
 - **Onboarding**: a required "Health questionnaire" item, owned by the person until submitted and then by the office.
   It is done when cleared.
+
+### S-011 — CQC "ready to start" (Regulation 19 / Schedule 3)
+2026-11-12 · Claude Code
+- The onboarding checklist is the readiness check. **Nobody is ready until every required item is done**, and the
+  staff page says so plainly.
+- **Schedule 3 items** are tagged "CQC" on screen (`cqc: true`):
+  - identity and Right to Work (the Right to Work check proves identity: passport, or the share code's photo);
+  - Enhanced DBS with the adults' barred list;
+  - conduct in previous care work: two verified references;
+  - full employment history with gaps explained;
+  - qualifications (the job role's required checks);
+  - health (the reviewed questionnaire).
+- **Employment history** is done automatically for anyone hired through an application, since the form enforces
+  explained gaps. For existing staff with paper files, the office adds a check of type `employment_history`.
+- **References** are done when two different referees on their application have answered and been verified; or, for
+  paper files, with a check of type `references`.
+- Optional items (emergency contact) never block readiness.

@@ -206,4 +206,23 @@ describe.skipIf(!hasDb)('References (e2e)', () => {
     await http().get(`/api/v1/recruitment/applications/${app.id}/references`).set(outsider.auth).expect(404);
     await http().post(`/api/v1/recruitment/applications/${app.id}/references`).set(teamLeader.auth).send({}).expect(403);
   });
+
+  it('a hire with two verified references has CQC history and references done on their checklist', async () => {
+    const app = await applied();
+    await http().post(`/api/v1/recruitment/applications/${app.id}/stage`).set(recruiter.auth).send({ stage: 'offer' }).expect(201);
+    const links = (await http().post(`/api/v1/recruitment/applications/${app.id}/references`).set(recruiter.auth).send({}).expect(201)).body.data.links;
+    expect(links).toHaveLength(2);
+    for (const l of links) await http().post('/api/v1/references/respond').send({ ...goodAnswers, token: tokenOf(l.link) }).expect(201);
+    const refs = (await http().get(`/api/v1/recruitment/applications/${app.id}/references`).set(recruiter.auth).expect(200)).body.data;
+    // One verified before hire, one after: the checklist follows.
+    await http().post(`/api/v1/recruitment/references/${refs[0].id}/verify`).set(recruiter.auth).send({ note: 'Phoned' }).expect(201);
+    const hired = (await http().post(`/api/v1/recruitment/applications/${app.id}/hire`).set(coordinator.auth).send({}).expect(201)).body.data;
+    const items = async () => (await http().get(`/api/v1/staff/${hired.staffProfileId}/onboarding`).set(coordinator.auth).expect(200)).body.data.items;
+    let list = await items();
+    expect(list.find((i: { key: string }) => i.key === 'employment_history')).toMatchObject({ done: true, cqc: true });
+    expect(list.find((i: { key: string }) => i.key === 'references')).toMatchObject({ done: false, detail: expect.stringContaining('1 of 2') });
+    await http().post(`/api/v1/recruitment/references/${refs[1].id}/verify`).set(recruiter.auth).send({ note: 'Phoned' }).expect(201);
+    list = await items();
+    expect(list.find((i: { key: string }) => i.key === 'references')).toMatchObject({ done: true });
+  });
 });

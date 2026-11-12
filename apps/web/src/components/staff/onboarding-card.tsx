@@ -18,7 +18,7 @@ export function ReadinessBar({ percent }: { percent: number }) {
   );
 }
 
-/** "92% ready" and what's left, on the staff page (D-101). */
+/** "92% ready" and what's left, on the staff page (D-101). Nobody is ready until every required item is done (S2-06). */
 export function OnboardingCard({ staffId }: { staffId: string }) {
   const { request } = useAuth();
   const checklist = useQuery({
@@ -33,6 +33,8 @@ export function OnboardingCard({ staffId }: { staffId: string }) {
         {c && <ReadinessBar percent={c.percent} />}
       </div>
       <ErrorAlert error={checklist.error} />
+      {c && !c.ready && <p className="mb-3 text-sm text-amber-800">Not ready to start work yet: every item without &ldquo;optional&rdquo; must be done first.</p>}
+      {c?.ready && <p className="mb-3 text-sm text-emerald-800">Ready to start: every required check, including CQC Schedule 3, is done.</p>}
       {c && (
         <ul className="grid gap-2 text-sm sm:grid-cols-2">
           {c.items.map((i) => (
@@ -46,6 +48,11 @@ export function OnboardingCard({ staffId }: { staffId: string }) {
                 <span className={i.done ? 'text-slate-600' : 'font-medium text-slate-900'}>
                   {i.label}
                   {!i.required && <span className="font-normal text-slate-500"> (optional)</span>}
+                  {i.cqc && (
+                    <span className="ml-1.5 rounded-full bg-brand-50 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-brand-800" title="Required by CQC Regulation 19, Schedule 3">
+                      CQC
+                    </span>
+                  )}
                 </span>
                 {i.detail && <span className="block text-xs text-slate-600">{i.detail}</span>}
               </span>

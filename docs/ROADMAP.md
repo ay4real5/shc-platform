@@ -30,7 +30,7 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 - [x] **S2-03** `agent` References: automatic emailed request with a secure one-time form; responses land on file.
 - [x] **S2-04** `agent` Contracts and policies signed online (reuse document e-signing); onboarding pack per role.
 - [x] **S2-05** `agent` Health declaration (special category data — restricted access).
-- [ ] **S2-06** `agent` "% ready to start" checklist built on CQC Regulation 19 / Schedule 3; nobody is marked
+- [x] **S2-06** `agent` "% ready to start" checklist built on CQC Regulation 19 / Schedule 3; nobody is marked
   ready until every required item is done (reuse the onboarding checklist).
 
 ## Stage 3 — Staff management and go-live (weeks 5–6)

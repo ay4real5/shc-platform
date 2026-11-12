@@ -34,4 +34,15 @@ describe('onboardingChecklist', () => {
     expect(c.ready).toBe(false);
     expect(onboardingChecklist({ ...all, documentsToSign: 3, documentsSigned: 3 }, []).ready).toBe(true);
   });
+
+  it('CQC Schedule 3: employment history and two verified references (or paper checks)', () => {
+    const facts = { ...all, employmentHistory: false, verifiedReferences: 1 };
+    const c = onboardingChecklist(facts, ['right_to_work']);
+    expect(c.items.find((i) => i.key === 'employment_history')).toMatchObject({ done: false, cqc: true });
+    expect(c.items.find((i) => i.key === 'references')).toMatchObject({ done: false, cqc: true, detail: expect.stringContaining('1 of 2') });
+    expect(c.items.find((i) => i.key === 'credential:right_to_work')?.cqc).toBe(true);
+    expect(c.ready).toBe(false);
+    expect(onboardingChecklist({ ...facts, employmentHistory: true, verifiedReferences: 2 }, ['right_to_work']).ready).toBe(true);
+    expect(onboardingChecklist({ ...facts, validCredentialTypes: [...all.validCredentialTypes, 'employment_history', 'references'] }, ['right_to_work']).ready).toBe(true);
+  });
 });

@@ -29,7 +29,16 @@ export const CREDENTIAL_TYPE_LABELS: Record<string, string> = {
   first_aid: 'First aid',
   driving_licence: 'Driving licence',
   car_insurance: 'Car insurance (business use)',
+  employment_history: 'Employment history checked (paper file)',
+  references: 'Two references checked (paper file)',
 };
+
+/**
+ * CQC Regulation 19 / Schedule 3 items on the checklist (S2-06): identity and Right to Work, DBS, conduct in previous
+ * care work (references), full employment history, qualifications, and health. Identity is proved by the Right to
+ * Work check (passport, share code photo).
+ */
+export const CQC_SCHEDULE_3_KEYS = ['credential:right_to_work', 'credential:dbs_enhanced', 'references', 'employment_history', 'health_declaration'] as const;
 
 export function credentialTypeLabel(type: string): string {
   return CREDENTIAL_TYPE_LABELS[type] ?? type.replaceAll('_', ' ').replace(/^\w/, (c) => c.toUpperCase());
@@ -48,6 +57,10 @@ export interface OnboardingFacts {
   documentsSigned?: number;
   /** Health declaration (S2-05). Left out = not tracked (no item). */
   health?: 'none' | 'submitted' | 'cleared' | 'referred';
+  /** S2-06. Left out = not tracked. Hired through an application (history with gaps explained), or a paper check. */
+  employmentHistory?: boolean;
+  /** S2-06. Received and verified references in the system. */
+  verifiedReferences?: number;
   /** Credential types (lower-case) with an active, unexpired credential. */
   validCredentialTypes: string[];
   /** Credential types on file but expired. */
@@ -63,6 +76,8 @@ export interface OnboardingItem {
   detail: string | null;
   /** Who usually fixes it. */
   owner: 'caregiver' | 'office';
+  /** Part of CQC Schedule 3 (S2-06). */
+  cqc?: boolean;
 }
 
 export interface OnboardingChecklist {
@@ -125,8 +140,31 @@ export function onboardingChecklist(facts: OnboardingFacts, requiredCredentials:
           ),
         ]
       : []),
+    ...(facts.employmentHistory !== undefined
+      ? [
+          item(
+            'employment_history',
+            'Full employment history, gaps explained',
+            facts.employmentHistory || valid.has('employment_history'),
+            'office',
+            'Comes with a hire through the careers page; for a paper file, add a check of type "employment_history".',
+          ),
+        ]
+      : []),
+    ...(facts.verifiedReferences !== undefined
+      ? [
+          item(
+            'references',
+            'Two verified references',
+            facts.verifiedReferences >= 2 || valid.has('references'),
+            'office',
+            `${Math.min(facts.verifiedReferences, 2)} of 2 verified. Request them from the application, or add a check of type "references" for a paper file.`,
+          ),
+        ]
+      : []),
     item('emergency_contact', 'Emergency contact', facts.hasEmergencyContact, 'office', 'Who to call if something happens at work.', false),
   ];
+  for (const i of items) if ((CQC_SCHEDULE_3_KEYS as readonly string[]).includes(i.key) || (i.key.startsWith('credential:') && i.required)) i.cqc = true;
   const required = items.filter((i) => i.required);
   const done = required.filter((i) => i.done).length;
   const percent = required.length ? Math.round((done / required.length) * 100) : 100;
