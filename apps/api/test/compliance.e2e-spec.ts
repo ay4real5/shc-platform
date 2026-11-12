@@ -90,7 +90,7 @@ describe.skipIf(!hasDb)('Compliance (e2e)', () => {
     expect(await job.run(agencyId)).toBe(0); // same stage: nothing new
     const notes = await prisma.notification.findMany({ where: { agencyId, type: 'credential_expiry' } });
     expect(notes.map((n) => n.userId).sort()).toEqual([aideUserId, officeId, ...(await managersOtherThan(officeId))].sort());
-    expect(notes[0]!.title).toBe('Credential expires in 20 days: CPR card');
+    expect(notes[0]!.title).toBe('Expires in 20 days: CPR card');
 
     await prisma.staffCredential.update({ where: { id: credential.id }, data: { expiryDate: toDate(addDays(today, -1))! } });
     expect(await job.run(agencyId)).toBe(1); // now expired
@@ -100,6 +100,36 @@ describe.skipIf(!hasDb)('Compliance (e2e)', () => {
     await http().patch(`/api/v1/staff/${profile.id}/credentials/${credential.id}`).set(office).send({ expiryDate: addDays(today, 5) }).expect(200);
     expect((await prisma.staffCredential.findUniqueOrThrow({ where: { id: credential.id } })).expiryAlertStage).toBeNull();
     expect(await job.run(agencyId)).toBe(1);
+  });
+
+  it('a newer credential of the same type replaces the old one, which stops alerting and counting (S3-01)', async () => {
+    const profile = await prisma.staffProfile.findFirstOrThrow({ where: { userId: aideUserId } });
+    const job = app.get(CredentialExpiryJob);
+    await job.run(agencyId); // settle anything left from earlier tests
+    const old = (
+      await http().post(`/api/v1/staff/${profile.id}/credentials`).set(office).send({ credentialType: 'driving_licence', credentialName: 'Driving licence', expiryDate: addDays(today, -3) }).expect(201)
+    ).body.data;
+    expect(old.status).toBe('active');
+    const before = (await http().get('/api/v1/compliance/dashboard').set(supervisor).expect(200)).body.data.credentials.expired;
+
+    await http().post(`/api/v1/staff/${profile.id}/credentials`).set(office).send({ credentialType: 'driving_licence', credentialName: 'Driving licence', expiryDate: addDays(today, 900) }).expect(201);
+    const list = (await http().get(`/api/v1/staff/${profile.id}/credentials`).set(office).expect(200)).body.data;
+    expect(list.find((c: { id: string }) => c.id === old.id).status).toBe('superseded');
+    expect((await http().get('/api/v1/compliance/dashboard').set(supervisor).expect(200)).body.data.credentials.expired).toBe(before - 1);
+    expect(await job.run(agencyId)).toBe(0); // the replaced licence never alerts
+  });
+
+  it('DBS alerts go to the office only, worded neutrally (S3-01)', async () => {
+    const profile = await prisma.staffProfile.findFirstOrThrow({ where: { userId: aideUserId } });
+    await prisma.notification.deleteMany({ where: { agencyId } });
+    await prisma.staffCredential.create({
+      data: { staffProfileId: profile.id, credentialType: 'dbs_enhanced', credentialName: 'Enhanced DBS', expiryDate: toDate(addDays(today, -1))! },
+    });
+    expect(await app.get(CredentialExpiryJob).run(agencyId)).toBe(1);
+    const notes = await prisma.notification.findMany({ where: { agencyId, type: 'credential_expiry' } });
+    expect(notes.length).toBeGreaterThan(0);
+    expect(notes.every((n) => n.title === 'DBS check needs attention')).toBe(true);
+    expect(notes.map((n) => n.userId)).not.toContain(aideUserId);
   });
 
   it('admins search the audit log and see the data protection checklist', async () => {

@@ -40,6 +40,7 @@ import { addMonths, fromDate, toDate } from '../../common/utils/dates.js';
 import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { PRODUCT_NAME } from '../../common/brand.js';
+import { supersedeOlderCredentials } from '../staff/credentials.service.js';
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -323,6 +324,7 @@ export class TrainingService {
         },
       });
       credentialId = credential.id;
+      await supersedeOlderCredentials(this.prisma, staff.id, credential.credentialType, credential.id); // a retake renews it
     }
     await this.prisma.trainingCompletion.create({ data: { courseId: id, staffProfileId: staff.id, scorePercent, passed, credentialId } });
     // Which questions were wrong (by number) helps them learn; the right answers stay private.

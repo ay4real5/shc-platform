@@ -81,6 +81,8 @@ export interface Credential {
   issueDate: string | null;
   expiryDate: string | null;
   alertDaysBefore: number;
+  /** active, or superseded by a newer one of the same type. */
+  status: string;
   state: 'valid' | 'expiring_soon' | 'expired' | 'no_expiry';
   verifiedById: string | null;
   verifiedAt: string | null;

@@ -2223,3 +2223,16 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **References** are done when two different referees on their application have answered and been verified; or, for
   paper files, with a check of type `references`.
 - Optional items (emergency contact) never block readiness.
+
+### S-012 — Expiry alerts for every check (S3-01)
+- **One job for everything.** Right to Work follow-ups, DBS, training, driving licence, car insurance and any other
+  credential all go through the existing daily credential expiry job (D-062). Right to Work and DBS feed it through
+  their synced credentials (S-007, S-008); training passes create credentials with the course's validity.
+- **Runs at 07:00 UTC** (7am or 8am UK), before the office opens; it used to run for US mornings.
+- **Wording per check.** Right to Work and DBS dates are follow-up dates, so they read as "follow-up check due" /
+  "DBS status check due", not "expires". Everything else says "Expires in N days: <name>".
+- **DBS alerts go to the office only**, worded neutrally ("DBS check needs attention"): the record may be waiting on
+  a risk decision, and status checks are an office task. Other alerts go to the person and to staff:update holders.
+- **Renewals supersede.** Adding a credential (or passing a course again) marks older credentials of the same type
+  `superseded`: they stay on file, shown as "Replaced by a newer one", but no longer alert, count as expired on the
+  compliance dashboard, or appear on "Checks & expiries". Type `other` is never superseded.

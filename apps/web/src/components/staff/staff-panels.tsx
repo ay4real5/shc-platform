@@ -1,6 +1,6 @@
 'use client';
 
-import { TIME_OFF_TYPES } from '@alora/shared';
+import { CREDENTIAL_TYPE_LABELS, TIME_OFF_TYPES, credentialTypeLabel } from '@alora/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
@@ -55,15 +55,15 @@ export function CredentialsPanel({ staffId, canEdit }: { staffId: string; canEdi
       <ErrorAlert error={error ?? list.error} />
       <ul className="mb-4 divide-y divide-slate-100 text-sm">
         {list.data?.map((c) => (
-          <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+          <li key={c.id} className={`flex flex-wrap items-center justify-between gap-2 py-2 ${c.status === 'superseded' ? 'opacity-70' : ''}`}>
             <span>
               <span className="font-medium">{c.credentialName}</span>
-              <span className="text-slate-500"> · {humanize(c.credentialType)}</span>
+              <span className="text-slate-500"> · {credentialTypeLabel(c.credentialType)}</span>
               {c.expiryDate && <span className="text-slate-500"> · expires {formatDate(c.expiryDate)}</span>}
               {c.verifiedAt && <span className="ml-2 text-xs text-emerald-700">verified</span>}
             </span>
             <span className="flex items-center gap-2">
-              <StatusBadge status={c.state} />
+              {c.status === 'superseded' ? <span className="text-xs text-slate-600">Replaced by a newer one</span> : <StatusBadge status={c.state} />}
               {canEdit && !c.verifiedAt && (
                 <Button variant="ghost" disabled={busy} onClick={() => void run(`/credentials/${c.id}`, 'PATCH', { verified: true })}>
                   Mark verified
@@ -86,8 +86,22 @@ export function CredentialsPanel({ staffId, canEdit }: { staffId: string; canEdi
       </ul>
       {canEdit && (
         <form onSubmit={(e) => void add(e)} className="grid gap-3 sm:grid-cols-2">
-          <Field label="Credential type" name="credentialType" placeholder="license, cpr, tb_test…" required />
-          <Field label="Credential name" name="credentialName" placeholder="RN license" required />
+          <Field
+            label="Credential type"
+            name="credentialType"
+            list={`credential-types-${staffId}`}
+            placeholder="driving_licence, first_aid…"
+            hint="Adding a newer one of the same type replaces the old one, and its expiry alerts stop."
+            required
+          />
+          <datalist id={`credential-types-${staffId}`}>
+            {Object.entries(CREDENTIAL_TYPE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </datalist>
+          <Field label="Credential name" name="credentialName" placeholder="Full UK driving licence" required />
           <Field label="Number" name="credentialNumber" />
           <Field label="Issued by" name="issuingAuthority" />
           <Field label="Issue date" name="issueDate" type="date" />

@@ -22,8 +22,46 @@ export function expiryStage(expiryDate: string, today: string, alertDaysBefore: 
 
 const daysUntil = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
 
+export interface ExpiryAlert {
+  title: string;
+  body: string;
+  /** Whether the staff member is told too, or only the office. */
+  toStaff: boolean;
+}
+
 /**
- * Daily: tells staff and their managers (staff:update holders) about credentials entering an expiry stage. Idempotent:
+ * What the alert says, per kind of check (S3-01). Right to Work and DBS "expiry" dates are follow-up dates (S-007,
+ * S-008), so they read as checks due, not as something expiring. DBS wording stays neutral and goes to the office only:
+ * the record may be waiting on a risk decision, and a status check is an office task.
+ */
+export function expiryAlertText(credentialType: string, credentialName: string, stage: ExpiryStage, days: number, who: string): ExpiryAlert {
+  const inDays = days === 0 ? 'today' : `in ${days} day${days === 1 ? '' : 's'}`;
+  switch (credentialType) {
+    case 'right_to_work':
+      return {
+        title: stage === 'expired' ? 'Right to Work follow-up check overdue' : `Right to Work follow-up check due ${inDays}`,
+        body: `${who}: check their right to work again (share code or documents) and record it in Staff. Without it they can't keep working.`,
+        toStaff: true,
+      };
+    case 'dbs_enhanced':
+      return {
+        title: stage === 'expired' ? 'DBS check needs attention' : `DBS status check due ${inDays}`,
+        body: `${who}: open their DBS record in Staff and bring it up to date.`,
+        toStaff: false,
+      };
+    default:
+      return {
+        title: stage === 'expired' ? `Expired: ${credentialName}` : `Expires ${inDays}: ${credentialName}`,
+        body: `${who}: renew it (or retake the course in Training) and update it in Staff.`,
+        toStaff: true,
+      };
+  }
+}
+
+/**
+ * Daily: tells staff and their managers (staff:update holders) about checks and credentials entering an expiry stage —
+ * Right to Work follow-ups, DBS, training, driving licence, insurance (S3-01). Superseded credentials are skipped.
+ * Idempotent:
  * the stage is claimed with a guarded update before anyone is notified, so several API instances can run it.
  */
 @Injectable()
@@ -38,8 +76,8 @@ export class CredentialExpiryJob {
     private readonly config: ConfigService<EnvironmentVariables, true>,
   ) {}
 
-  // 12:30 UTC — morning in the US.
-  @Cron('30 12 * * *', { name: 'credential-expiry' })
+  // 07:00 UTC: 7am (winter) or 8am (summer) in the UK, before the office opens.
+  @Cron('0 7 * * *', { name: 'credential-expiry' })
   async cron(): Promise<void> {
     if (!this.config.get('JOBS_ENABLED', { infer: true })) return;
     try {
@@ -56,12 +94,14 @@ export class CredentialExpiryJob {
     const rows = await this.prisma.staffCredential.findMany({
       where: {
         expiryDate: { lte: horizon },
+        status: 'active',
         // Not yet told it's expired (spelled out: NOT (stage = 'expired') would also drop NULL stages in SQL).
         OR: [{ expiryAlertStage: null }, { expiryAlertStage: { not: 'expired' } }],
         staffProfile: { isActive: true, user: { isActive: true }, ...(agencyId ? { agencyId } : {}) },
       },
       select: {
         id: true,
+        credentialType: true,
         credentialName: true,
         expiryDate: true,
         alertDaysBefore: true,
@@ -88,13 +128,16 @@ export class CredentialExpiryJob {
       if (!claimed.count) continue; // another instance got it
       if (!managersByAgency.has(agency)) managersByAgency.set(agency, await this.compliance.usersWithPermission(agency, 'staff', 'update'));
       const who = `${c.staffProfile.user.firstName} ${c.staffProfile.user.lastName}`;
-      const days = daysUntil(today, expiry);
+      const alert = expiryAlertText(c.credentialType, c.credentialName, stage, daysUntil(today, expiry), who);
+      const managers = managersByAgency.get(agency)!;
+      const userIds = [...new Set(alert.toStaff ? [c.staffProfile.userId, ...managers] : managers)];
+      if (!userIds.length) continue;
       await this.notifications.notify({
         agencyId: agency,
-        userIds: [c.staffProfile.userId, ...managersByAgency.get(agency)!],
+        userIds,
         type: 'credential_expiry',
-        title: stage === 'expired' ? `Credential expired: ${c.credentialName}` : `Credential expires in ${days} day${days === 1 ? '' : 's'}: ${c.credentialName}`,
-        body: `${who} — renew it and update the expiry date in Staff.`,
+        title: alert.title,
+        body: alert.body,
         data: { credentialId: c.id },
       });
       sent++;

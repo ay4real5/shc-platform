@@ -115,6 +115,12 @@ describe.skipIf(!hasDb)('SHC Academy (e2e)', () => {
     const results = (await http().get(api(`/training/courses/${course.id}/results`)).set(supervisor.auth).expect(200)).body.data;
     expect(results.map((r: { scorePercent: number }) => r.scorePercent)).toEqual([75, 50]);
     expect((await http().get(api('/training/courses')).set(supervisor.auth).expect(200)).body.data[0]).toMatchObject({ passedBy: 1, questions: 4 });
+
+    // A retake renews it: the old credential is superseded, so it never sends an expiry alert (S3-01).
+    await http().post(api(`/training/my/${course.id}/submit`)).set(aide.auth).send({ answers: [1, 0, 1, 1] }).expect(200);
+    const all = await prisma.staffCredential.findMany({ where: { staffProfileId: aide.staffId!, credentialType: 'infection_control' }, orderBy: { createdAt: 'asc' } });
+    expect(all.map((c) => c.status)).toEqual(['superseded', 'active']);
+    expect(all[0]!.id).toBe(credential.id);
   });
 
   it('hides inactive courses and lets the course be opened to everyone', async () => {

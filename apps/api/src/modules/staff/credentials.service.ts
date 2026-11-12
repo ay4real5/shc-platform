@@ -17,6 +17,8 @@ export interface CredentialView {
   issueDate: string | null;
   expiryDate: string | null;
   alertDaysBefore: number;
+  /** active, or superseded once a newer credential of the same type was added (S3-01). */
+  status: string;
   /** valid | expiring_soon | expired | no_expiry — computed, never stored. */
   state: CredentialState;
   verifiedById: string | null;
@@ -29,6 +31,24 @@ export interface ExpiringCredential extends CredentialView {
 }
 
 type CredentialRow = Prisma.StaffCredentialGetPayload<object>;
+
+/**
+ * A new credential replaces older ones of the same type (a renewed licence, a retaken course): they're marked
+ * superseded so they stop counting as expired and stop sending expiry alerts (S3-01). "other" is never superseded.
+ */
+export async function supersedeOlderCredentials(
+  db: Pick<PrismaService, 'staffCredential'> | Prisma.TransactionClient,
+  staffProfileId: string,
+  credentialType: string,
+  keepId: string,
+): Promise<number> {
+  if (credentialType.trim().toLowerCase() === 'other') return 0;
+  const { count } = await db.staffCredential.updateMany({
+    where: { staffProfileId, credentialType, status: 'active', id: { not: keepId } },
+    data: { status: 'superseded' },
+  });
+  return count;
+}
 
 /** Staff licences and certifications with expiry tracking (DESIGN.md §5.3, §13.2 credential_expiry). */
 @Injectable()
@@ -43,7 +63,7 @@ export class CredentialsService {
     await this.staff.assertSelfOr(caller, await this.staff.find(caller, staffId), 'staff:read');
     const rows = await this.prisma.staffCredential.findMany({
       where: { staffProfileId: staffId },
-      orderBy: [{ expiryDate: { sort: 'asc', nulls: 'last' } }, { credentialName: 'asc' }],
+      orderBy: [{ status: 'asc' }, { expiryDate: { sort: 'asc', nulls: 'last' } }, { credentialName: 'asc' }],
     });
     const today = await this.clock.todayString(caller.agencyId);
     return rows.map((row) => toView(row, today));
@@ -65,6 +85,7 @@ export class CredentialsService {
         notes: dto.notes ?? null,
       },
     });
+    await supersedeOlderCredentials(this.prisma, staffId, row.credentialType, row.id);
     return toView(row, await this.clock.todayString(caller.agencyId));
   }
 
@@ -102,6 +123,7 @@ export class CredentialsService {
     const rows = await this.prisma.staffCredential.findMany({
       where: {
         expiryDate: { lte: toDate(addDays(today, withinDays)) },
+        status: 'active',
         staffProfile: { agencyId: caller.agencyId, isActive: true },
       },
       include: {
@@ -147,6 +169,7 @@ function toView(row: CredentialRow, today: string): CredentialView {
     issueDate: fromDate(row.issueDate),
     expiryDate,
     alertDaysBefore: row.alertDaysBefore,
+    status: row.status,
     state: credentialState(expiryDate, row.alertDaysBefore, today),
     verifiedById: row.verifiedById,
     verifiedAt: row.verifiedAt,

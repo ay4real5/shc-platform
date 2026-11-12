@@ -33,7 +33,7 @@ export class ComplianceService {
   async dashboard(caller: AuthUser) {
     const agencyId = caller.agencyId;
     const today = await this.clock.todayString(agencyId);
-    const activeStaff = { staffProfile: { agencyId, isActive: true } };
+    const activeStaff = { status: 'active', staffProfile: { agencyId, isActive: true } };
     const [credentialsExpired, credentialsExpiring, adminsWithout2fa] = await Promise.all([
       this.prisma.staffCredential.count({ where: { ...activeStaff, expiryDate: { lt: toDate(today) } } }),
       this.prisma.staffCredential.count({ where: { ...activeStaff, expiryDate: { gte: toDate(today), lte: toDate(addDays(today, 30)) } } }),

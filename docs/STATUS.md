@@ -25,7 +25,7 @@
   - Email goes live with hosting (Azure).
 
 ## In progress
-Nothing: Stage 2 finished. See the session log for the last test results.
+Stage 3. S3-01 (expiry alerts for every check, S-012) is done; next is S3-02.
 
 How to run the browser suite locally:
 1. Build the API: `npm run build -w @alora/api`.
@@ -35,7 +35,6 @@ How to run the browser suite locally:
 
 ## Next up
 **Stage 3 (weeks 5–6)**, in order:
-- S3-01: expiry alerts for all checks (credential job; Right to Work and DBS already feed it).
 - S3-02: training and the Care Certificate.
 - S3-03: holiday (5.6 weeks, pro-rata) and absence.
 - S3-04: supervisions and appraisals.
@@ -56,6 +55,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-12 | Claude Code | S3-01 | Expiry alerts for all checks: UK-morning job, wording per check, DBS office-only, renewals supersede old credentials. Browser 21/21; compliance/training/staff e2e 19/19; unit ok. |
 | 2026-11-12 | Claude Code | S2-01..S2-06 | Right to Work, DBS, references, documents to sign + onboarding packs, health questionnaire, CQC ready-to-start. Final run: browser 21/21, API unit 85/85, API e2e 167/167, shared 34/34. |
 | 2026-11-12 | Claude Code | S1-05 | Hiring pipeline (stages, interviews, timeline, candidate emails, hire → login + staff record); API e2e 152/152, browser 16/16. |
 | 2026-11-12 | Claude Code | S1-03, S1-04 | UK staff/company records (S-003); recruitment API and careers pages; API e2e 144/144 plus recruitment 5/5; browser tests not yet run. |

@@ -34,7 +34,7 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
   ready until every required item is done (reuse the onboarding checklist).
 
 ## Stage 3 — Staff management and go-live (weeks 5–6)
-- [ ] **S3-01** `agent` Expiry alerts for Right to Work, DBS, training, driving licence and insurance (reuse the
+- [x] **S3-01** `agent` Expiry alerts for Right to Work, DBS, training, driving licence and insurance (reuse the
   credential expiry job).
 - [ ] **S3-02** `agent` Training and Care Certificate tracking (reuse Academy courses and credentials).
 - [ ] **S3-03** `agent` Holiday (5.6-week statutory entitlement, pro-rata) and absence.
