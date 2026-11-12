@@ -767,6 +767,74 @@
         ]
       }
     },
+    "/api/v1/staff/right-to-work/follow-ups": {
+      "get": {
+        "operationId": "RightToWorkController_followUps",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/v1/staff/{id}/right-to-work": {
+      "get": {
+        "operationId": "RightToWorkController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      },
+      "post": {
+        "operationId": "RightToWorkController_record",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordRightToWorkDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
     "/api/v1/staff/onboarding": {
       "get": {
         "operationId": "StaffController_onboardingOverview",
@@ -3567,6 +3635,10 @@
             }
           }
         }
+      },
+      "RecordRightToWorkDto": {
+        "type": "object",
+        "properties": {}
       },
       "OnboardingRequirementsDto": {
         "type": "object",

@@ -251,6 +251,7 @@ model StaffProfile {
   availability       StaffAvailability[]
   timeOff            StaffTimeOff[]
   documents          Document[]
+  rightToWorkChecks  RightToWorkCheck[]
 
   @@unique([agencyId, employeeId])
   @@index([agencyId])
@@ -775,4 +776,41 @@ model Interview {
   @@index([applicationId])
   @@index([agencyId, startsAt])
   @@map("interviews")
+}
+
+/// A Right to Work check (S2-01): who checked, when, how, and what it showed. Append-only — a new check is a new row.
+/// A passed check also updates the staff member's `right_to_work` credential, so follow-ups use the expiry alerts.
+model RightToWorkCheck {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId            String    @map("agency_id") @db.Uuid
+  staffProfileId      String    @map("staff_profile_id") @db.Uuid
+  /// share_code | manual_document | idsp
+  method              String    @db.VarChar(20)
+  /// Share code used for the online check (9 characters, no spaces).
+  shareCode           String?   @map("share_code") @db.VarChar(9)
+  /// Manual checks: @alora/shared RTW_DOCUMENTS key.
+  documentType        String?   @map("document_type") @db.VarChar(50)
+  /// Manual checks: originals seen in_person | video_call.
+  seenHow             String?   @map("seen_how") @db.VarChar(12)
+  /// unlimited | time_limited
+  permission          String    @db.VarChar(15)
+  permissionExpiresOn DateTime? @map("permission_expires_on") @db.Date
+  /// When the next check is due (null = none needed).
+  followUpOn          DateTime? @map("follow_up_on") @db.Date
+  /// e.g. "Student: 20 hours a week in term time".
+  restrictions        String?   @db.VarChar(500)
+  /// passed | failed
+  outcome             String    @db.VarChar(10)
+  checkedOn           DateTime  @map("checked_on") @db.Date
+  checkedById         String    @map("checked_by_id") @db.Uuid
+  /// Evidence: the saved copy of the check or documents (a staff document).
+  documentId          String?   @map("document_id") @db.Uuid
+  notes               String?
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([staffProfileId, checkedOn])
+  @@index([agencyId, followUpOn])
+  @@map("right_to_work_checks")
 }
