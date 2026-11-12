@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Injectable, Module, Patch } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Injectable, Module, Patch } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { DEFAULT_LEAVE_YEAR_START_MONTH } from '@alora/shared';
-import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+import { DEFAULT_LEAVE_YEAR_START_MONTH, DEFAULT_SUPERVISION_INTERVALS, SUPERVISION_TYPES, type SupervisionType } from '@alora/shared';
+import { IsBoolean, IsInt, IsObject, IsNotEmpty, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
@@ -63,6 +63,11 @@ export class UpdateAgencyDto {
   @Min(1)
   @Max(12)
   leaveYearStartMonth?: number;
+
+  /** Months between supervisions, appraisals and spot checks (S3-04), e.g. `{ "supervision": 2 }`. 1–24 each. */
+  @IsOptional()
+  @IsObject()
+  supervisionEveryMonths?: Partial<Record<SupervisionType, number>>;
 }
 
 export interface AgencyView {
@@ -77,6 +82,7 @@ export interface AgencyView {
   careersSlug: string | null;
   recognitionBadges: boolean;
   leaveYearStartMonth: number;
+  supervisionEveryMonths: Record<SupervisionType, number>;
 }
 
 const SELECT = {
@@ -101,7 +107,11 @@ const isObject = (v: unknown): v is Prisma.JsonObject => typeof v === 'object' &
 
 function view({ settings, ...agency }: Prisma.AgencyGetPayload<{ select: typeof SELECT }>): AgencyView {
   const month = isObject(settings) ? settings.leaveYearStartMonth : undefined;
-  return { ...agency, recognitionBadges: recognitionEnabled(settings), leaveYearStartMonth: typeof month === 'number' ? month : DEFAULT_LEAVE_YEAR_START_MONTH };
+  const custom = isObject(settings) && isObject(settings.supervisionEveryMonths) ? settings.supervisionEveryMonths : {};
+  const supervisionEveryMonths = Object.fromEntries(
+    SUPERVISION_TYPES.map((t) => [t, typeof custom[t] === 'number' ? (custom[t] as number) : DEFAULT_SUPERVISION_INTERVALS[t].everyMonths]),
+  ) as Record<SupervisionType, number>;
+  return { ...agency, recognitionBadges: recognitionEnabled(settings), leaveYearStartMonth: typeof month === 'number' ? month : DEFAULT_LEAVE_YEAR_START_MONTH, supervisionEveryMonths };
 }
 
 /**
@@ -117,14 +127,24 @@ export class AgencyService {
   }
 
   async update(caller: AuthUser, dto: UpdateAgencyDto): Promise<AgencyView> {
-    const { recognitionBadges, leaveYearStartMonth, ...fields } = dto;
+    const { recognitionBadges, leaveYearStartMonth, supervisionEveryMonths, ...fields } = dto;
+    if (supervisionEveryMonths) {
+      for (const [k, v] of Object.entries(supervisionEveryMonths)) {
+        if (!(SUPERVISION_TYPES as readonly string[]).includes(k) || !Number.isInteger(v) || v < 1 || v > 24) {
+          throw new BadRequestException('supervisionEveryMonths: each of supervision, appraisal, spot_check must be 1 to 24 months');
+        }
+      }
+    }
     let settings: Prisma.InputJsonObject | undefined;
-    if (recognitionBadges !== undefined || leaveYearStartMonth !== undefined) {
+    if (recognitionBadges !== undefined || leaveYearStartMonth !== undefined || supervisionEveryMonths !== undefined) {
       const current = await this.prisma.agency.findUniqueOrThrow({ where: { id: caller.agencyId }, select: { settings: true } });
       settings = {
         ...(isObject(current.settings) ? current.settings : {}),
         ...(recognitionBadges !== undefined ? { recognitionBadges } : {}),
         ...(leaveYearStartMonth !== undefined ? { leaveYearStartMonth } : {}),
+        ...(supervisionEveryMonths !== undefined
+          ? { supervisionEveryMonths: { ...(isObject(current.settings) && isObject(current.settings.supervisionEveryMonths) ? current.settings.supervisionEveryMonths : {}), ...supervisionEveryMonths } }
+          : {}),
       };
     }
     return view(await this.prisma.agency.update({ where: { id: caller.agencyId }, data: { ...fields, ...(settings ? { settings } : {}) }, select: SELECT }));

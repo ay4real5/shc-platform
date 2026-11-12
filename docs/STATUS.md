@@ -12,7 +12,7 @@
   - health questionnaire (encrypted, managers only);
   - the CQC "ready to start" checklist (Schedule 3 items tagged).
 - Dev database `shc` on the Neon dev server. Migrations: `init`, `audit_logs_partitioning`, `uk_staff_record`,
-  `uk_company`, `recruitment`, `hiring_pipeline`, `right_to_work`, `dbs`, `references`, `signatures`, `health`, `care_certificate`, `holiday`.
+  `uk_company`, `recruitment`, `hiring_pipeline`, `right_to_work`, `dbs`, `references`, `signatures`, `health`, `care_certificate`, `holiday`, `supervisions`.
 - Local `.env` (not committed) has its own JWT secret and encryption key.
 - Demo seed:
   - "Demo Care Services (FAKE DATA)", Europe/London, logins `*@demo.shc.test`, password `Demo-Password-1!`.
@@ -26,7 +26,8 @@
 
 ## In progress
 Stage 3. Done: S3-01 (expiry alerts for every check, S-012), S3-02 (Care Certificate + training matrix, S-013),
-S3-03 (holiday allowance, balance, absence and Bradford factor, S-014). Next is S3-04 (supervisions and appraisals).
+S3-03 (holiday allowance, balance, absence and Bradford factor, S-014), S3-04 (supervisions, appraisals and spot checks,
+S-015). Next is S3-05 (manager dashboard).
 
 How to run the browser suite locally:
 1. Build the API: `npm run build -w @alora/api`.
@@ -36,7 +37,6 @@ How to run the browser suite locally:
 
 ## Next up
 **Stage 3 (weeks 5–6)**, in order:
-- S3-04: supervisions and appraisals.
 - S3-05: manager dashboard (who can't work yet and why, what expires this month, hiring at a glance).
 - S3-06: staff phone app, which also needs documents to sign, the health questionnaire and Care Certificate progress.
 - S3-07: go-live (Azure UK South, domain, email sender; manager training).
@@ -56,6 +56,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-12 | Claude Code | S3-04 | Supervisions, appraisals and spot checks: due dates from intervals, book/record (notes encrypted), person reads and signs, day-before reminders and overdue alerts job, overview page, intervals in settings, new supervisions:manage permission. API e2e 178/178, API unit 88/88, shared 44/44, browser 24/24. |
 | 2026-11-12 | Claude Code | S3-03 | Holiday allowance (5.6 weeks, max 28, pro-rata, override), working days per request, balance check, office-recorded leave approved at once, sickness + Bradford factor, Holiday & absence report, leave year setting. API e2e 175/175, API unit 88/88, shared 42/42, browser 23/23. |
 | 2026-11-12 | Claude Code | S3-02 | Care Certificate (16 standards signed off by an assessor, auto-awarded, 12-week due date) and training matrix page. API e2e 172/172 (seed test now checks per-type counts), API unit 88/88, shared 37/37, browser 22/22. |
 | 2026-11-12 | Claude Code | S3-01 | Expiry alerts for all checks: UK-morning job, wording per check, DBS office-only, renewals supersede old credentials. Browser 21/21; compliance/training/staff e2e 19/19; unit ok. |

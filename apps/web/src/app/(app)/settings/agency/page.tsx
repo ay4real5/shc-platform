@@ -7,6 +7,7 @@ import { Alert, Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader } from '@/components/ui/data-display';
 import { Field } from '@/components/ui/field';
 import { SelectField } from '@/components/ui/form-controls';
+import { SUPERVISION_TYPE_LABELS, SUPERVISION_TYPES } from '@alora/shared';
 import { useAuth } from '@/lib/auth/auth-provider';
 
 interface Agency {
@@ -20,6 +21,7 @@ interface Agency {
   timezone: string;
   careersSlug: string | null;
   leaveYearStartMonth: number;
+  supervisionEveryMonths: Record<string, number>;
 }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -36,7 +38,7 @@ export default function AgencySettingsPage() {
     queryFn: async () => (await request<Agency>('/agency')).data,
   });
   const save = useMutation({
-    mutationFn: (body: Record<string, string | number>) => request<Agency>('/agency', { method: 'PATCH', body }),
+    mutationFn: (body: Record<string, unknown>) => request<Agency>('/agency', { method: 'PATCH', body }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agency'] }),
   });
 
@@ -47,13 +49,19 @@ export default function AgencySettingsPage() {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const body: Record<string, string | number> = {};
+    const body: Record<string, unknown> = {};
     for (const key of FIELDS) {
       const value = String(form.get(key) ?? '').trim();
       if (value && value !== (a?.[key] ?? '')) body[key] = value;
     }
     const month = Number(form.get('leaveYearStartMonth'));
     if (month && month !== a?.leaveYearStartMonth) body.leaveYearStartMonth = month;
+    const every: Record<string, number> = {};
+    for (const t of SUPERVISION_TYPES) {
+      const v = Number(form.get(`every_${t}`));
+      if (v && v !== a?.supervisionEveryMonths[t]) every[t] = v;
+    }
+    if (Object.keys(every).length) body.supervisionEveryMonths = every;
     save.mutate(body);
   };
 
@@ -90,6 +98,15 @@ export default function AgencySettingsPage() {
                 </option>
               ))}
             </SelectField>
+            {SUPERVISION_TYPES.map((t) => (
+              <SelectField key={t} label={`${SUPERVISION_TYPE_LABELS[t]}: every`} name={`every_${t}`} defaultValue={String(a.supervisionEveryMonths[t])} disabled={!editable}>
+                {[1, 2, 3, 4, 6, 12, 18, 24].map((m) => (
+                  <option key={m} value={m}>
+                    {m} month{m === 1 ? '' : 's'}
+                  </option>
+                ))}
+              </SelectField>
+            ))}
             <p className="text-sm text-slate-600 sm:col-span-2">Timezone: {a.timezone}</p>
             {editable && (
               <div className="flex flex-col gap-2 sm:col-span-2">

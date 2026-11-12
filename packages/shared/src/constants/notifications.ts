@@ -6,6 +6,8 @@ export const NOTIFICATION_TYPES = [
   'time_off_decided',
   /** A new job application arrived (S1-04) — for people who manage recruitment. */
   'application_received',
+  /** Supervision, appraisal or spot check: booked for tomorrow, overdue, or a record to read and sign (S3-04). */
+  'supervision',
   'system',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -31,5 +33,6 @@ export const DEFAULT_DELIVERY_CHANNELS: Record<NotificationType, readonly Delive
   document_signature: ['push', 'sms'],
   time_off_decided: ['push'],
   application_received: ['push', 'email'],
+  supervision: ['push', 'email'],
   system: ['email'],
 };

@@ -2273,3 +2273,23 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Report:** `GET /holiday/report` (`staff:read`), the "Holiday & absence" page, sortable by holiday left or Bradford
   score. Staff see their balance on the home page.
 - Not included: Statutory Sick Pay, carry-over between leave years, leavers' holiday pay. Raise with Michael if needed.
+
+### S-015 — Supervisions, appraisals and spot checks (S3-04)
+- **Three types** (`SUPERVISION_TYPES`): supervision (every 3 months, first one a month after starting), appraisal
+  (every 12 months, first at 12 months), spot check / observed practice (every 6 months, first at 3 months). Companies
+  change the intervals in Company settings (`settings.supervisionEveryMonths`, 1–24 months each).
+- **Due date** = last one held + interval; with none held, start date + first gap; with no start date, today.
+  Overdue = past the due date with nothing booked.
+- **Book or record.** `POST /staff/:id/supervisions` books a date (one booking per type at a time), or records one
+  already held (`heldOn` + notes). A booked one is recorded with `/supervisions/:id/complete` or cancelled.
+  Nobody holds their own; the supervisor defaults to whoever books it.
+- **New permission `supervisions:manage`**: care coordinators and team leaders (seniors often supervise), plus admins
+  and registered managers. Holders book, record and read notes. `staff:read` alone sees dates and status, not notes.
+- **Notes are HR-confidential**: encrypted (`PhiContext.SupervisionNotes`), readable by the person and
+  supervisions:manage holders, and every view of a staff member's supervisions is audited. The person reads and signs
+  the record (`/acknowledge`), with an optional comment (encrypted, `SupervisionComment`). The home page prompts them.
+- **Reminders** (`SupervisionRemindersJob`, 07:15 UTC): the person and supervisor the day before a booking (claimed
+  with `reminder_sent_at`); and one message to supervisions:manage holders when people become overdue, recorded once
+  per person, type and due date in `supervision_overdue_alerts`. New notification type `supervision`.
+- **Overview** page "Supervisions" (`GET /supervisions/overview`, `staff:read`): everyone's three due dates, overdue
+  filter, records waiting for signature.

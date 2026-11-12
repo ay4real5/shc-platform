@@ -94,6 +94,7 @@ model User {
   @@index([agencyId])
   @@map("users")
   careCertificateSignOffs CareCertificateSignOff[] @relation("CareCertificateSignedOffBy")
+  supervisionsLed         Supervision[] @relation("SupervisionSupervisor")
 }
 
 /// One-time 2FA backup codes (DECISIONS D-026). Only a SHA-256 hash is stored; codes carry 80 random bits.
@@ -254,6 +255,7 @@ model StaffProfile {
   credentials        StaffCredential[]
   trainingCompletions TrainingCompletion[]
   careCertificate    CareCertificateSignOff[]
+  supervisions       Supervision[]
   availability       StaffAvailability[]
   timeOff            StaffTimeOff[]
   documents          Document[]
@@ -991,4 +993,46 @@ model CareCertificateSignOff {
   @@unique([staffProfileId, standard])
   @@index([agencyId])
   @@map("care_certificate_sign_offs")
+}
+
+/// A supervision, appraisal or spot check (S3-04): booked, then recorded. Notes are encrypted (HR-confidential).
+model Supervision {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId              String    @map("agency_id") @db.Uuid
+  staffProfileId        String    @map("staff_profile_id") @db.Uuid
+  /// supervision | appraisal | spot_check
+  type                  String    @db.VarChar(20)
+  /// scheduled | completed | cancelled
+  status                String    @default("scheduled") @db.VarChar(20)
+  scheduledFor          DateTime? @map("scheduled_for") @db.Date
+  heldOn                DateTime? @map("held_on") @db.Date
+  supervisorId          String?   @map("supervisor_id") @db.Uuid
+  /// What was discussed and the actions agreed. PhiCryptoService, context SupervisionNotes.
+  notesEncrypted        Bytes?    @map("notes_encrypted")
+  /// The person reads the record and confirms it, optionally with a comment (encrypted, SupervisionComment).
+  acknowledgedAt        DateTime? @map("acknowledged_at") @db.Timestamptz(6)
+  staffCommentEncrypted Bytes?    @map("staff_comment_encrypted")
+  /// Day-before reminder sent (claimed with a guarded update).
+  reminderSentAt        DateTime? @map("reminder_sent_at") @db.Timestamptz(6)
+  createdById           String?   @map("created_by") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+  supervisor   User?        @relation("SupervisionSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
+
+  @@index([agencyId, status])
+  @@index([staffProfileId, type])
+  @@map("supervisions")
+}
+
+/// "Overdue" alerts already sent, one per person, type and due date, so the daily job alerts once (S3-04).
+model SupervisionOverdueAlert {
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  type           String   @db.VarChar(20)
+  dueOn          DateTime @map("due_on") @db.Date
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@id([staffProfileId, type, dueOn])
+  @@map("supervision_overdue_alerts")
 }

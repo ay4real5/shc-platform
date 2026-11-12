@@ -22,6 +22,8 @@ export const PERMISSION_CATALOGUE = {
   recruitment: ['read', 'manage'],
   /** Read health declarations (special category data, S2-05). Managers only. */
   health: ['read'],
+  /** Schedule and record supervisions, appraisals and spot checks, and read their notes (S3-04). */
+  supervisions: ['manage'],
 } as const;
 
 type Catalogue = typeof PERMISSION_CATALOGUE;

@@ -35,6 +35,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'documents:sign',
     'notifications:create',
     'training:manage',
+    'supervisions:manage',
     'recruitment:read',
     'recruitment:manage',
     'compliance:read',
@@ -45,7 +46,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, readonly Permission[]> = {
   recruiter: [...STAFF_BASE, 'recruitment:read', 'recruitment:manage', 'staff:read', 'documents:create', 'documents:read'],
 
   /** Leads a team or a supported-living service: sees their people, approves holidays. */
-  team_leader: [...STAFF_BASE, 'staff:read', 'time_off:approve', 'documents:read', 'compliance:read'],
+  team_leader: [...STAFF_BASE, 'staff:read', 'time_off:approve', 'documents:read', 'compliance:read', 'supervisions:manage'],
 
   senior_care_worker: STAFF_BASE,
   care_worker: STAFF_BASE,

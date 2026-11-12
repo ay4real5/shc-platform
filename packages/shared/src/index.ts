@@ -14,3 +14,4 @@ export * from './constants/dbs.js';
 export * from './constants/health.js';
 export * from './constants/training.js';
 export * from './constants/holiday.js';
+export * from './constants/supervisions.js';

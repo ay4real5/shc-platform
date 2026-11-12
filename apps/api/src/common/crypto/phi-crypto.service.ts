@@ -12,6 +12,8 @@ export const PhiContext = {
   StaffNiNumber: 'staff_profiles.ni_number_encrypted',
   HealthAnswers: 'health_declarations.answers',
   HealthReviewNote: 'health_declarations.review_note',
+  SupervisionNotes: 'supervisions.notes',
+  SupervisionComment: 'supervisions.staff_comment',
   UserTwoFaSecret: 'users.two_fa_secret',
 } as const;
 export type PhiContext = (typeof PhiContext)[keyof typeof PhiContext];

@@ -22,6 +22,7 @@ const LABELS: Partial<Record<NotificationType, string>> = {
   document_signature: 'Documents to sign',
   time_off_decided: 'My holiday or time-off request is decided',
   application_received: 'A new job application arrives',
+  supervision: 'Supervisions, appraisals and spot checks (booked, overdue, to sign)',
   system: 'Security alerts',
 };
 

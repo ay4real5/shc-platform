@@ -32,6 +32,8 @@ export interface SeedOptions {
   encryptTwoFaSecret?: (base32Secret: string) => string;
   /** Encrypts a message's text (PhiCryptoService.encryptBytes with messageContentContext). No messages without it. */
   encryptMessage?: (text: string, messageId: string) => Uint8Array<ArrayBuffer>;
+  /** Encrypts supervision notes (PhiContext.SupervisionNotes). No supervision records without it (S3-04). */
+  encryptSupervisionNotes?: (text: string) => Uint8Array<ArrayBuffer>;
   /** Makes sure built-in roles exist (RbacSyncService.sync). */
   syncRoles: () => Promise<void>;
 }
@@ -195,6 +197,30 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
           approvedById: coordinatorId,
         })),
       });
+      // Supervisions, appraisals and spot checks (S3-04): mostly in date and signed; some overdue; some booked.
+      if (options.encryptSupervisionNotes) {
+        const enc = options.encryptSupervisionNotes;
+        const held = (type: string, daysAgo: number, signed: boolean) => ({
+          agencyId: DEMO_AGENCY_ID,
+          staffProfileId: profile.id,
+          type,
+          status: 'completed',
+          heldOn: toDate(addDays(today, -daysAgo))!,
+          supervisorId: coordinatorId,
+          notesEncrypted: enc(`FAKE ${type.replace('_', ' ')} notes: wellbeing good; training up to date; agreed to shadow a senior on two complex calls.`),
+          acknowledgedAt: signed ? new Date(`${addDays(today, -daysAgo + 2)}T10:00:00Z`) : null,
+        });
+        // Every fourth person's last supervision was four months ago: overdue (the default is every 3 months).
+        const rows = [held('supervision', staffNo % 4 === 2 ? 120 : rand.int(20, 80), !(i === 0 && plan.discipline === 'care_worker'))];
+        if (!ccInProgress) rows.push(held('appraisal', rand.int(30, 330), true));
+        if (staffNo % 3 !== 1) rows.push(held('spot_check', rand.int(10, 160), true));
+        await prisma.supervision.createMany({ data: rows });
+        if (staffNo % 3 === 1) {
+          await prisma.supervision.create({
+            data: { agencyId: DEMO_AGENCY_ID, staffProfileId: profile.id, type: 'spot_check', scheduledFor: toDate(addDays(today, rand.int(3, 20)))!, supervisorId: coordinatorId },
+          });
+        }
+      }
       if (ccInProgress) {
         const done = rand.int(3, 12);
         await prisma.careCertificateSignOff.createMany({
@@ -415,6 +441,8 @@ export async function wipeDemoAgency(prisma: PrismaClient): Promise<void> {
   await prisma.onboardingPack.deleteMany({ where });
   await prisma.document.deleteMany({ where }); // stored files cascade; version links are cleared
   await prisma.trainingCourse.deleteMany({ where }); // questions and completions cascade
+  const demoProfiles = (await prisma.staffProfile.findMany({ where, select: { id: true } })).map((p) => p.id);
+  await prisma.supervisionOverdueAlert.deleteMany({ where: { staffProfileId: { in: demoProfiles } } }); // no foreign key
   await prisma.user.deleteMany({ where }); // staff profiles, credentials, availability, tokens, roles-links cascade
   await prisma.role.deleteMany({ where });
   await prisma.agency.deleteMany({ where: { id: DEMO_AGENCY_ID } });
