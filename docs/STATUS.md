@@ -8,7 +8,7 @@
     messaging, notifications, compliance.
   - Recruitment (S1-04): job adverts, the public careers page and applications.
 - Separate **dev database** `shc` on the Neon dev server. Migrations: `init`, `audit_logs_partitioning`,
-  `uk_staff_record`, `uk_company`, `recruitment`.
+  `uk_staff_record`, `uk_company`, `recruitment`, `hiring_pipeline`.
 - Local `.env` (not committed) has its own JWT secret and encryption key.
 - Demo seed:
   - "Demo Care Services (FAKE DATA)", Europe/London, logins `*@demo.shc.test`, password `Demo-Password-1!`.
