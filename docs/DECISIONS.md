@@ -2094,3 +2094,26 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
     registered manager.
   - It then emails a 72-hour "choose your password" link, using the password-reset tokens. Without email set up,
     the office gives a starting password in Users.
+
+### S-006 — Right to Work checks
+2026-11-12 · Claude Code
+- **Records**: `right_to_work_checks` is append-only.
+  - Each row holds the method (share code, or manual check of originals; IDSP refused until a provider is chosen),
+    who checked and when, how the originals were seen (in person or live video), the permission (unlimited or
+    time-limited, with its end date), any restrictions, the outcome, an evidence document and notes.
+  - The full share code is stored but only its last 3 characters are returned.
+- **Rules** (`@alora/shared` `right-to-work.ts`, simplified Home Office lists):
+  - List A documents (British/Irish passport; birth or naturalisation certificate with an NI document) mean no time
+    limit, so no follow-up.
+  - List B group 1 (endorsed passport) and time-limited share code checks follow up when the permission ends.
+  - A Positive Verification Notice follows up six months after the check.
+  - Checks can't be dated in the future, and permission that has already ended can't pass.
+- **Credential**: a passed check sets the staff member's single `right_to_work` credential.
+  - It records the issue date (the check date), expiry (the follow-up date), 28-day alerts, verified by the
+    checker, and the evidence document.
+  - So the onboarding checklist, "Checks & expiries" and the expiry-alert job cover Right to Work with no extra code.
+  - The credential follows the newest check by check date; an older check entered late stays in the history only.
+  - A failed check never creates or updates the credential.
+- `GET /staff/right-to-work/follow-ups` lists due and overdue follow-ups, ready for a dashboard tile.
+- Evidence is uploaded as a staff document of type `right_to_work` from the same form. Home Office guidance: keep it
+  for the employment plus two years.

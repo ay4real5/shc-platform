@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { AvailabilityEditor, CredentialsPanel, TimeOffPanel } from '@/components/staff/staff-panels';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { OnboardingCard } from '@/components/staff/onboarding-card';
+import { RightToWorkPanel } from '@/components/staff/right-to-work-panel';
 import { Card } from '@/components/ui/card';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
 import { useAuth } from '@/lib/auth/auth-provider';
@@ -95,6 +96,7 @@ export default function StaffMemberPage() {
         </Card>
       )}
 
+      <RightToWorkPanel staffId={id} canEdit={canEdit} />
       <CredentialsPanel staffId={id} canEdit={canEdit} />
       <div className="grid gap-6 lg:grid-cols-2">
         <AvailabilityEditor staffId={id} canEdit={isSelf || canEdit} />

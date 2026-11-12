@@ -117,9 +117,11 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
     return user.id;
   };
 
+  let coordinatorId = '';
   for (const role of OFFICE_ROLES) {
     const email = `${role.replaceAll('_', '.')}@${DEMO_EMAIL_DOMAIN}`;
-    await makeUser(role, email, rand.pick(FIRST), rand.pick(LAST));
+    const id = await makeUser(role, email, rand.pick(FIRST), rand.pick(LAST));
+    if (role === 'care_coordinator') coordinatorId = id;
     logins.push({ role, email });
   }
 
@@ -164,6 +166,25 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
         { staffProfileId: profile.id, credentialType: 'moving_handling', credentialName: 'Moving & handling', expiryDate: toDate(addDays(today, rand.int(-10, 365))) },
       ];
       await prisma.staffCredential.createMany({ data: rows });
+      // The Right to Work check behind that credential (S2-01): time-limited share code checks for some, passports for the rest.
+      const rtwExpiry = rows[1]!.expiryDate;
+      await prisma.rightToWorkCheck.create({
+        data: {
+          agencyId: DEMO_AGENCY_ID,
+          staffProfileId: profile.id,
+          method: rtwExpiry ? 'share_code' : 'manual_document',
+          shareCode: rtwExpiry ? 'DEMO00000' : null,
+          documentType: rtwExpiry ? null : 'british_irish_passport',
+          seenHow: rtwExpiry ? null : 'in_person',
+          permission: rtwExpiry ? 'time_limited' : 'unlimited',
+          permissionExpiresOn: rtwExpiry,
+          followUpOn: rtwExpiry,
+          outcome: 'passed',
+          checkedOn: profile.hireDate ?? toDate(today)!,
+          checkedById: coordinatorId,
+          notes: 'FAKE demo check',
+        },
+      });
       credentials += rows.length;
       await prisma.staffAvailability.createMany({
         data: [1, 2, 3, 4, 5].map((dayOfWeek) => ({ staffProfileId: profile.id, dayOfWeek, startTime: toTime('08:00'), endTime: toTime('20:00') })),
