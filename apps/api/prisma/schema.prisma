@@ -93,6 +93,7 @@ model User {
 
   @@index([agencyId])
   @@map("users")
+  careCertificateSignOffs CareCertificateSignOff[] @relation("CareCertificateSignedOffBy")
 }
 
 /// One-time 2FA backup codes (DECISIONS D-026). Only a SHA-256 hash is stored; codes carry 80 random bits.
@@ -248,6 +249,7 @@ model StaffProfile {
   agency             Agency                       @relation(fields: [agencyId], references: [id])
   credentials        StaffCredential[]
   trainingCompletions TrainingCompletion[]
+  careCertificate    CareCertificateSignOff[]
   availability       StaffAvailability[]
   timeOff            StaffTimeOff[]
   documents          Document[]
@@ -962,4 +964,25 @@ model HealthDeclaration {
   staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
 
   @@map("health_declarations")
+}
+
+/// One Care Certificate standard signed off for a staff member by an assessor (S3-02). Fake data only in seeds.
+model CareCertificateSignOff {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String   @map("agency_id") @db.Uuid
+  staffProfileId String   @map("staff_profile_id") @db.Uuid
+  /// 1–16, see CARE_CERTIFICATE_STANDARDS in @alora/shared.
+  standard       Int      @db.SmallInt
+  completedOn    DateTime @map("completed_on") @db.Date
+  /// Null only if the assessor's account was later deleted.
+  signedOffById  String?  @map("signed_off_by") @db.Uuid
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+  signedOffBy  User?        @relation("CareCertificateSignedOffBy", fields: [signedOffById], references: [id], onDelete: SetNull)
+
+  @@unique([staffProfileId, standard])
+  @@index([agencyId])
+  @@map("care_certificate_sign_offs")
 }

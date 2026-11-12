@@ -1,3 +1,4 @@
+import { CareCertificateController, CareCertificateService } from './care-certificate.js';
 import { Module } from '@nestjs/common';
 import { CredentialsService } from './credentials.service.js';
 import { DbsController, DbsService } from './dbs.js';
@@ -10,8 +11,8 @@ import { TimeOffController } from './time-off.controller.js';
 import { TimeOffService } from './time-off.service.js';
 
 @Module({
-  controllers: [RightToWorkController, DbsController, HealthController, StaffController, TimeOffController],
-  providers: [StaffService, CredentialsService, TimeOffService, OnboardingService, RightToWorkService, DbsService, HealthService],
+  controllers: [CareCertificateController, RightToWorkController, DbsController, HealthController, StaffController, TimeOffController],
+  providers: [CareCertificateService, StaffService, CredentialsService, TimeOffService, OnboardingService, RightToWorkService, DbsService, HealthService],
   exports: [StaffService, TimeOffService, OnboardingService],
 })
 export class StaffModule {}

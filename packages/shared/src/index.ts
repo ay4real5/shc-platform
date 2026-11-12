@@ -12,3 +12,4 @@ export * from './constants/recruitment.js';
 export * from './constants/right-to-work.js';
 export * from './constants/dbs.js';
 export * from './constants/health.js';
+export * from './constants/training.js';

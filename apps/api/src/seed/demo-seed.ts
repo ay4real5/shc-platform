@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { MANDATORY_TWO_FACTOR_ROLES, todayInTimeZone, type Discipline, type Role } from '@alora/shared';
+import { CARE_CERTIFICATE_STANDARDS, MANDATORY_TWO_FACTOR_ROLES, TRAINING_MATRIX, needsCareCertificate, todayInTimeZone, type Discipline, type Role } from '@alora/shared';
 import { hash } from '@node-rs/argon2';
 import { addDays, toDate, toTime } from '../common/utils/dates.js';
 import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
@@ -138,6 +138,8 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       const userId = await makeUser(plan.role, loginEmail, first, last);
       if (i === 0) logins.push({ role: `${plan.role} (${plan.discipline})`, email: loginEmail });
 
+      // Some new care staff are part-way through the Care Certificate (S3-02); the rest have it on file.
+      const ccInProgress = needsCareCertificate(plan.discipline) && staffNo % 6 === 1;
       const profile = await prisma.staffProfile.create({
         data: {
           userId,
@@ -145,7 +147,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
           employeeId: `D${String(staffNo).padStart(4, '0')}`,
           discipline: plan.discipline,
           employmentType: rand.pick(['full_time', 'full_time', 'part_time', 'zero_hours', 'bank']),
-          hireDate: toDate(addDays(today, -rand.int(30, 1500))),
+          hireDate: toDate(addDays(today, ccInProgress ? -rand.int(20, 70) : -rand.int(30, 1500))),
           hourlyRate: plan.discipline === 'care_worker' || plan.discipline === 'support_worker' ? 12.6 + rand.int(0, 2) : 14 + rand.int(0, 3),
           town: 'Manchester',
           postcode: rand.pick(['M1 2AB', 'M4 5CD', 'M14 6EF', 'M20 7GH']),
@@ -162,10 +164,31 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       const rows = [
         { staffProfileId: profile.id, credentialType: 'dbs_enhanced', credentialName: 'Enhanced DBS with adult barred list (FAKE)', credentialNumber: `00${rand.int(1000000000, 9999999999)}`, expiryDate: toDate(dbsExpiry) },
         { staffProfileId: profile.id, credentialType: 'right_to_work', credentialName: 'Right to Work check', expiryDate: staffNo % 5 === 0 ? toDate(addDays(today, rand.int(20, 60))) : null },
-        { staffProfileId: profile.id, credentialType: 'care_certificate', credentialName: 'Care Certificate', issueDate: toDate(addDays(today, -rand.int(30, 600))) },
         { staffProfileId: profile.id, credentialType: 'moving_handling', credentialName: 'Moving & handling', expiryDate: toDate(addDays(today, rand.int(-10, 365))) },
       ];
+      // Training for the matrix (S3-02): most on file and in date, a few expiring, expired or missing.
+      for (const t of TRAINING_MATRIX) {
+        if (t.type === 'care_certificate' || t.type === 'moving_handling' || !(t.neededBy as readonly string[]).includes(plan.discipline)) continue;
+        if (rand.next() < 0.1) continue; // missing
+        rows.push({ staffProfileId: profile.id, credentialType: t.type, credentialName: t.label, expiryDate: toDate(addDays(today, rand.int(-20, 700))) } as (typeof rows)[number]);
+      }
+      if (needsCareCertificate(plan.discipline) && !ccInProgress) {
+        rows.push({ staffProfileId: profile.id, credentialType: 'care_certificate', credentialName: 'Care Certificate', issueDate: toDate(addDays(today, -rand.int(30, 600))), expiryDate: null } as (typeof rows)[number]);
+      }
       await prisma.staffCredential.createMany({ data: rows });
+      if (ccInProgress) {
+        const done = rand.int(3, 12);
+        await prisma.careCertificateSignOff.createMany({
+          data: CARE_CERTIFICATE_STANDARDS.slice(0, done).map((st, k) => ({
+            agencyId: DEMO_AGENCY_ID,
+            staffProfileId: profile.id,
+            standard: st.number,
+            completedOn: toDate(addDays(today, -(done - k)))!,
+            signedOffById: coordinatorId,
+            notes: 'FAKE: observed in practice',
+          })),
+        });
+      }
       // The DBS certificate behind that credential (S2-02): on the Update Service, status check due on the expiry date.
       await prisma.dbsCheck.create({
         data: {

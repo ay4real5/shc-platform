@@ -36,7 +36,7 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 ## Stage 3 — Staff management and go-live (weeks 5–6)
 - [x] **S3-01** `agent` Expiry alerts for Right to Work, DBS, training, driving licence and insurance (reuse the
   credential expiry job).
-- [ ] **S3-02** `agent` Training and Care Certificate tracking (reuse Academy courses and credentials).
+- [x] **S3-02** `agent` Training and Care Certificate tracking (reuse Academy courses and credentials).
 - [ ] **S3-03** `agent` Holiday (5.6-week statutory entitlement, pro-rata) and absence.
 - [ ] **S3-04** `agent` Supervisions and appraisals: schedule, record, remind.
 - [ ] **S3-05** `agent` Manager dashboard: who can't work yet and why, what expires this month, hiring at a glance.

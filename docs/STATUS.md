@@ -12,7 +12,7 @@
   - health questionnaire (encrypted, managers only);
   - the CQC "ready to start" checklist (Schedule 3 items tagged).
 - Dev database `shc` on the Neon dev server. Migrations: `init`, `audit_logs_partitioning`, `uk_staff_record`,
-  `uk_company`, `recruitment`, `hiring_pipeline`, `right_to_work`, `dbs`, `references`, `signatures`, `health`.
+  `uk_company`, `recruitment`, `hiring_pipeline`, `right_to_work`, `dbs`, `references`, `signatures`, `health`, `care_certificate`.
 - Local `.env` (not committed) has its own JWT secret and encryption key.
 - Demo seed:
   - "Demo Care Services (FAKE DATA)", Europe/London, logins `*@demo.shc.test`, password `Demo-Password-1!`.
@@ -25,7 +25,8 @@
   - Email goes live with hosting (Azure).
 
 ## In progress
-Stage 3. S3-01 (expiry alerts for every check, S-012) is done; next is S3-02.
+Stage 3. Done: S3-01 (expiry alerts for every check, S-012) and S3-02 (Care Certificate + training matrix, S-013).
+Next is S3-03 (holiday and absence).
 
 How to run the browser suite locally:
 1. Build the API: `npm run build -w @alora/api`.
@@ -35,11 +36,11 @@ How to run the browser suite locally:
 
 ## Next up
 **Stage 3 (weeks 5–6)**, in order:
-- S3-02: training and the Care Certificate.
 - S3-03: holiday (5.6 weeks, pro-rata) and absence.
 - S3-04: supervisions and appraisals.
-- S3-05: staff app, which also needs documents to sign and the health questionnaire.
-- S3-06: go-live.
+- S3-05: manager dashboard (who can't work yet and why, what expires this month, hiring at a glance).
+- S3-06: staff phone app, which also needs documents to sign, the health questionnaire and Care Certificate progress.
+- S3-07: go-live (Azure UK South, domain, email sender; manager training).
 
 Open items:
 - Retention for unsuccessful applicants (six months).
@@ -55,6 +56,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-12 | Claude Code | S3-02 | Care Certificate (16 standards signed off by an assessor, auto-awarded, 12-week due date) and training matrix page. API e2e 172/172 (seed test now checks per-type counts), API unit 88/88, shared 37/37, browser 22/22. |
 | 2026-11-12 | Claude Code | S3-01 | Expiry alerts for all checks: UK-morning job, wording per check, DBS office-only, renewals supersede old credentials. Browser 21/21; compliance/training/staff e2e 19/19; unit ok. |
 | 2026-11-12 | Claude Code | S2-01..S2-06 | Right to Work, DBS, references, documents to sign + onboarding packs, health questionnaire, CQC ready-to-start. Final run: browser 21/21, API unit 85/85, API e2e 167/167, shared 34/34. |
 | 2026-11-12 | Claude Code | S1-05 | Hiring pipeline (stages, interviews, timeline, candidate emails, hire → login + staff record); API e2e 152/152, browser 16/16. |

@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { AvailabilityEditor, CredentialsPanel, TimeOffPanel } from '@/components/staff/staff-panels';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { StaffDocumentsPanel } from '@/components/documents/signing';
+import { CareCertificatePanel } from '@/components/staff/care-certificate-panel';
 import { DbsPanel } from '@/components/staff/dbs-panel';
 import { HealthPanel } from '@/components/staff/health';
 import { OnboardingCard } from '@/components/staff/onboarding-card';
@@ -103,6 +104,7 @@ export default function StaffMemberPage() {
       <DbsPanel staffId={id} canEdit={canEdit} isSelf={isSelf} />
       <StaffDocumentsPanel staffId={id} />
       <HealthPanel staffId={id} isSelf={isSelf} />
+      <CareCertificatePanel staffId={id} isSelf={isSelf} />
       <CredentialsPanel staffId={id} canEdit={canEdit} />
       <div className="grid gap-6 lg:grid-cols-2">
         <AvailabilityEditor staffId={id} canEdit={isSelf || canEdit} />

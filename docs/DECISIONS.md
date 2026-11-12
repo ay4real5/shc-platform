@@ -2236,3 +2236,20 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Renewals supersede.** Adding a credential (or passing a course again) marks older credentials of the same type
   `superseded`: they stay on file, shown as "Replaced by a newer one", but no longer alert, count as expired on the
   compliance dashboard, or appear on "Checks & expiries". Type `other` is never superseded.
+
+### S-013 — Care Certificate and the training matrix (S3-02)
+- **Care Certificate progress** is stored per standard (`care_certificate_sign_offs`): the 16 standards from the
+  Skills for Care 2025 update (`CARE_CERTIFICATE_STANDARDS`; check the titles if Skills for Care changes them).
+  - Signed off by holders of `training:manage` (coordinators, managers), never by the person themselves.
+  - Due 12 weeks after the staff record's start date; shown as overdue after that.
+  - When the 16th is signed off, a `care_certificate` credential is recorded automatically (verified by the
+    assessor), which ticks the onboarding item. Someone who already has it from elsewhere gets it added as a
+    credential, as before.
+  - A sign-off can be undone until the certificate is on file.
+  - Only roles whose required checks include the Care Certificate see the panel (care, support, senior, team leader).
+- **Training matrix** (`GET /training/matrix`, `staff:read`): one row per active member of staff, one column per
+  training type in `TRAINING_MATRIX`, each with the roles that need it. Cells come from active credentials: in date,
+  expiring (inside its warning window), expired, missing (needed but none), or not needed. While the Care Certificate
+  is in progress the cell shows standards done (e.g. 7/16). Training still comes from credentials, so classroom
+  certificates (added on the staff page) and Academy passes both count.
+- New credential types: `infection_control`, `health_safety`, `fire_safety`.
