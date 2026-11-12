@@ -44,7 +44,8 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 - [ ] **S3-07** `agent`+`human` UK hosting (Azure UK South), domain, email sender; manager training.
 
 ## Needs Ayo (`human`)
-- [ ] Michael's full company name, logo and colours; company website for the careers page.
+- [x] Company name: **SHC** (confirmed by Ayo, 12 Nov 2026). Logo: the teal S mark for now.
+- [ ] Company website address (to allow the careers page to be embedded there, CAREERS_FRAME_ANCESTORS).
 - [ ] Signed agreement + data processing agreement; ICO registration.
 - [ ] Azure subscription for UK hosting, and a domain for the platform.
 - [ ] Repo visibility: currently public — make private before real client data or pricing logic is added.
