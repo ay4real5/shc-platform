@@ -2293,3 +2293,16 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   per person, type and due date in `supervision_overdue_alerts`. New notification type `supervision`.
 - **Overview** page "Supervisions" (`GET /supervisions/overview`, `staff:read`): everyone's three due dates, overdue
   filter, records waiting for signature.
+
+### S-016 — Manager dashboard (S3-05)
+- **One call**, `GET /dashboard/manager` (`staff:read`), built from the existing services so the numbers match their
+  own pages: onboarding readiness, expiring credentials (30 days), the training matrix, supervisions, plus hiring
+  counts (open jobs, new applications this week, applicants per open stage, interviews in the next 7 days,
+  applications waiting over a week) and pending holiday requests and health questionnaires to review.
+- **Home page for staff:read holders:** four counts (active, ready to work, can't work yet, checks expired or
+  expiring), then "Can't work yet" (least ready first, with what's missing), "Expiring in the next 30 days",
+  "Needs your attention" (only items with something to do, each linking to its page) and "Hiring" (only for
+  recruitment:read). Lists show 8; counts are complete. Staff without staff:read keep their own cards.
+- **Demo data** now gives established staff a full file (signed in, address, paper history and reference checks,
+  cleared health questionnaire) so the dashboard shows a realistic mix. The demo login accounts keep their health
+  questionnaire to fill in (browser tests use them).

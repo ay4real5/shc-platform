@@ -34,6 +34,8 @@ export interface SeedOptions {
   encryptMessage?: (text: string, messageId: string) => Uint8Array<ArrayBuffer>;
   /** Encrypts supervision notes (PhiContext.SupervisionNotes). No supervision records without it (S3-04). */
   encryptSupervisionNotes?: (text: string) => Uint8Array<ArrayBuffer>;
+  /** Encrypts health questionnaire answers (PhiContext.HealthAnswers). No questionnaires without it. */
+  encryptHealthAnswers?: (json: string) => Uint8Array<ArrayBuffer>;
   /** Makes sure built-in roles exist (RbacSyncService.sync). */
   syncRoles: () => Promise<void>;
 }
@@ -152,6 +154,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
           hireDate: toDate(addDays(today, ccInProgress ? -rand.int(20, 70) : i === 0 ? -rand.int(400, 1500) : -rand.int(30, 1500))),
           daysPerWeek: i === 0 ? 5 : rand.pick([5, 5, 4, 3, 2.5]), // demo logins: full time, for stable tests
           hourlyRate: plan.discipline === 'care_worker' || plan.discipline === 'support_worker' ? 12.6 + rand.int(0, 2) : 14 + rand.int(0, 3),
+          addressLine1: `${staffNo} Demo Street (FAKE)`,
           town: 'Manchester',
           postcode: rand.pick(['M1 2AB', 'M4 5CD', 'M14 6EF', 'M20 7GH']),
           canDrive: rand.next() < 0.5,
@@ -179,6 +182,31 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
         rows.push({ staffProfileId: profile.id, credentialType: 'care_certificate', credentialName: 'Care Certificate', issueDate: toDate(addDays(today, -rand.int(30, 600))), expiryDate: null } as (typeof rows)[number]);
       }
       await prisma.staffCredential.createMany({ data: rows });
+      // Established staff have a full file (S3-05: the dashboard shows a realistic mix): they've signed in, their paper
+      // history and reference checks are recorded, and their health questionnaire is cleared. New starters don't yet.
+      if (!ccInProgress) {
+        await prisma.user.update({ where: { id: userId }, data: { lastLoginAt: new Date(`${addDays(today, -rand.int(1, 20))}T09:00:00Z`) } });
+        await prisma.staffCredential.createMany({
+          data: [
+            { staffProfileId: profile.id, credentialType: 'employment_history', credentialName: 'Employment history checked (paper file)', verifiedById: coordinatorId, verifiedAt: new Date() },
+            { staffProfileId: profile.id, credentialType: 'references', credentialName: 'Two references checked (paper file)', verifiedById: coordinatorId, verifiedAt: new Date() },
+          ],
+        });
+        if (options.encryptHealthAnswers && i !== 0) { // the demo logins fill theirs in (browser tests)
+          const no = { answer: 'no' };
+          await prisma.healthDeclaration.create({
+            data: {
+              agencyId: DEMO_AGENCY_ID,
+              staffProfileId: profile.id,
+              answersEncrypted: options.encryptHealthAnswers(JSON.stringify({ answers: { condition: no, adjustments: no, recent_absence: no, medication: no, lifting: no }, vaccines: { flu: true, covid: false } })),
+              submittedAt: new Date(`${addDays(today, -rand.int(60, 400))}T10:00:00Z`),
+              outcome: 'fit',
+              reviewedById: coordinatorId,
+              reviewedAt: new Date(`${addDays(today, -rand.int(30, 59))}T10:00:00Z`),
+            },
+          });
+        }
+      }
       // Holiday and sickness (S3-03): some leave taken, some booked, and a few sickness spells (one person with many).
       const leave = [
         { startDate: addDays(today, -rand.int(20, 120)), length: rand.int(2, 5), type: 'annual_leave' },

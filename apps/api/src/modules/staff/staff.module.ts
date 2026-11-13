@@ -1,3 +1,4 @@
+import { DashboardController, DashboardService } from './dashboard.js';
 import { SupervisionRemindersJob } from './supervision-reminders.job.js';
 import { SupervisionsController, SupervisionsService } from './supervisions.js';
 import { HolidayService } from './holiday.js';
@@ -15,8 +16,8 @@ import { TimeOffController } from './time-off.controller.js';
 import { TimeOffService } from './time-off.service.js';
 
 @Module({
-  controllers: [SupervisionsController, CareCertificateController, HolidayController, RightToWorkController, DbsController, HealthController, StaffController, TimeOffController],
-  providers: [SupervisionsService, SupervisionRemindersJob, CareCertificateService, HolidayService, StaffService, CredentialsService, TimeOffService, OnboardingService, RightToWorkService, DbsService, HealthService],
+  controllers: [DashboardController, SupervisionsController, CareCertificateController, HolidayController, RightToWorkController, DbsController, HealthController, StaffController, TimeOffController],
+  providers: [DashboardService, SupervisionsService, SupervisionRemindersJob, CareCertificateService, HolidayService, StaffService, CredentialsService, TimeOffService, OnboardingService, RightToWorkService, DbsService, HealthService],
   exports: [StaffService, TimeOffService, OnboardingService],
 })
 export class StaffModule {}

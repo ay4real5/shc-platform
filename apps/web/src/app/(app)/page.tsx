@@ -2,8 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Bell, ClipboardCheck, GraduationCap, ShieldAlert, UserPlus, Users, type LucideIcon } from 'lucide-react';
+import { Bell, CheckCircle2, ClipboardCheck, GraduationCap, ShieldAlert, UserPlus, Users, type LucideIcon } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
+import { ManagerDashboard, useManagerDashboard } from '@/components/dashboard/manager-dashboard';
 import { ToSignCard } from '@/components/documents/signing';
 import { HealthPromptCard } from '@/components/staff/health';
 import { HolidayBalanceCard } from '@/components/staff/holiday';
@@ -81,21 +82,8 @@ export default function DashboardPage() {
   const chip =
     'inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur transition-all hover:-translate-y-0.5 hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-white';
 
-  const activeStaff = useQuery({
-    queryKey: ['dashboard', 'active-staff'],
-    enabled: can('staff:read'),
-    queryFn: async () => (await request<unknown[]>('/staff?isActive=true&limit=1')).meta?.total,
-  });
-  const notReady = useQuery({
-    queryKey: ['dashboard', 'not-ready'],
-    enabled: can('staff:read'),
-    queryFn: async () => (await request<{ ready: boolean }[]>('/staff/onboarding')).data.filter((s) => !s.ready).length,
-  });
-  const credentialAlerts = useQuery({
-    queryKey: ['dashboard', 'credential-alerts'],
-    enabled: can('staff:read'),
-    queryFn: async () => (await request<unknown[]>('/staff/expiring-credentials?withinDays=30')).data.length,
-  });
+  const manager = useManagerDashboard(can('staff:read'));
+  const m = manager.data;
   const unread = useQuery({
     queryKey: ['dashboard', 'unread'],
     queryFn: async () => (await request<{ unread: number }>('/notifications/unread-count')).data.unread,
@@ -140,20 +128,22 @@ export default function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {can('staff:read') && (
           <>
-            <StatCard label="Active staff" value={activeStaff.data} loading={activeStaff.isLoading} href="/staff" icon={Users} tone="brand" />
-            <StatCard label="Not yet ready to work" value={notReady.data} loading={notReady.isLoading} href="/staff/onboarding" icon={ClipboardCheck} tone="accent" />
+            <StatCard label="Active staff" value={m?.staff.active} loading={manager.isLoading} href="/staff" icon={Users} tone="brand" />
+            <StatCard label="Ready to work" value={m?.staff.ready} loading={manager.isLoading} href="/staff/onboarding" icon={CheckCircle2} tone="sky" />
+            <StatCard label="Can't work yet" value={m?.notReady.total} loading={manager.isLoading} href="/staff/onboarding" icon={ClipboardCheck} tone="accent" />
             <StatCard
               label="Checks expired or expiring (30 days)"
-              value={credentialAlerts.data}
-              loading={credentialAlerts.isLoading}
+              value={m ? m.expiring.expired + m.expiring.within30Days : undefined}
+              loading={manager.isLoading}
               href="/staff/credentials"
               icon={ShieldAlert}
               tone="amber"
             />
           </>
         )}
-        <StatCard label="Unread notifications" value={unread.data} loading={unread.isLoading} icon={Bell} tone="sky" />
+        {!can('staff:read') && <StatCard label="Unread notifications" value={unread.data} loading={unread.isLoading} icon={Bell} tone="sky" />}
       </div>
+      {can('staff:read') && <ManagerDashboard data={m} error={manager.error} />}
     </div>
   );
 }

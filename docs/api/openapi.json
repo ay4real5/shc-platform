@@ -767,6 +767,20 @@
         ]
       }
     },
+    "/api/v1/dashboard/manager": {
+      "get": {
+        "operationId": "DashboardController_manager",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
     "/api/v1/staff/{id}/supervisions": {
       "get": {
         "operationId": "SupervisionsController_forStaff",

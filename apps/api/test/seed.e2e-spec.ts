@@ -47,6 +47,7 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
         Buffer.from(crypto.encrypt(base32, PhiContext.UserTwoFaSecret)).toString('base64'),
       encryptMessage: (text, id) => crypto.encryptBytes(Buffer.from(text, 'utf8'), messageContentContext(id)),
       encryptSupervisionNotes: (text) => new Uint8Array(crypto.encrypt(text, PhiContext.SupervisionNotes)),
+      encryptHealthAnswers: (json) => new Uint8Array(crypto.encrypt(json, PhiContext.HealthAnswers)),
     });
   }, 300_000);
 

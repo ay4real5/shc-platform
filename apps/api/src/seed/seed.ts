@@ -38,6 +38,7 @@ try {
       ? (text, messageId) => new Uint8Array(encryptPhiBytes(Buffer.from(text, 'utf8'), messageContentContext(messageId), keyring))
       : undefined,
     encryptSupervisionNotes: keyring ? (text) => new Uint8Array(encryptPhi(text, PhiContext.SupervisionNotes, keyring)) : undefined,
+    encryptHealthAnswers: keyring ? (json) => new Uint8Array(encryptPhi(json, PhiContext.HealthAnswers, keyring)) : undefined,
   });
   console.log('\nDemo agency seeded (all data is FAKE).\n');
   console.table(summary.counts);
