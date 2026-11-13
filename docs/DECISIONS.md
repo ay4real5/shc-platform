@@ -2117,6 +2117,11 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - `GET /staff/right-to-work/follow-ups` lists due and overdue follow-ups, ready for a dashboard tile.
 - Evidence is uploaded as a staff document of type `right_to_work` from the same form. Home Office guidance: keep it
   for the employment plus two years.
+- **13 Nov 2026 (Ayo):** stay with manual checks at launch. No digital ID provider (IDSP) for now:
+  - it only covers valid British/Irish passports;
+  - many care staff are on visas (share codes), which no one can automate;
+  - it costs a fee per check and adds another data processor.
+  - Revisit after launch if most hires are British or Irish. The `idsp` method is reserved for that.
 
 ### S-007 — DBS checks
 2026-11-12 · Claude Code
