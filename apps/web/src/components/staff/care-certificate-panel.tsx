@@ -43,7 +43,8 @@ export function CareCertificatePanel({ staffId, isSelf }: { staffId: string; isS
   if (!c || (!c.needed && !c.awarded && c.completed === 0)) return data.error ? <ErrorAlert error={data.error} /> : null;
   const assessor = can('training:manage') && !isSelf;
   const percent = Math.round((c.completed / c.total) * 100);
-  const showList = assessor || showAll;
+  // Awarded with no sign-offs in SHC (e.g. from a previous employer): an empty checklist would contradict the award.
+  const showList = (assessor && !(c.awarded && c.completed === 0)) || showAll;
 
   return (
     <Card role="region" aria-labelledby={`cc-${staffId}`} className="flex flex-col gap-3 p-5">

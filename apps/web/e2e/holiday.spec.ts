@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { goTo } from './nav';
+import { goTo, openTab } from './nav';
 
 /** The coordinator checks holiday balances and sickness for the whole company (FAKE demo data). */
 test('holiday & absence report', async ({ page }) => {
@@ -16,6 +16,7 @@ test('holiday & absence report', async ({ page }) => {
   const first = page.getByRole('row').nth(1);
   await expect(first.getByText(/Worth a review|High/)).toBeVisible();
   await first.getByRole('link').click();
+  await openTab(page, 'Holiday & availability');
   await expect(page.getByText(/holiday left/)).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText(/Sickness, last 52 weeks: 4 spells/)).toBeVisible();
 });

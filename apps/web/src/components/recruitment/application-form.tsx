@@ -138,7 +138,7 @@ export function ApplicationForm({ slug, jobPostingId }: { slug: string; jobPosti
       <Card className="flex flex-col gap-2 p-6" role="status">
         <h2 className="font-display text-xl font-bold text-ink">Thank you, your application has been sent</h2>
         <p className="text-sm text-slate-700">
-          Your reference is <span className="font-mono font-semibold">{done}</span>. We will be in touch by email or phone. Please keep an eye on your
+          Your reference is <span className="tabular-nums tracking-wide font-semibold">{done}</span>. We will be in touch by email or phone. Please keep an eye on your
           junk folder too.
         </p>
       </Card>

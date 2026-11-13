@@ -43,7 +43,7 @@ export default function CredentialsAttentionPage() {
             {list.data?.map((c) => (
               <tr key={c.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/staff/${c.staff.id}`} className="font-medium text-brand-800 hover:underline">
+                  <Link href={`/staff/${c.staff.id}#checks`} className="font-medium text-brand-800 hover:underline">
                     {c.staff.lastName}, {c.staff.firstName}
                   </Link>{' '}
                   <span className="text-slate-500">({disciplineLabel(c.staff.discipline)})</span>

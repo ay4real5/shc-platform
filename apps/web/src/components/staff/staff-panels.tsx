@@ -2,6 +2,7 @@
 
 import { CREDENTIAL_TYPE_LABELS, TIME_OFF_TYPES, credentialTypeLabel } from '@alora/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { BadgeCheck, Plus, Trash2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -33,6 +34,7 @@ function useStaffAction(staffId: string) {
 export function CredentialsPanel({ staffId, canEdit }: { staffId: string; canEdit: boolean }) {
   const { request } = useAuth();
   const { run, error, busy } = useStaffAction(staffId);
+  const [adding, setAdding] = useState(false);
   const list = useQuery({
     queryKey: ['staff', staffId, 'credentials'],
     queryFn: async () => (await request<Credential[]>(`/staff/${staffId}/credentials`)).data,
@@ -47,46 +49,28 @@ export function CredentialsPanel({ staffId, canEdit }: { staffId: string; canEdi
       const value = String(form.get(key) ?? '').trim();
       if (value) body[key] = value;
     }
-    if (await run('/credentials', 'POST', body)) formEl.reset();
+    if (await run('/credentials', 'POST', body)) {
+      formEl.reset();
+      setAdding(false);
+    }
   };
 
   return (
     <Card className="p-5">
-      <h2 className="mb-4 text-base font-semibold text-slate-900">Credentials</h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="font-display text-lg font-semibold text-ink">Credentials</h2>
+          <p className="text-xs text-slate-600">Training, licences and checks on file, with their expiry dates.</p>
+        </div>
+        {canEdit && !adding && (
+          <Button variant="secondary" onClick={() => setAdding(true)}>
+            <Plus aria-hidden className="h-4 w-4" /> New credential
+          </Button>
+        )}
+      </div>
       <ErrorAlert error={error ?? list.error} />
-      <ul className="mb-4 divide-y divide-slate-100 text-sm">
-        {list.data?.map((c) => (
-          <li key={c.id} className={`flex flex-wrap items-center justify-between gap-2 py-2 ${c.status === 'superseded' ? 'opacity-70' : ''}`}>
-            <span>
-              <span className="font-medium">{c.credentialName}</span>
-              <span className="text-slate-500"> · {credentialTypeLabel(c.credentialType)}</span>
-              {c.expiryDate && <span className="text-slate-500"> · expires {formatDate(c.expiryDate)}</span>}
-              {c.verifiedAt && <span className="ml-2 text-xs text-emerald-700">verified</span>}
-            </span>
-            <span className="flex items-center gap-2">
-              {c.status === 'superseded' ? <span className="text-xs text-slate-600">Replaced by a newer one</span> : <StatusBadge status={c.state} />}
-              {canEdit && !c.verifiedAt && (
-                <Button variant="ghost" disabled={busy} onClick={() => void run(`/credentials/${c.id}`, 'PATCH', { verified: true })}>
-                  Mark verified
-                </Button>
-              )}
-              {canEdit && (
-                <Button
-                  variant="ghost"
-                  disabled={busy}
-                  aria-label={`Remove ${c.credentialName}`}
-                  onClick={() => window.confirm(`Remove ${c.credentialName}?`) && void run(`/credentials/${c.id}`, 'DELETE')}
-                >
-                  Remove
-                </Button>
-              )}
-            </span>
-          </li>
-        ))}
-        {list.data?.length === 0 && <li className="py-2 text-slate-500">No credentials recorded.</li>}
-      </ul>
-      {canEdit && (
-        <form onSubmit={(e) => void add(e)} className="grid gap-3 sm:grid-cols-2">
+      {canEdit && adding && (
+        <form onSubmit={(e) => void add(e)} className="mb-4 grid gap-3 rounded-md border border-brand-100 bg-brand-50/40 p-4 sm:grid-cols-2">
           <Field
             label="Credential type"
             name="credentialType"
@@ -107,11 +91,60 @@ export function CredentialsPanel({ staffId, canEdit }: { staffId: string; canEdi
           <Field label="Issued by" name="issuingAuthority" />
           <Field label="Issue date" name="issueDate" type="date" />
           <Field label="Expiry date" name="expiryDate" type="date" />
-          <Button type="submit" variant="secondary" disabled={busy} className="sm:justify-self-start">
-            Add credential
-          </Button>
+          <div className="flex gap-2 sm:col-span-2">
+            <Button type="submit" disabled={busy}>
+              Add credential
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => setAdding(false)}>
+              Cancel
+            </Button>
+          </div>
         </form>
       )}
+      <ul className="divide-y divide-slate-100 text-sm">
+        {list.data?.map((c) => {
+          const typeLabel = credentialTypeLabel(c.credentialType);
+          return (
+            <li key={c.id} className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5 ${c.status === 'superseded' ? 'opacity-70' : ''}`}>
+              <span className="min-w-0">
+                <span className="font-medium text-ink">{c.credentialName}</span>
+                {typeLabel.toLowerCase() !== c.credentialName.toLowerCase() && <span className="text-slate-500"> · {typeLabel}</span>}
+                <span className="block text-xs text-slate-600">
+                  {c.expiryDate ? `Expires ${formatDate(c.expiryDate)}` : 'No expiry'}
+                  {c.verifiedAt ? (
+                    <span className="ml-2 inline-flex items-center gap-1 text-emerald-700">
+                      <BadgeCheck aria-hidden className="h-3.5 w-3.5" /> verified
+                    </span>
+                  ) : (
+                    <span className="ml-2 text-slate-500">not verified yet</span>
+                  )}
+                </span>
+              </span>
+              <span className="flex items-center gap-1">
+                {c.status === 'superseded' ? <span className="text-xs text-slate-600">Replaced by a newer one</span> : c.expiryDate && <StatusBadge status={c.state} />}
+                {canEdit && !c.verifiedAt && (
+                  <Button variant="ghost" className="px-2.5 py-1 text-xs" disabled={busy} onClick={() => void run(`/credentials/${c.id}`, 'PATCH', { verified: true })}>
+                    Mark verified
+                  </Button>
+                )}
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    className="px-2 py-1 text-slate-500 hover:text-rose-700"
+                    disabled={busy}
+                    aria-label={`Remove ${c.credentialName}`}
+                    title="Remove"
+                    onClick={() => window.confirm(`Remove ${c.credentialName}?`) && void run(`/credentials/${c.id}`, 'DELETE')}
+                  >
+                    <Trash2 aria-hidden className="h-4 w-4" />
+                  </Button>
+                )}
+              </span>
+            </li>
+          );
+        })}
+        {list.data?.length === 0 && <li className="py-2 text-slate-500">No credentials recorded.</li>}
+      </ul>
     </Card>
   );
 }

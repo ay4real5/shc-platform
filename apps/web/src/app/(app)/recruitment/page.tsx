@@ -157,7 +157,7 @@ export default function RecruitmentPage() {
                 </td>
                 <td className="py-2 pr-4 text-slate-700">{a.job?.title ?? 'General application'}</td>
                 <td className="py-2 pr-4 text-slate-700">{formatDate(a.createdAt)}</td>
-                <td className="py-2 pr-4 font-mono text-slate-700">{a.reference}</td>
+                <td className="py-2 pr-4 tabular-nums tracking-wide text-slate-700">{a.reference}</td>
                 <td className="py-2">
                   <StatusBadge status={a.stage} />
                 </td>

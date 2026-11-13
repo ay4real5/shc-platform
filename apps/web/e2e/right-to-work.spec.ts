@@ -1,3 +1,4 @@
+import { openTab } from './nav';
 import { expect, test } from '@playwright/test';
 
 /** A coordinator records a share code Right to Work check, with evidence, on a demo care worker (FAKE data). */
@@ -12,6 +13,7 @@ test('a coordinator records a time-limited Right to Work check with evidence; th
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Staff', exact: true }).click();
   await expect(page.getByRole('columnheader', { name: 'Job role' })).toBeVisible({ timeout: 20_000 });
   await page.getByRole('row').nth(1).getByRole('link').first().click();
+  await openTab(page, 'Checks & training');
   await expect(page.getByRole('heading', { name: 'Right to Work' })).toBeVisible({ timeout: 20_000 });
 
   await page.getByRole('button', { name: 'Record a check' }).click();

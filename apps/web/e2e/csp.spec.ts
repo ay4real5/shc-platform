@@ -1,3 +1,4 @@
+import { openTab } from './nav';
 import { expect, test } from '@playwright/test';
 
 test('every page carries a nonce-based CSP, and the app runs without violating it', async ({ page }) => {
@@ -28,6 +29,7 @@ test('every page carries a nonce-based CSP, and the app runs without violating i
   await expect(page.getByRole('heading', { name: 'Staff', exact: true })).toBeVisible({ timeout: 20_000 }); // not the previous page's table
   await expect(page.getByRole('columnheader', { name: 'Job role' })).toBeVisible();
   await page.getByRole('row').nth(1).getByRole('link').first().click();
+  await openTab(page, 'Checks & training');
   await expect(page.getByRole('heading', { name: 'Credentials' })).toBeVisible({ timeout: 20_000 });
   await nav.getByRole('link', { name: 'Messages' }).click();
   await expect(page.getByRole('heading', { name: 'Messages' }).first()).toBeVisible({ timeout: 20_000 });

@@ -47,7 +47,7 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 ## Stage 4 — Extras (agreed 13 Nov 2026)
 - [x] **S4-01** `agent` Staff spreadsheet import: existing staff, checks and training in one upload (S-019).
 - [x] **S4-02** `agent` CQC inspection pack: one click per person, flags anything missing (S-020).
-- [ ] **S4-03** `agent` Design polish pass (Ayo: "it can be better").
+- [x] **S4-03** `agent` Design polish pass (Ayo: "it can be better"): staff record in tabs, list readiness (S-021).
 
 ## Ideas after go-live
 - [ ] Visa sponsorship tracker (only if Michael sponsors workers).

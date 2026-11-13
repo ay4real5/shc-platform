@@ -67,7 +67,7 @@ export default function TrainingMatrixPage() {
                 {rows.map((r) => (
                   <tr key={r.staff.id}>
                     <td className="py-1.5 pr-4">
-                      <Link href={`/staff/${r.staff.id}`} className="font-medium text-brand-800 hover:underline">
+                      <Link href={`/staff/${r.staff.id}#checks`} className="font-medium text-brand-800 hover:underline">
                         {r.staff.name}
                       </Link>
                       <span className="block text-xs text-slate-500">{disciplineLabel(r.staff.discipline)}</span>

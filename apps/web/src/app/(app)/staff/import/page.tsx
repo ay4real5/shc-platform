@@ -205,7 +205,7 @@ export default function StaffImportPage() {
                   .sort((a, b) => Number(b.status === 'error') - Number(a.status === 'error') || a.row - b.row)
                   .map((r) => (
                     <tr key={r.row} className="align-top">
-                      <td className="py-2.5 pr-3 font-mono text-slate-600">{r.row}</td>
+                      <td className="py-2.5 pr-3 tabular-nums tracking-wide text-slate-600">{r.row}</td>
                       <td className="py-2.5 pr-3">
                         {r.staffId ? (
                           <Link href={`/staff/${r.staffId}`} className="font-medium text-brand-800 hover:underline">

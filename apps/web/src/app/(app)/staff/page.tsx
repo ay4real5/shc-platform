@@ -29,6 +29,13 @@ export default function StaffPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
+  // Readiness per person (same checklist as each record's Onboarding card), shown as a bar in the list.
+  const readiness = useQuery({
+    queryKey: ['staff', 'onboarding-overview'],
+    queryFn: async () => (await request<{ staffId: string; percent: number; ready: boolean }[]>('/staff/onboarding')).data,
+  });
+  const ready = new Map((readiness.data ?? []).map((r) => [r.staffId, r]));
+
   const staff = useQuery({
     queryKey: ['staff', { debounced, discipline, active, page }],
     placeholderData: keepPreviousData,
@@ -95,7 +102,7 @@ export default function StaffPage() {
               <th className="py-2 pr-4 font-medium">Job role</th>
               <th className="py-2 pr-4 font-medium">Employee ID</th>
               <th className="py-2 pr-4 font-medium">Type</th>
-              <th className="py-2 pr-4 font-medium">Languages</th>
+              <th className="py-2 pr-4 font-medium">Ready to work</th>
               <th className="py-2 font-medium">Status</th>
             </tr>
           </thead>
@@ -103,14 +110,33 @@ export default function StaffPage() {
             {staff.data?.data.map((s) => (
               <tr key={s.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/staff/${s.id}`} className="font-medium text-brand-800 hover:underline">
-                    {s.lastName}, {s.firstName}
-                  </Link>
+                  <span className="flex items-center gap-3">
+                    <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-brand-900 text-xs font-semibold text-accent-300">
+                      {s.firstName[0]}
+                      {s.lastName[0]}
+                    </span>
+                    <Link href={`/staff/${s.id}`} className="font-medium text-brand-800 hover:underline">
+                      {s.lastName}, {s.firstName}
+                    </Link>
+                  </span>
                 </td>
                 <td className="py-2 pr-4 text-slate-700">{disciplineLabel(s.discipline)}</td>
-                <td className="py-2 pr-4 font-mono text-slate-700">{s.employeeId ?? '—'}</td>
+                <td className="py-2 pr-4 tabular-nums tracking-wide text-slate-700">{s.employeeId ?? '—'}</td>
                 <td className="py-2 pr-4 text-slate-700">{humanize(s.employmentType)}</td>
-                <td className="py-2 pr-4 text-slate-700">{s.languages.join(', ') || '—'}</td>
+                <td className="py-2 pr-4">
+                  {ready.get(s.id) ? (
+                    <span className="flex items-center gap-2" title={ready.get(s.id)!.ready ? 'Ready to work' : 'Not ready yet'}>
+                      <span aria-hidden className="h-1.5 w-20 overflow-hidden rounded-sm bg-slate-200">
+                        <span className={`block h-full ${ready.get(s.id)!.ready ? 'bg-emerald-500' : 'bg-accent-500'}`} style={{ width: `${ready.get(s.id)!.percent}%` }} />
+                      </span>
+                      <span className={`text-xs font-semibold ${ready.get(s.id)!.ready ? 'text-emerald-700' : 'text-slate-700'}`}>
+                        {ready.get(s.id)!.ready ? 'Ready' : `${ready.get(s.id)!.percent}%`}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-slate-400">—</span>
+                  )}
+                </td>
                 <td className="py-2">
                   <StatusBadge status={s.isActive ? 'active' : 'inactive'} />
                 </td>

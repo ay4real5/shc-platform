@@ -28,7 +28,7 @@ test('training matrix and Care Certificate sign-off', async ({ page }) => {
   await expect(page.getByRole('columnheader', { name: /Care Certificate/ })).toBeVisible();
   await expect(page.getByText(/^\d+\/16$/).first()).toBeVisible(); // someone part-way through
 
-  await page.goto(`/staff/${await teamLeaderStaffId()}`);
+  await page.goto(`/staff/${await teamLeaderStaffId()}#checks`);
   const panel = page.getByRole('region', { name: 'Care Certificate' });
   const progress = panel.getByText(/(\d+) of 16 standards signed off/);
   await expect(progress).toBeVisible({ timeout: 20_000 });

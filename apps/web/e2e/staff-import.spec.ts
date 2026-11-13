@@ -1,3 +1,4 @@
+import { openTab } from './nav';
 import { expect, test } from '@playwright/test';
 import { answerTwoFactor } from './two-factor';
 
@@ -32,5 +33,6 @@ test('an admin previews and imports staff from a spreadsheet', async ({ page }) 
   await page.getByRole('button', { name: 'Import 2 people' }).click();
   await expect(page.getByRole('heading', { name: '2 people imported' })).toBeVisible({ timeout: 30_000 });
   await page.getByRole('link', { name: 'Imported Carer' }).click();
+  await openTab(page, 'Checks & training');
   await expect(page.getByText('Checked before SHC (imported from spreadsheet)')).toBeVisible({ timeout: 20_000 });
 });

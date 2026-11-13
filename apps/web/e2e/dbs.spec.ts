@@ -1,3 +1,4 @@
+import { openTab } from './nav';
 import { expect, test } from '@playwright/test';
 
 const ukDate = (d: Date) => d.toLocaleDateString('en-GB', { timeZone: 'UTC', dateStyle: 'medium' });
@@ -17,6 +18,7 @@ test('a coordinator records a DBS certificate and an Update Service status check
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Staff', exact: true }).click();
   await expect(page.getByRole('columnheader', { name: 'Job role' })).toBeVisible({ timeout: 20_000 });
   await page.getByRole('row').nth(2).getByRole('link').first().click();
+  await openTab(page, 'Checks & training');
   await expect(page.getByRole('heading', { name: 'DBS', exact: true })).toBeVisible({ timeout: 20_000 });
 
   await page.getByRole('button', { name: 'Add a certificate' }).click();

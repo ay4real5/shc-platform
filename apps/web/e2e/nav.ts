@@ -26,3 +26,8 @@ export async function goTo(page: Page, name: string): Promise<void> {
   if (menu) await nav.getByRole('button', { name: menu }).click();
   await nav.getByRole('link', { name, exact: true }).click();
 }
+
+/** Opens a tab on a staff member's record (S4-03: the record is split into tabs). */
+export async function openTab(page: Page, name: 'Overview' | 'Checks & training' | 'Supervision' | 'Documents' | 'Holiday & availability'): Promise<void> {
+  await page.getByRole('tab', { name }).click();
+}

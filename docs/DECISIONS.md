@@ -2396,3 +2396,21 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   the app's top bar and footer are hidden in print. No server-side PDF library.
 - Demo seed: DBS credentials are now marked verified by the coordinator, so only imported ones show "on paper".
 
+### S-021 — Design polish: staff record in tabs (S4-03)
+2026-11-13 · Claude Code
+- **Staff record** (`/staff/[id]`): was one long column of about 12 boxes. Now a profile header (initials, name, role,
+  contract, start date, email/phone, a big "% ready to work" figure, Inspection pack / Edit / End employment) and five
+  tabs: Overview (onboarding checklist, personal details, pay), Checks & training (Right to Work, DBS, health, Care
+  Certificate, credentials), Supervision, Documents, Holiday & availability.
+- **Tabs follow the address bar** (`#checks`, `#supervision`, `#documents`, `#holiday`) via `useSyncExternalStore`,
+  so links from other pages open the right tab; the older anchors `#time-off` and `#supervisions` still work. Links from
+  Checks & expiries, the training matrix and the dashboard's expiry list open `#checks`. Browser tests open tabs with
+  `e2e/nav.ts` `openTab()`.
+- **Credentials panel:** the add form opens from a "New credential" button; each row shows expiry and
+  verified / not verified on a second line; remove is a bin icon (aria-label kept).
+- **Care Certificate:** awarded with no sign-offs in SHC now hides the 16-standard checklist for assessors too
+  (it contradicted the award).
+- **Staff list:** initials square and a "Ready to work" bar per person (from `GET /staff/onboarding`) replace the
+  Languages column.
+- IDs and references use normal digits (`tabular-nums`) instead of the monospace font.
+

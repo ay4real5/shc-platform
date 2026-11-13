@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { goTo } from './nav';
+import { goTo, openTab } from './nav';
 import { answerTwoFactor } from './two-factor';
 
 const PASSWORD = 'Demo-Password-1!';
@@ -43,6 +43,8 @@ test('an admin adds a user, turns them into staff, and manages credentials, avai
   await expect(page.getByText('£12.60')).toBeVisible(); // admins hold pay:read
 
   // 3. Credentials with computed state.
+  await openTab(page, 'Checks & training');
+  await page.getByRole('button', { name: 'New credential' }).click();
   await page.getByLabel('Credential type').fill('first_aid');
   await page.getByLabel('Credential name').fill('First aid');
   await page.getByLabel('Expiry date').fill('2020-01-01');
@@ -50,6 +52,7 @@ test('an admin adds a user, turns them into staff, and manages credentials, avai
   await expect(page.getByText('expired', { exact: true })).toBeVisible();
 
   // 4. Availability: add a Monday slot and save; it is still there after reloading.
+  await openTab(page, 'Holiday & availability');
   await expect(page.getByText('No availability set')).toBeVisible();
   await page.getByRole('button', { name: 'Add time slot' }).click();
   await page.getByRole('button', { name: 'Save availability' }).click();
@@ -59,8 +62,8 @@ test('an admin adds a user, turns them into staff, and manages credentials, avai
 
   // 5. Time off: the admin records it for them, approved at once (S3-03), and it comes off their holiday balance.
   await expect(page.getByText(/days? holiday left/)).toBeVisible();
-  await page.getByLabel('From', { exact: true }).last().fill('2027-03-01');
-  await page.getByLabel('To', { exact: true }).last().fill('2027-03-03');
+  await page.getByLabel('From', { exact: true }).first().fill('2027-03-01');
+  await page.getByLabel('To', { exact: true }).first().fill('2027-03-03');
   await page.getByRole('button', { name: 'Record time off (approved)' }).click();
   await expect(page.getByText('approved', { exact: true })).toBeVisible();
   await expect(page.getByText(/working days?$/).first()).toBeVisible(); // counted on their availability pattern
@@ -71,8 +74,10 @@ test('team leaders see their people but never pay, and cannot open Users', async
   await expect(nav(page).getByRole('link', { name: 'Users' })).toHaveCount(0);
   await nav(page).getByRole('link', { name: 'Staff' }).click();
   await page.getByRole('row').nth(1).getByRole('link').click();
-  await expect(page.getByRole('heading', { name: 'Credentials' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Personal details' })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole('heading', { name: 'Pay' })).toHaveCount(0);
+  await openTab(page, 'Checks & training');
+  await expect(page.getByRole('heading', { name: 'Credentials' })).toBeVisible();
 });
 
 test('the checks page lists the expired DBS check from the demo data', async ({ page }) => {

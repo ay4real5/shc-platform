@@ -17,5 +17,5 @@ test('manager dashboard', async ({ page }) => {
 
   // Straight from an alert to the person's record.
   await page.getByRole('heading', { name: 'Expiring in the next 30 days' }).locator('xpath=../..').getByRole('link').nth(1).click();
-  await expect(page).toHaveURL(/\/staff\/[0-9a-f-]{36}$/);
+  await expect(page).toHaveURL(/\/staff\/[0-9a-f-]{36}(#checks)?$/);
 });

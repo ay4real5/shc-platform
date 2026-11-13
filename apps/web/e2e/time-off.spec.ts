@@ -43,7 +43,7 @@ test('a coordinator sees a care worker’s pending holiday and approves it', asy
     await page.getByLabel('Password').fill(PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
-    await page.goto(`/staff/${staffId}`);
+    await page.goto(`/staff/${staffId}#holiday`);
 
     const row = page.getByRole('listitem').filter({ hasText: 'Annual leave' }).filter({ has: page.getByRole('button', { name: 'Approve' }) });
     await expect(row.first()).toBeVisible();

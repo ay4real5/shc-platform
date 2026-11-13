@@ -47,7 +47,7 @@ test('health questionnaire: filled in by the care worker, reviewed by a manager,
 
   // The coordinator sees the status but has no way to read the answers.
   await signIn(page, 'care.coordinator@demo.shc.test');
-  const href = `/staff/${await careWorkerStaffId()}`;
+  const href = `/staff/${await careWorkerStaffId()}#checks`;
   await page.goto(href);
   await expect(page.getByText(/Filled in, waiting for a manager’s review/)).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole('button', { name: 'View answers' })).toHaveCount(0);

@@ -120,7 +120,7 @@ export function ManagerDashboard({ data, error }: { data: ManagerDashboardData |
               {data.expiring.items.map((c) => (
                 <li key={c.credentialId} className="flex flex-wrap items-center justify-between gap-2 py-2">
                   <span>
-                    <Link href={`/staff/${c.staffId}`} className="font-medium text-brand-800 hover:underline">
+                    <Link href={`/staff/${c.staffId}#checks`} className="font-medium text-brand-800 hover:underline">
                       {c.name}
                     </Link>
                     <span className="text-slate-600"> · {c.credentialType === 'other' ? c.credentialName : credentialTypeLabel(c.credentialType)}</span>

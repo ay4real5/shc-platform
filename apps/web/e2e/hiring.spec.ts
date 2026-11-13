@@ -1,3 +1,4 @@
+import { openTab } from './nav';
 import { expect, test } from '@playwright/test';
 
 /** A coordinator takes a demo applicant (FAKE data) from applied to hired: interview, score, offer, hire. */
@@ -42,5 +43,6 @@ test('a coordinator interviews, offers and hires an applicant, who then has a st
   await expect(page.getByText(/Hired\. Their login and staff record are ready/)).toBeVisible({ timeout: 20_000 });
   await page.getByRole('link', { name: 'Open their staff record' }).click();
   await expect(page.getByRole('heading', { name: /Alex Example \(FAKE\)/ })).toBeVisible({ timeout: 20_000 });
+  await openTab(page, 'Checks & training');
   await expect(page.getByRole('heading', { name: 'Credentials' })).toBeVisible();
 });

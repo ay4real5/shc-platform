@@ -76,7 +76,7 @@ export function ReferencesPanel({ app }: { app: ApplicationDetail }) {
           <p>Email isn&rsquo;t set up yet, so send {links.length === 1 ? 'this link' : 'these links'} to the referee yourself (each works once, for 30 days):</p>
           <ul className="mt-1 flex flex-col gap-1">
             {links.map((l) => (
-              <li key={l.refereeId} className="break-all font-mono text-xs">
+              <li key={l.refereeId} className="break-all tabular-nums tracking-wide text-xs">
                 {app.referees.find((r) => r.id === l.refereeId)?.name}: {l.link}
               </li>
             ))}

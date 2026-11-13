@@ -98,7 +98,7 @@ export function DbsPanel({ staffId, canEdit, isSelf }: { staffId: string; canEdi
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={latest.acceptable ? 'verified' : 'pending'} />
             <span className="font-medium text-slate-900">{latest.levelLabel}</span>
-            <span className="font-mono text-slate-600">{latest.certificateNumber}</span>
+            <span className="tabular-nums tracking-wide text-slate-600">{latest.certificateNumber}</span>
           </div>
           <p className="mt-1 text-slate-700">
             Issued {formatDate(latest.issueDate)} · {latest.result === 'clear' ? 'Clear' : 'Shows information'}
