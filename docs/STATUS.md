@@ -58,6 +58,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-13 | Claude Code | S4-01 | Staff spreadsheet import (template, preview, import with checks). Shared 18 new tests, API unit 16 + e2e 4, browser test passes. |
 | 2026-11-13 | Claude Code | S3-08 | Ayo: SHC and Primordial are different companies, so nothing visual may be shared. New look (navy and gold): Source Serif/Sans fonts, shield logo and icons, navy top bar with drop-downs (was Primordial's sidebar), new sign-in, dashboard header, careers frame, emails and phone app; "Unlock Primordial Health" text fixed in the phone app; design guard in lint. Browser 25/25, API unit 88/88, mobile 41/41, Android bundle builds. |
 | 2026-11-13 | Claude Code | S3-06 | Staff app: "Needs doing" on home, contracts and policies to read and sign (file opened in the phone's viewer), health questionnaire, supervision records to read and sign, Care Certificate progress, holiday left and working days; UK dates and £. Mobile typecheck/lint clean, unit 41/41, Android bundle builds, every API call checked against the dev API as the demo care worker. Not yet tried on a real phone. |
 | 2026-11-13 | Claude Code | S3-05 | Manager dashboard (one API call; can't work yet + why, expiring 30 days, needs attention, hiring); demo data gives established staff full files. API e2e 179/179, API unit 88/88, browser 25/25. |
@@ -65,7 +66,6 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 | 2026-11-12 | Claude Code | S3-03 | Holiday allowance (5.6 weeks, max 28, pro-rata, override), working days per request, balance check, office-recorded leave approved at once, sickness + Bradford factor, Holiday & absence report, leave year setting. API e2e 175/175, API unit 88/88, shared 42/42, browser 23/23. |
 | 2026-11-12 | Claude Code | S3-02 | Care Certificate (16 standards signed off by an assessor, auto-awarded, 12-week due date) and training matrix page. API e2e 172/172 (seed test now checks per-type counts), API unit 88/88, shared 37/37, browser 22/22. |
 | 2026-11-12 | Claude Code | S3-01 | Expiry alerts for all checks: UK-morning job, wording per check, DBS office-only, renewals supersede old credentials. Browser 21/21; compliance/training/staff e2e 19/19; unit ok. |
-| 2026-11-13 | Claude Code | S4-01 | Staff spreadsheet import (template, preview, import with checks). Shared 18 new tests, API unit 16 + e2e 4, browser test passes. |
 | 2026-11-12 | Claude Code | S2-01..S2-06 | Right to Work, DBS, references, documents to sign + onboarding packs, health questionnaire, CQC ready-to-start. Final run: browser 21/21, API unit 85/85, API e2e 167/167, shared 34/34. |
 | 2026-11-12 | Claude Code | S1-05 | Hiring pipeline (stages, interviews, timeline, candidate emails, hire → login + staff record); API e2e 152/152, browser 16/16. |
 | 2026-11-12 | Claude Code | S1-03, S1-04 | UK staff/company records (S-003); recruitment API and careers pages; API e2e 144/144 plus recruitment 5/5; browser tests not yet run. |
