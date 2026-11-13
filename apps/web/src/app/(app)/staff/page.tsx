@@ -54,6 +54,11 @@ export default function StaffPage() {
             <ButtonLink href="/staff/credentials" variant="secondary">
               Credentials needing attention
             </ButtonLink>
+            {can('staff:create') && can('users:create') && (
+              <ButtonLink href="/staff/import" variant="secondary">
+                Import from spreadsheet
+              </ButtonLink>
+            )}
             {can('staff:create') && <ButtonLink href="/staff/new">Add staff profile</ButtonLink>}
           </>
         }

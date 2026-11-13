@@ -44,9 +44,12 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 - [x] **S3-08** `agent` SHC's own look (navy and gold), nothing shared with Primordial's design (S-018).
 - [ ] **S3-07** `agent`+`human` UK hosting (Azure UK South), domain, email sender; manager training.
 
-## Ideas after go-live (not started, agreed 13 Nov 2026)
-- [ ] Staff spreadsheet import (existing staff, checks and training in one upload).
-- [ ] CQC inspection pack: one click per person, flags anything missing.
+## Stage 4 — Extras (agreed 13 Nov 2026)
+- [x] **S4-01** `agent` Staff spreadsheet import: existing staff, checks and training in one upload (S-019).
+- [ ] **S4-02** `agent` CQC inspection pack: one click per person, flags anything missing.
+- [ ] **S4-03** `agent` Design polish pass (Ayo: "it can be better").
+
+## Ideas after go-live
 - [ ] Visa sponsorship tracker (only if Michael sponsors workers).
 - [ ] AI assistant. **Admins and managers only** (its own permission, not given to staff roles; nothing in the staff
   app). Ideas: read dates from uploaded certificates, draft job adverts / interview questions / supervision write-ups,
@@ -54,7 +57,7 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
   rejects candidates (UK GDPR automated decisions, bias).
 
 ## Needs Ayo (`human`)
-- [x] Company name: **SHC** (confirmed by Ayo, 12 Nov 2026). Logo: the teal S mark for now.
+- [x] Company name: **SHC** (confirmed by Ayo, 12 Nov 2026). Logo: the navy shield with a gold S (S-018).
 - [ ] Company website address (to allow the careers page to be embedded there, CAREERS_FRAME_ANCESTORS).
 - [ ] Signed agreement + data processing agreement; ICO registration.
 - [ ] Azure subscription for UK hosting, and a domain for the platform.

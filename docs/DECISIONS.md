@@ -2355,3 +2355,25 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Guard:** `apps/web/scripts/check-colors.mjs` (part of `npm run lint -w @alora/web`) fails on Primordial's
   teal/coral values, its fonts, `bg-mesh` and `expo-linear-gradient`. It checks the website, the phone app, app.json,
   the logo files and the email template.
+
+### S-019 — Staff spreadsheet import (S4-01)
+2026-11-13 · Claude Code
+- **Why:** Michael has 50+ existing staff; typing each one in by hand would make launch day a week of data entry.
+- **Format:** CSV (Excel "Save as CSV UTF-8"), no spreadsheet library. Template and column list live in
+  `@alora/shared` `staff-import.ts`; headers match ignoring case, spaces and punctuation; dates are UK day/month/year
+  (two-digit years refused). Up to 500 rows per upload.
+- **Flow:** `POST /staff-import` with `dryRun: true` returns a preview (ready / skipped / error per row with reasons and
+  warnings); the same call without `dryRun` saves. Each row has its own transaction, so one bad row never blocks the
+  rest. People whose email already has a login are skipped, so the office can fix bad rows and upload the same file again.
+- **What a row creates:** a login (role from the job role, password nobody knows; they set one with "Forgot
+  password", nothing is emailed), the staff record, and their checks:
+  - Right to Work: a check with the new method `imported` ("Checked before SHC"), never offered on the form;
+  - DBS: a `dbs_checks` row plus the credential, using the same rule as by hand (only clear + enhanced with the adults'
+    barred list counts; anything else shows not cleared until a manager decides);
+  - paper-file `references` / `employment_history`, and training, NMC, driving licence and insurance as credentials.
+  - Imported credentials are **not verified** (no `verifiedById`) and carry a note to keep the evidence on file;
+    the inspection pack will show them as needing evidence.
+- **Who:** needs `staff:create` and `users:create` (admins and registered managers). Coordinators can't: bulk logins
+  are a setup job. The hiring rule applies too: nobody can import a role with more access than their own.
+- No onboarding packs are sent to imported staff (they're already working); send them per person if needed.
+
