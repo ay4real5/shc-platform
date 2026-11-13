@@ -21,17 +21,18 @@ describe('conversationTitle', () => {
 
 describe('formatting', () => {
   it('formats money', () => {
-    expect(money(1234.5)).toBe('$1,234.50');
-    expect(money(0)).toBe('$0.00');
+    expect(money(1234.5)).toBe('£1,234.50');
+    expect(money(0)).toBe('£0.00');
   });
   it('formats dates without timezone drift', () => {
-    expect(dateRange('2026-09-01', '2026-09-14')).toBe('Sep 1 – Sep 14');
-    expect(shortDate('2026-09-29')).toBe('Tue, Sep 29');
+    // UK order; the month abbreviation (Sep/Sept) depends on the Intl data on the phone.
+    expect(dateRange('2026-09-01', '2026-09-14')).toMatch(/^1 Sept? – 14 Sept?$/);
+    expect(shortDate('2026-09-29')).toMatch(/^Tue,? 29 Sept?$/);
   });
   it('shortWhen shows a weekday within the week and a date after', () => {
     const now = new Date('2026-09-29T15:00:00');
     expect(shortWhen('2026-09-27T10:00:00', now)).toBe('Sun');
-    expect(shortWhen('2026-09-01T10:00:00', now)).toBe('Sep 1');
+    expect(shortWhen('2026-09-01T10:00:00', now)).toMatch(/^1 Sept?$/);
   });
   it('counts shift hours, including overnight', () => {
     expect(hoursBetween('09:00', '13:30')).toBe(4.5);

@@ -27,7 +27,9 @@
 ## In progress
 Stage 3. Done: S3-01 (expiry alerts for every check, S-012), S3-02 (Care Certificate + training matrix, S-013),
 S3-03 (holiday allowance, balance, absence and Bradford factor, S-014), S3-04 (supervisions, appraisals and spot checks,
-S-015), S3-05 (manager dashboard, S-016). Next is S3-06 (staff phone app).
+S-015), S3-05 (manager dashboard, S-016), S3-06 (staff phone app catches up with the website, S-017). Next is S3-07
+(go-live), which needs Ayo. The phone app has not been tried on a real phone since S3-06: run `npm run start -w @alora/mobile`
+and open it in Expo Go with `EXPO_PUBLIC_API_URL` set to the computer's network address.
 
 How to run the browser suite locally:
 1. Build the API: `npm run build -w @alora/api`.
@@ -37,7 +39,6 @@ How to run the browser suite locally:
 
 ## Next up
 **Stage 3 (weeks 5–6)**, in order:
-- S3-06: staff phone app, which also needs documents to sign, the health questionnaire and Care Certificate progress.
 - S3-07: go-live (Azure UK South, domain, email sender; manager training).
 
 Open items:
@@ -55,6 +56,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-13 | Claude Code | S3-06 | Staff app: "Needs doing" on home, contracts and policies to read and sign (file opened in the phone's viewer), health questionnaire, supervision records to read and sign, Care Certificate progress, holiday left and working days; UK dates and £. Mobile typecheck/lint clean, unit 41/41, Android bundle builds, every API call checked against the dev API as the demo care worker. Not yet tried on a real phone. |
 | 2026-11-13 | Claude Code | S3-05 | Manager dashboard (one API call; can't work yet + why, expiring 30 days, needs attention, hiring); demo data gives established staff full files. API e2e 179/179, API unit 88/88, browser 25/25. |
 | 2026-11-12 | Claude Code | S3-04 | Supervisions, appraisals and spot checks: due dates from intervals, book/record (notes encrypted), person reads and signs, day-before reminders and overdue alerts job, overview page, intervals in settings, new supervisions:manage permission. API e2e 178/178, API unit 88/88, shared 44/44, browser 24/24. |
 | 2026-11-12 | Claude Code | S3-03 | Holiday allowance (5.6 weeks, max 28, pro-rata, override), working days per request, balance check, office-recorded leave approved at once, sickness + Bradford factor, Holiday & absence report, leave year setting. API e2e 175/175, API unit 88/88, shared 42/42, browser 23/23. |

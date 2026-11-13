@@ -23,7 +23,7 @@ export function greeting(hour: number): string {
 
 /** "2026-09-29" → "Tuesday, September 29". */
 export function longDate(date: string): string {
-  return new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
 }
 
 /** The next visit to go to: one already in progress, else the first scheduled one. */

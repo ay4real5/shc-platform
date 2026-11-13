@@ -42,6 +42,11 @@ function Routes() {
         <Stack.Screen name="time-off" options={{ title: 'Holiday & time off' }} />
         <Stack.Screen name="training/index" options={{ title: 'Training' }} />
         <Stack.Screen name="training/[id]" options={{ title: 'Course' }} />
+        <Stack.Screen name="documents/index" options={{ title: 'Contracts & policies' }} />
+        <Stack.Screen name="documents/[id]" options={{ title: 'Read and sign' }} />
+        <Stack.Screen name="health" options={{ title: 'Health questionnaire' }} />
+        <Stack.Screen name="supervisions" options={{ title: 'Supervisions' }} />
+        <Stack.Screen name="care-certificate" options={{ title: 'Care Certificate' }} />
       </Stack.Protected>
     </Stack>
   );

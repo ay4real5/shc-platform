@@ -2306,3 +2306,20 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Demo data** now gives established staff a full file (signed in, address, paper history and reference checks,
   cleared health questionnaire) so the dashboard shows a realistic mix. The demo login accounts keep their health
   questionnaire to fill in (browser tests use them).
+
+### S-017 — Staff phone app catches up with the website (S3-06)
+- **Same API, no new endpoints.** The app uses the routes the website uses: `signature-requests/mine` and `/sign`,
+  `staff/me/health` (PUT), `staff/:id/supervisions` and `supervisions/:id/acknowledge`, `staff/:id/holiday`,
+  `staff/:id/care-certificate`. Each one already lets the person read their own record.
+- **Home screen** starts with "Needs doing": documents to sign (one opens directly, several open the list), the
+  health questionnaire if not filled in, and supervision records to sign. The Care Certificate shows while in
+  progress. Quick links cover holiday (with days left), training, documents, supervisions, health and messages.
+  These extras load with `Promise.allSettled`, so one failing never breaks the home screen.
+- **Opening a document:** the file route needs the session token, so the app downloads it with `expo-file-system`
+  into its private cache (`shc-documents`) and opens it with the phone's viewer via `expo-sharing`. The same file
+  name is overwritten on the next open. The folder is deleted on sign-out. Signing is the same as on the website:
+  typed full name plus a ticked statement.
+- **Care Certificate awarded without sign-offs** (for example, brought from a previous employer) shows "complete"
+  with the award date and no empty checklist.
+- **UK formats:** app dates are now en-GB and money is in £. Tests accept "Sep" or "Sept", because the month
+  abbreviation depends on the phone's Intl data.

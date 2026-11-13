@@ -51,7 +51,7 @@ function ago(iso: string): string {
   if (minutes < 1) return 'just now';
   if (minutes < 60) return `${minutes} min ago`;
   if (minutes < 24 * 60) return `${Math.round(minutes / 60)} h ago`;
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return new Date(iso).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
 }
 
 /** This person's alerts (the same inbox as the dashboard bell). Alerts never include personal details. */

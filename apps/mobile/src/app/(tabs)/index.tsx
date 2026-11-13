@@ -1,11 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { todayInTimeZone } from '@alora/shared';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar, Card, ErrorText, GradientHeader, Pill, SectionTitle, colors, type IconName } from '@/components/ui';
 import { errorMessage, useAuth } from '@/lib/auth-context';
+import {
+  careCertificateText,
+  daysText,
+  staffTasks,
+  type CareCertificate,
+  type HealthDetail,
+  type HolidaySummary,
+  type SignatureRequest,
+  type StaffTask,
+} from '@/lib/self-service';
 import { greeting, longDate } from '@/lib/visits';
 
 interface Onboarding {
@@ -29,10 +39,13 @@ interface Course {
 
 const shortDate = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
+/** A settled optional call's data, or a fallback: extras never break the home screen. */
+const settled = <T,>(r: PromiseSettledResult<{ data: T }>, fallback: T): T => (r.status === 'fulfilled' ? r.value.data : fallback);
+
 function QuickLink({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={{ flex: 1 }}>
-      <Card style={{ alignItems: 'center', gap: 6, paddingVertical: 18 }}>
+      <Card style={{ alignItems: 'center', gap: 6, paddingVertical: 16 }}>
         <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name={icon} size={22} color={colors.brandDark} />
         </View>
@@ -49,6 +62,9 @@ export default function HomeScreen() {
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [tasks, setTasks] = useState<StaffTask[]>([]);
+  const [holiday, setHoliday] = useState<HolidaySummary | null>(null);
+  const [careCertificate, setCareCertificate] = useState<CareCertificate | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const today = user ? todayInTimeZone(user.agencyTimezone) : null;
@@ -65,6 +81,16 @@ export default function HomeScreen() {
       setOnboarding(o.data);
       setCredentials(c.data);
       setCourses(t.data);
+      const [sign, health, sup, hol, cc] = await Promise.allSettled([
+        request<SignatureRequest[]>('/signature-requests/mine'),
+        request<HealthDetail>('/staff/me/health'),
+        request<{ id: string; typeLabel: string }[]>('/supervisions/mine/to-sign'),
+        request<HolidaySummary>(`/staff/${me.id}/holiday`),
+        request<CareCertificate>(`/staff/${me.id}/care-certificate`),
+      ]);
+      setTasks(staffTasks({ toSign: settled(sign, []), health: settled<HealthDetail | null>(health, null), supervisionsToSign: settled(sup, []) }));
+      setHoliday(settled<HolidaySummary | null>(hol, null));
+      setCareCertificate(settled<CareCertificate | null>(cc, null));
     } catch (e) {
       setError(errorMessage(e));
     }
@@ -81,7 +107,8 @@ export default function HomeScreen() {
   const toRenew = credentials.filter((c) => c.state === 'expired' || c.state === 'expiring_soon');
   const training = courses.filter((c) => c.status !== 'passed');
   const todo = onboarding && !onboarding.ready ? onboarding.items.filter((i) => i.required && !i.done) : [];
-  const allGood = onboarding?.ready && !toRenew.length && !training.length;
+  const allGood = onboarding?.ready && !toRenew.length && !training.length && !tasks.length;
+  const ccText = careCertificate?.awarded ? null : careCertificateText(careCertificate);
 
   return (
     <ScrollView
@@ -129,6 +156,28 @@ export default function HomeScreen() {
           </Card>
         )}
 
+        {tasks.length > 0 && (
+          <>
+            <SectionTitle>Needs doing</SectionTitle>
+            <Card style={{ gap: 4 }}>
+              {tasks.map((t) => (
+                <Pressable
+                  key={t.key}
+                  accessibilityRole="button"
+                  onPress={() => router.push(t.route as Href)}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }}
+                >
+                  <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name={t.icon} size={18} color={colors.accent} />
+                  </View>
+                  <Text style={{ flex: 1, color: colors.text, fontSize: 16, fontWeight: '600' }}>{t.text}</Text>
+                  <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+                </Pressable>
+              ))}
+            </Card>
+          </>
+        )}
+
         {todo.length > 0 && (
           <>
             <SectionTitle>Still to do before you start</SectionTitle>
@@ -174,10 +223,29 @@ export default function HomeScreen() {
           </>
         )}
 
+        {ccText && (
+          <Pressable accessibilityRole="button" onPress={() => router.push('/care-certificate')}>
+            <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Ionicons name="ribbon-outline" size={24} color={colors.brand} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>Care Certificate</Text>
+                <Text style={{ color: careCertificate?.overdue ? colors.danger : colors.muted, fontSize: 14 }}>{ccText}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+            </Card>
+          </Pressable>
+        )}
+
         <SectionTitle>Quick links</SectionTitle>
         <View style={{ flexDirection: 'row', gap: 12 }}>
-          <QuickLink icon="airplane-outline" label="Book holiday" onPress={() => router.push('/time-off')} />
+          <QuickLink icon="sunny-outline" label={holiday ? `Holiday
+${daysText(holiday.remaining)} left` : 'Holiday'} onPress={() => router.push('/time-off')} />
           <QuickLink icon="school-outline" label="Training" onPress={() => router.push('/training')} />
+          <QuickLink icon="document-text-outline" label="Documents" onPress={() => router.push('/documents')} />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <QuickLink icon="clipboard-outline" label="Supervisions" onPress={() => router.push('/supervisions')} />
+          <QuickLink icon="heart-outline" label="Health form" onPress={() => router.push('/health')} />
           <QuickLink icon="chatbubbles-outline" label="Messages" onPress={() => router.push('/messages')} />
         </View>
       </View>

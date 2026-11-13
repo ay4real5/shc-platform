@@ -6,6 +6,7 @@ import { useAuth } from './auth-context';
 import { cancelAllReminders, registerForPush, unregisterForPush } from './notifications';
 import { classify, OfflineQueue, type NewOp, type QueuedOp } from './offline-queue';
 import { openQueueStore, type ReadCache } from './queue-store';
+import { clearDownloadedDocuments } from './open-document';
 
 type Request = <T>(path: string, options?: Omit<RequestOptions, 'accessToken'>) => Promise<ApiResult<T>>;
 
@@ -164,6 +165,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
           if (queue) for (const op of await queue.list()) await queue.remove(op.id);
           await cache?.clear();
           await cancelAllReminders();
+          clearDownloadedDocuments();
           await unregisterForPush(request);
           setOps([]);
           await auth.signOut();

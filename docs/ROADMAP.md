@@ -40,7 +40,7 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 - [x] **S3-03** `agent` Holiday (5.6-week statutory entitlement, pro-rata) and absence.
 - [x] **S3-04** `agent` Supervisions and appraisals: schedule, record, remind.
 - [x] **S3-05** `agent` Manager dashboard: who can't work yet and why, what expires this month, hiring at a glance.
-- [ ] **S3-06** `agent` Staff phone app (reuse the caregiver app): documents, training, holiday, messages.
+- [x] **S3-06** `agent` Staff phone app (reuse the caregiver app): documents, training, holiday, messages.
 - [ ] **S3-07** `agent`+`human` UK hosting (Azure UK South), domain, email sender; manager training.
 
 ## Needs Ayo (`human`)

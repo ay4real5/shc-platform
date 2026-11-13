@@ -60,25 +60,25 @@ export function conversationTitle(c: Pick<Conversation, 'subject' | 'participant
 export function shortWhen(iso: string, now: Date = new Date()): string {
   const d = new Date(iso);
   const days = (now.getTime() - d.getTime()) / 86_400_000;
-  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  if (days < 6) return d.toLocaleDateString('en-US', { weekday: 'short' });
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' });
+  if (days < 6) return d.toLocaleDateString('en-GB', { weekday: 'short' });
+  return d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
 }
 
 /** 1234.5 → "$1,234.50". */
 export function money(amount: number): string {
-  return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  return amount.toLocaleString('en-GB', { style: 'currency', currency: 'GBP' });
 }
 
-/** "2026-09-01", "2026-09-14" → "Sep 1 – Sep 14". */
+/** "2026-09-01", "2026-09-14" → "1 Sept – 14 Sept". */
 export function dateRange(from: string, to: string): string {
-  const f = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const f = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   return `${f(from)} – ${f(to)}`;
 }
 
-/** "2026-09-29" → "Tue, Sep 29". */
+/** "2026-09-29" → "Tue 29 Sept". */
 export function shortDate(date: string): string {
-  return new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
 /** A mileage entry as /payroll/mileage returns it (own entries only for a caregiver). */
@@ -100,6 +100,8 @@ export interface TimeOffEntry {
   startDate: string;
   endDate: string;
   days: number;
+  /** Working days it uses (S3-03); null on older requests. */
+  workingDays: number | null;
   type: string;
   status: string;
   notes: string | null;

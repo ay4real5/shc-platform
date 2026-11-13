@@ -5,6 +5,7 @@ import { Alert, FlatList, Pressable, RefreshControl, Text, View } from 'react-na
 import { Button, Card, ErrorText, Input, colors, styles } from '@/components/ui';
 import { errorMessage, useAuth } from '@/lib/auth-context';
 import { dateRange, shortDate, timeOffCancellable, timeOffError, type TimeOffEntry } from '@/lib/extras';
+import { daysText, type HolidaySummary } from '@/lib/self-service';
 import { humanize } from '@/lib/visits';
 import { TIME_OFF_TYPES } from '@alora/shared';
 
@@ -18,6 +19,7 @@ const TYPES = TIME_OFF_TYPES;
 export default function TimeOffScreen() {
   const { request } = useAuth();
   const [entries, setEntries] = useState<TimeOffEntry[] | null>(null);
+  const [holiday, setHoliday] = useState<HolidaySummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [startDate, setStartDate] = useState('');
@@ -31,7 +33,12 @@ export default function TimeOffScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      setEntries((await request<TimeOffEntry[]>('/time-off?limit=50')).data);
+      const [list, me] = await Promise.all([request<TimeOffEntry[]>('/time-off?limit=50'), request<{ id: string }>('/staff/me')]);
+      setEntries(list.data);
+      // The balance is a nice-to-have: never let it break the list.
+      request<HolidaySummary>(`/staff/${me.data.id}/holiday`)
+        .then(({ data }) => setHoliday(data))
+        .catch(() => setHoliday(null));
     } catch (e) {
       setError(errorMessage(e));
     }
@@ -106,6 +113,18 @@ export default function TimeOffScreen() {
         <View style={{ gap: 12, marginBottom: 4 }}>
           <Text style={styles.subtitle}>Ask for days off here. The office approves them and you’ll get an alert.</Text>
           <ErrorText>{error}</ErrorText>
+          {holiday && (
+            <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Ionicons name="sunny-outline" size={26} color={colors.brand} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>{daysText(holiday.remaining)} left</Text>
+                <Text style={{ color: colors.muted, fontSize: 14 }}>
+                  of {daysText(holiday.entitlement)} this leave year · {daysText(holiday.taken)} taken, {daysText(holiday.booked)} booked
+                  {holiday.pending ? `, ${daysText(holiday.pending)} waiting` : ''}
+                </Text>
+              </View>
+            </Card>
+          )}
           <Card style={{ gap: 12 }}>
             <Input label="First day (YYYY-MM-DD)" value={startDate} onChangeText={setStartDate} placeholder="2026-10-12" autoCapitalize="none" keyboardType="numbers-and-punctuation" />
             <Input label="Last day (YYYY-MM-DD)" value={endDate} onChangeText={setEndDate} placeholder="2026-10-14" autoCapitalize="none" keyboardType="numbers-and-punctuation" />
@@ -151,7 +170,7 @@ export default function TimeOffScreen() {
         <Card style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Text style={{ flex: 1, fontSize: 16, fontWeight: '700', color: colors.text }}>
-              {dateRange(item.startDate, item.endDate)} · {item.days} day{item.days === 1 ? '' : 's'}
+              {dateRange(item.startDate, item.endDate)} · {daysText(item.workingDays ?? item.days)}
             </Text>
             <Text style={{ fontSize: 13, fontWeight: '700', color: item.status === 'approved' ? '#15803d' : item.status === 'denied' ? colors.danger : colors.muted }}>
               {humanize(item.status)}

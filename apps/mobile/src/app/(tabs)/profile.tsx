@@ -52,7 +52,7 @@ const BADGE_ICONS: Record<string, 'trophy-outline' | 'time-outline' | 'document-
 };
 
 const date = (d: string | null) =>
-  d ? new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : null;
+  d ? new Date(`${d}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : null;
 
 /** This person's profile, checks, settings and help (D-080). */
 export default function ProfileScreen() {
@@ -125,8 +125,12 @@ export default function ProfileScreen() {
         </Card>
 
         <Card style={{ paddingVertical: 4 }}>
-          <ListRow icon="airplane-outline" label="Holiday & time off" onPress={() => router.push('/time-off')} />
-          <ListRow icon="school-outline" label="Training" onPress={() => router.push('/training')} last />
+          <ListRow icon="sunny-outline" label="Holiday & time off" onPress={() => router.push('/time-off')} />
+          <ListRow icon="document-text-outline" label="Contracts & policies" onPress={() => router.push('/documents')} />
+          <ListRow icon="clipboard-outline" label="Supervisions & appraisals" onPress={() => router.push('/supervisions')} />
+          <ListRow icon="heart-outline" label="Health questionnaire" onPress={() => router.push('/health')} />
+          <ListRow icon="school-outline" label="Training" onPress={() => router.push('/training')} />
+          <ListRow icon="ribbon-outline" label="Care Certificate" onPress={() => router.push('/care-certificate')} last />
         </Card>
 
         {onboarding && !onboarding.ready && (
