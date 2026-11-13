@@ -44,6 +44,15 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 - [x] **S3-08** `agent` SHC's own look (navy and gold), nothing shared with Primordial's design (S-018).
 - [ ] **S3-07** `agent`+`human` UK hosting (Azure UK South), domain, email sender; manager training.
 
+## Ideas after go-live (not started, agreed 13 Nov 2026)
+- [ ] Staff spreadsheet import (existing staff, checks and training in one upload).
+- [ ] CQC inspection pack: one click per person, flags anything missing.
+- [ ] Visa sponsorship tracker (only if Michael sponsors workers).
+- [ ] AI assistant. **Admins and managers only** (its own permission, not given to staff roles; nothing in the staff
+  app). Ideas: read dates from uploaded certificates, draft job adverts / interview questions / supervision write-ups,
+  answer managers' questions from the company's policies. A person always confirms. AI never scores, ranks or
+  rejects candidates (UK GDPR automated decisions, bias).
+
 ## Needs Ayo (`human`)
 - [x] Company name: **SHC** (confirmed by Ayo, 12 Nov 2026). Logo: the teal S mark for now.
 - [ ] Company website address (to allow the careers page to be embedded there, CAREERS_FRAME_ANCESTORS).
