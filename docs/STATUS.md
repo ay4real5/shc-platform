@@ -29,7 +29,9 @@ Stage 3. Done: S3-01 (expiry alerts for every check, S-012), S3-02 (Care Certifi
 S3-03 (holiday allowance, balance, absence and Bradford factor, S-014), S3-04 (supervisions, appraisals and spot checks,
 S-015), S3-05 (manager dashboard, S-016), S3-06 (staff phone app catches up with the website, S-017), S3-08 (SHC's own navy and gold look, S-018).
 Stage 4 (Ayo, 13 Nov): S4-01 staff spreadsheet import (S-019, `/staff/import`) and S4-02 CQC inspection pack (S-020,
-`/compliance/inspection`) done, and S4-03 design polish (S-021: staff record in tabs). Next: S3-07 go-live when Ayo
+`/compliance/inspection`) done, and S4-03 design polish (S-021: staff record in tabs), and S4-04 AI help for admins/managers (S-022).
+**The `ANTHROPIC_API_KEY` in the laptop's `.env` is rejected by Anthropic (401)**: Ayo must put a new key in `.env`
+(never in chat) before AI answers work; everything else is tested with a stand-in. Next: S3-07 go-live when Ayo
 says so; then ideas (AI for managers, visa sponsorship tracker). S3-07 (go-live) is on hold until Ayo says so (Azure is signed in on the laptop; SHC would get
 its own `shc-prod` group in UK South). The phone app has not been tried on a real phone since S3-06: run `npm run start -w @alora/mobile`
 and open it in Expo Go with `EXPO_PUBLIC_API_URL` set to the computer's network address.
@@ -59,6 +61,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-13 | Claude Code | S4-04 | AI help (ai:use, admins/managers): drafting adverts, interview questions and supervision write-ups; Ask our policies with citations; structured outputs + refusal fallback on claude-opus-5-5; FAKE policy PDFs in demo. API unit 108/108, AI e2e 4/4, seed e2e OK, browser AI test passes. Live call not yet verified: laptop key returns 401. |
 | 2026-11-13 | Claude Code | S4-03 | Staff record split into a profile header + 5 tabs; credentials form behind a button; Care Certificate contradiction fixed; staff list shows readiness. Browser 27/27, API unit 104/104, shared 69/69, lint + design guard OK. |
 | 2026-11-13 | Claude Code | S4-02 | CQC inspection pack: team overview (least ready first) and printable packs per person (Schedule 3 + Right to Work + supervision). Shared 7 tests, API e2e 3, browser test passes; PDF printed and checked. |
 | 2026-11-13 | Claude Code | S4-01 | Staff spreadsheet import (template, preview, import with checks). Shared 18 new tests, API unit 16 + e2e 4, browser test passes. |

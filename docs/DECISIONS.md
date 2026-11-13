@@ -2414,3 +2414,29 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   Languages column.
 - IDs and references use normal digits (`tabular-nums`) instead of the monospace font.
 
+### S-022 — AI help for admins and managers (S4-04)
+2026-11-13 · Claude Code
+- **Who:** new permission `ai:use`, held by super admin, company admin and registered manager only (Ayo: AI is for
+  people with admin privileges, never staff). Not in the phone app. Custom roles can be given it on the Roles page.
+- **What it does** (a person always reads and edits; nothing is saved by the AI):
+  - **Drafting** (`POST /ai/draft`): job advert from rough notes in the description box ("Write the advert with AI"),
+    supervision write-up from the manager's notes ("Tidy up my notes with AI", both supervision forms), and interview
+    questions on the job page (copied, not saved). Prompts forbid inventing facts and discriminatory requirements or
+    questions (Equality Act 2010); missing facts become [placeholders].
+  - **Ask our policies** (`POST /ai/policy-question`, Compliance menu): answers only from the company's documents of type
+    "policy" (PDF, latest version, company-wide), up to 25 files / 20 MB, sent as PDF document blocks with citations; the
+    page shows which policies the answer came from. The documents are cached (`cache_control` on the last one) so
+    follow-up questions cost less. Word files are skipped and named ("save as PDF").
+  - **Not done:** reading certificates (sends personal data such as ID): waits for Michael's data processing agreement.
+  - Never scores, ranks or rejects anyone.
+- **Model and API:** `ASSISTANT_MODEL` default `claude-opus-5-5`. Current models reject forced `tool_choice`, so
+  `ClaudeService.structured` uses structured outputs (`output_config.format` json_schema) at effort `medium`. Every call
+  has the server-side refusal fallback (`server-side-fallback-2026-07-01`, `fallbacks: "default"`). Refusals and cut-off
+  answers become a friendly 503. Prompt and answer text are never logged; calls are audited (`AI_DRAFT`,
+  `AI_POLICY_QUESTION`).
+- **Switch:** off without `ANTHROPIC_API_KEY`; in production also needs `AI_DPA_CONFIRMED=true` (replaces Primordial's
+  US `ASSISTANT_BAA_CONFIRMED`): set only once the DPA and privacy notice name Anthropic as a processor, including the
+  transfer outside the UK.
+- **Demo:** four FAKE policies (lone working, missed visits, sickness, medication) are seeded as real PDFs
+  (`seed/simple-pdf.ts`, stored encrypted like uploads). Tests use a stand-in for Claude, so they cost nothing.
+

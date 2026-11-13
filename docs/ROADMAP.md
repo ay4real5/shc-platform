@@ -48,13 +48,15 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 - [x] **S4-01** `agent` Staff spreadsheet import: existing staff, checks and training in one upload (S-019).
 - [x] **S4-02** `agent` CQC inspection pack: one click per person, flags anything missing (S-020).
 - [x] **S4-03** `agent` Design polish pass (Ayo: "it can be better"): staff record in tabs, list readiness (S-021).
+- [x] **S4-04** `agent` AI help for admins and managers: drafting (job adverts, interview questions, supervision
+  write-ups) and "Ask our policies" (S-022). Needs a working `ANTHROPIC_API_KEY` in `.env` (`human`).
+- [ ] **S4-05** `agent` AI reads uploaded certificates (fills dates/type for a manager to confirm). Only after Michael's
+  data processing agreement names Anthropic.
 
 ## Ideas after go-live
 - [ ] Visa sponsorship tracker (only if Michael sponsors workers).
-- [ ] AI assistant. **Admins and managers only** (its own permission, not given to staff roles; nothing in the staff
-  app). Ideas: read dates from uploaded certificates, draft job adverts / interview questions / supervision write-ups,
-  answer managers' questions from the company's policies. A person always confirms. AI never scores, ranks or
-  rejects candidates (UK GDPR automated decisions, bias).
+- AI is **admins and managers only** (S-022). A person always confirms; AI never scores, ranks or rejects candidates
+  (UK GDPR automated decisions, bias).
 
 ## Needs Ayo (`human`)
 - [x] Company name: **SHC** (confirmed by Ayo, 12 Nov 2026). Logo: the navy shield with a gold S (S-018).
