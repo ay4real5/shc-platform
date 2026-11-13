@@ -47,4 +47,6 @@ export class DatabaseDocumentStorage extends DocumentStorage {
   }
 }
 
-const context = (documentId: string) => `documents.content:${documentId}`;
+/** Encryption context of a stored file (also used by the demo seed to store FAKE policies). */
+export const documentContentContext = (documentId: string) => `documents.content:${documentId}`;
+const context = documentContentContext;

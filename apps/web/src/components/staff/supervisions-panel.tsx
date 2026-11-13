@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { ErrorAlert, StatusBadge, formatDate } from '@/components/ui/data-display';
 import { Field } from '@/components/ui/field';
 import { SelectField, TextAreaField } from '@/components/ui/form-controls';
+import { AiAssist } from '@/components/ai/ai-assist';
 import { useAuth } from '@/lib/auth/auth-provider';
 
 export interface DueItem {
@@ -124,6 +125,7 @@ export function SupervisionsPanel({ staffId, isSelf }: { staffId: string; isSelf
               <Field label="Date held" name="heldOn" type="date" max={localToday()} defaultValue={localToday()} required />
               <div className="sm:col-span-2">
                 <TextAreaField label="What was discussed, and the actions agreed" name="notes" required minLength={10} maxLength={10000} rows={5} />
+                <AiAssist kind="supervision_write_up" field="notes" label="Tidy up my notes with AI" />
               </div>
             </>
           )}
@@ -194,6 +196,7 @@ export function SupervisionsPanel({ staffId, isSelf }: { staffId: string; isSelf
                   <Field label="Date held" name="heldOn" type="date" max={localToday()} defaultValue={localToday()} required />
                   <div className="sm:col-span-2">
                     <TextAreaField label="What was discussed, and the actions agreed" name="notes" required minLength={10} maxLength={10000} rows={5} />
+                <AiAssist kind="supervision_write_up" field="notes" label="Tidy up my notes with AI" />
                   </div>
                   <div className="flex gap-2 sm:col-span-2">
                     <Button type="submit" disabled={act.isPending}>

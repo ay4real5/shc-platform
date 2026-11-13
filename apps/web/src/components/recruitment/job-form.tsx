@@ -2,6 +2,7 @@
 
 import { DISCIPLINES, EMPLOYMENT_TYPES } from '@alora/shared';
 import { useState, type FormEvent } from 'react';
+import { AiAssist } from '@/components/ai/ai-assist';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ErrorAlert } from '@/components/ui/data-display';
@@ -77,6 +78,15 @@ export function JobForm({ job, submitLabel, onSubmit }: { job?: Job; submitLabel
       <Card className="flex flex-col gap-4 p-5">
         <Field label="Short summary" name="summary" maxLength={300} defaultValue={job?.summary ?? ''} hint="One or two lines shown in the job list." />
         <TextAreaField label="Full description" name="description" required maxLength={20000} rows={10} defaultValue={job?.description} />
+        <AiAssist
+          kind="job_advert"
+          field="description"
+          label="Write the advert with AI from these notes"
+          context={(form) => {
+            const f = new FormData(form);
+            return { jobTitle: String(f.get('title') ?? '') || undefined, discipline: String(f.get('discipline') ?? '') || undefined, location: String(f.get('location') ?? '') || undefined };
+          }}
+        />
         {!job && (
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" name="publish" defaultChecked className="size-4 rounded border-slate-300" />

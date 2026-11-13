@@ -1,4 +1,6 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { databaseKey } from '../modules/documents/document-storage.js';
+import { simplePdf } from './simple-pdf.js';
 import { CARE_CERTIFICATE_STANDARDS, MANDATORY_TWO_FACTOR_ROLES, TRAINING_MATRIX, needsCareCertificate, todayInTimeZone, type Discipline, type Role } from '@alora/shared';
 import { hash } from '@node-rs/argon2';
 import { addDays, toDate, toTime } from '../common/utils/dates.js';
@@ -36,6 +38,8 @@ export interface SeedOptions {
   encryptSupervisionNotes?: (text: string) => Uint8Array<ArrayBuffer>;
   /** Encrypts health questionnaire answers (PhiContext.HealthAnswers). No questionnaires without it. */
   encryptHealthAnswers?: (json: string) => Uint8Array<ArrayBuffer>;
+  /** Encrypts a stored file (DatabaseDocumentStorage, documentContentContext). No demo policies without it (S-022). */
+  encryptDocument?: (content: Buffer, documentId: string) => Uint8Array<ArrayBuffer>;
   /** Makes sure built-in roles exist (RbacSyncService.sync). */
   syncRoles: () => Promise<void>;
 }
@@ -304,6 +308,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
   }
 
   const messages = options.encryptMessage ? await seedMessages(prisma, options.encryptMessage) : 0;
+  if (options.encryptDocument) await seedPolicies(prisma, coordinatorId, options.encryptDocument);
   const applications = await seedRecruitment(prisma, today);
   return {
     agencyId: DEMO_AGENCY_ID,
@@ -317,6 +322,73 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
 export const DEMO_CAREERS_SLUG = 'demo-care';
 
 /** Three adverts (two open, one draft) and a handful of FAKE applications at different stages. */
+/** FAKE company policies as real PDFs, so "Ask our policies" (S-022) has something to answer from. */
+const DEMO_POLICIES: { title: string; paragraphs: string[] }[] = [
+  {
+    title: 'Lone working policy (FAKE)',
+    paragraphs: [
+      'FAKE DEMO POLICY. Purpose: to keep care workers safe when they visit people at home on their own.',
+      '1. Before each first visit to a new client, the office completes a home risk assessment and shares any risks in the care plan.',
+      '2. Care workers check in on the app at the start and end of every visit. If a worker has not checked out 30 minutes after a visit should have ended, the office phones them; if there is no answer, the on-call manager is told.',
+      '3. If a visit feels unsafe, the care worker should leave straight away, go somewhere safe and phone the on-call manager. Never stay in a situation that feels unsafe. In an emergency, call 999 first.',
+      '4. Every incident or near miss is recorded on the incident form within 24 hours and discussed at the next supervision.',
+      '5. Care workers do not visit after 10pm alone unless the registered manager has agreed it in writing.',
+    ],
+  },
+  {
+    title: 'Missed and late visits policy (FAKE)',
+    paragraphs: [
+      'FAKE DEMO POLICY. Purpose: to make sure no one goes without the care they need.',
+      '1. A visit counts as late when the care worker arrives more than 30 minutes after the planned time, and missed when no one arrives.',
+      '2. Care workers who are running more than 15 minutes late must phone the office, who will tell the client or their family.',
+      '3. Any missed visit is reported to the registered manager the same day and recorded as an incident. If the client could have come to harm, the manager considers a safeguarding referral to the local authority and a notification to CQC.',
+      '4. Patterns of late visits are reviewed every month.',
+    ],
+  },
+  {
+    title: 'Sickness absence policy (FAKE)',
+    paragraphs: [
+      'FAKE DEMO POLICY. Purpose: to support staff who are unwell and to cover their visits.',
+      '1. Staff who are unwell must phone (not text) the office or on-call manager at least 2 hours before their first visit.',
+      '2. Staff with diarrhoea or vomiting must not work until 48 hours after their symptoms have stopped.',
+      '3. For absences of more than 7 calendar days, a fit note from a doctor is needed.',
+      '4. A return-to-work conversation takes place after every absence. Three or more spells of absence in 12 months lead to a review meeting.',
+    ],
+  },
+  {
+    title: 'Medication policy (FAKE)',
+    paragraphs: [
+      'FAKE DEMO POLICY. Purpose: safe help with medicines in people’s homes.',
+      '1. Only staff who have completed medication training and been assessed as competent may give medicines.',
+      '2. Every medicine given, refused or not given is recorded on the MAR chart at the time.',
+      '3. If a client refuses their medication, do not force or hide it in food. Record the refusal and tell the office the same day; the office will tell the GP or pharmacist if the medicine is important.',
+      '4. Any medication error is reported to the on-call manager straight away and recorded as an incident.',
+    ],
+  },
+];
+
+async function seedPolicies(prisma: PrismaClient, uploadedById: string, encrypt: (content: Buffer, documentId: string) => Uint8Array<ArrayBuffer>): Promise<void> {
+  for (const p of DEMO_POLICIES) {
+    const id = randomUUID();
+    const content = simplePdf(p.title, p.paragraphs);
+    await prisma.document.create({
+      data: {
+        id,
+        agencyId: DEMO_AGENCY_ID,
+        uploadedById,
+        documentType: 'policy',
+        title: p.title,
+        fileName: `${p.title.replace(/[^A-Za-z0-9]+/g, '-').toLowerCase()}.pdf`,
+        fileSize: content.length,
+        mimeType: 'application/pdf',
+        s3Key: databaseKey(id),
+        contentHash: createHash('sha256').update(content).digest('hex'),
+        blob: { create: { content: encrypt(content, id) } },
+      },
+    });
+  }
+}
+
 async function seedRecruitment(prisma: PrismaClient, today: string): Promise<number> {
   const recruiter = await prisma.user.findFirst({ where: { agencyId: DEMO_AGENCY_ID, email: `recruiter@${DEMO_EMAIL_DOMAIN}` }, select: { id: true } });
   const job = (data: Omit<Prisma.JobPostingUncheckedCreateInput, 'agencyId'>) =>

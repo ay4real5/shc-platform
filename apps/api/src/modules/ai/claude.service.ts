@@ -4,16 +4,32 @@ import { ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppEnv, type EnvironmentVariables } from '../../config/env.validation.js';
 
-/** Models that accept tool_choice {type: 'tool'} (Claude 4.x and Haiku 4.5). */
-const FORCED_TOOL = /^claude-(haiku|sonnet|opus)-4/;
-
 /** Just the part of the SDK client used, so tests can stand in for Anthropic. */
-export type MessagesClient = { messages: Pick<Anthropic['messages'], 'create'> };
+export type MessagesClient = { beta: { messages: Pick<Anthropic['beta']['messages'], 'create'> } };
+
+/** A source document for a question (a company policy), sent to Claude as a PDF with citations on. */
+export interface SourceDocument {
+  title: string;
+  /** PDF bytes. */
+  pdf: Buffer;
+}
+
+export interface CitedAnswer {
+  text: string;
+  /** Titles of the documents the answer quotes, in the order first cited. */
+  sources: string[];
+}
 
 /**
- * Claude for features other than the assistant chat (D-096: note tidy-up, incident detection, family updates). Same
- * gate as the assistant (D-092): off without ANTHROPIC_API_KEY, and in production off until ASSISTANT_BAA_CONFIRMED —
- * patient details are sent. Never logs prompt or response text.
+ * The server-side refusal fallback: if the model declines (a safety classifier false positive), the API re-runs the
+ * request on a fallback model it picks by category, inside the same call.
+ */
+const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
+
+/**
+ * Claude for SHC's AI help (S-022): drafting text and answering questions from the company's own policies, for admins
+ * and managers. Off without ANTHROPIC_API_KEY; in production also off until AI_DPA_CONFIRMED (the UK GDPR paperwork
+ * names Anthropic as a processor). Never logs prompt or response text.
  */
 @Injectable()
 export class ClaudeService {
@@ -26,43 +42,84 @@ export class ClaudeService {
   get enabled(): boolean {
     if (!this.config.get('ANTHROPIC_API_KEY', { infer: true })) return false;
     const production = this.config.get('APP_ENV', { infer: true }) === AppEnv.Production;
-    return !production || this.config.get('ASSISTANT_BAA_CONFIRMED', { infer: true });
+    return !production || this.config.get('AI_DPA_CONFIRMED', { infer: true }) === true;
   }
 
   get model(): string {
     return this.config.get('ASSISTANT_MODEL', { infer: true });
   }
 
-  /**
-   * One structured answer: Claude must call `tool` (its input schema is the shape we want back). Returns the tool
-   * input, or throws 503 when AI is off or the call fails.
-   */
-  async structured<T>(system: string, user: string, tool: { name: string; description: string; input_schema: Anthropic.Tool.InputSchema }): Promise<T> {
-    if (!this.enabled) throw new ServiceUnavailableException('AI features aren’t switched on for this agency');
+  private api(): MessagesClient {
+    if (!this.enabled) throw new ServiceUnavailableException('AI help isn’t switched on for this company');
     this.client ??= new Anthropic({ apiKey: this.config.get('ANTHROPIC_API_KEY', { infer: true })! });
-    let response: Anthropic.Message;
+    return this.client;
+  }
+
+  private async call(params: Omit<Anthropic.Beta.MessageCreateParamsNonStreaming, 'model' | 'betas' | 'fallbacks'>): Promise<Anthropic.Beta.BetaMessage> {
+    let response: Anthropic.Beta.BetaMessage;
     try {
-      response = await this.client.messages.create({
-        model: this.model,
-        max_tokens: 2048,
-        system: FORCED_TOOL.test(this.model) ? system : `${system}\n\nAlways answer by calling the ${tool.name} tool.`,
-        tools: [tool],
-        // Newer models (Opus/Sonnet 5.x, Fable) refuse a forced tool choice; they get the instruction above instead.
-        tool_choice: FORCED_TOOL.test(this.model) ? { type: 'tool', name: tool.name } : { type: 'auto' },
-        messages: [{ role: 'user', content: user }],
-      });
+      response = await this.api().beta.messages.create({ ...params, model: this.model, betas: [FALLBACK_BETA], fallbacks: 'default' });
     } catch (error) {
+      if (error instanceof ServiceUnavailableException) throw error;
       const status = error instanceof Anthropic.APIError ? error.status : 'network';
       this.logger.warn(`AI call failed (${status})`);
-      throw new ServiceUnavailableException('The AI service is unavailable right now — please try again in a minute');
+      throw new ServiceUnavailableException('The AI service is unavailable right now. Please try again in a minute.');
     }
-    const use = response.content.find((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === tool.name);
-    if (!use) throw new ServiceUnavailableException('The AI service didn’t return an answer — please try again');
-    return use.input as T;
+    if (response.stop_reason === 'refusal') throw new ServiceUnavailableException('The AI declined this one. Try rewording it.');
+    if (response.stop_reason === 'max_tokens') throw new ServiceUnavailableException('The answer was too long. Try asking for something shorter.');
+    return response;
+  }
+
+  /** One answer in the shape of `schema` (structured outputs: the reply is guaranteed to match it). */
+  async structured<T>(system: string, user: string, schema: Record<string, unknown>): Promise<T> {
+    const response = await this.call({
+      max_tokens: 16000,
+      system,
+      output_config: { effort: 'medium', format: { type: 'json_schema', schema } },
+      messages: [{ role: 'user', content: user }],
+    });
+    const text = response.content.find((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')?.text;
+    try {
+      return JSON.parse(text ?? '') as T;
+    } catch {
+      throw new ServiceUnavailableException('The AI service didn’t return an answer. Please try again.');
+    }
+  }
+
+  /**
+   * Answers a question from the given documents only, quoting them (citations). The documents come first and are
+   * cached, so several questions in a row about the same policies cost much less.
+   */
+  async askDocuments(system: string, documents: SourceDocument[], question: string): Promise<CitedAnswer> {
+    const blocks: Anthropic.Beta.BetaContentBlockParam[] = documents.map((d, i) => ({
+      type: 'document',
+      source: { type: 'base64', media_type: 'application/pdf', data: d.pdf.toString('base64') },
+      title: d.title,
+      citations: { enabled: true },
+      ...(i === documents.length - 1 ? { cache_control: { type: 'ephemeral' as const } } : {}),
+    }));
+    const response = await this.call({
+      max_tokens: 16000,
+      system,
+      output_config: { effort: 'medium' },
+      messages: [{ role: 'user', content: [...blocks, { type: 'text', text: question }] }],
+    });
+    const sources: string[] = [];
+    let text = '';
+    for (const block of response.content) {
+      if (block.type !== 'text') continue;
+      text += block.text;
+      for (const c of block.citations ?? []) {
+        const title = 'document_title' in c ? c.document_title : null;
+        if (title && !sources.includes(title)) sources.push(title);
+      }
+    }
+    if (!text.trim()) throw new ServiceUnavailableException('The AI service didn’t return an answer. Please try again.');
+    return { text: text.trim(), sources };
   }
 }
 
-/** Whether AI help is switched on (the apps show the AI buttons only then). Any signed-in user. */
+/** Whether AI help is switched on (the website shows the AI buttons only then). Any signed-in user. */
 @ApiTags('ai')
 @Controller('ai')
 export class AiController {

@@ -183,6 +183,35 @@ export class DocumentsService {
     return { fileName: doc.fileName, mimeType: doc.mimeType ?? 'image/jpeg', content };
   }
 
+  /**
+   * The company's policies for AI questions (S-022): latest version of each company-wide (not personal) document of type
+   * "policy". PDFs are returned with their bytes; other formats are listed by title so the page can say they were skipped.
+   */
+  async policiesForAi(agencyId: string, limits: { count: number; bytes: number }): Promise<{ pdfs: { title: string; pdf: Buffer }[]; skipped: string[] }> {
+    const docs = await this.prisma.document.findMany({
+      where: { agencyId, documentType: 'policy', staffId: null, deletedAt: null, nextVersion: null },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, title: true, mimeType: true, fileSize: true, contentHash: true },
+    });
+    const pdfs: { title: string; pdf: Buffer }[] = [];
+    const skipped: string[] = [];
+    let total = 0;
+    for (const d of docs) {
+      if (d.mimeType !== 'application/pdf' || pdfs.length >= limits.count || total + (d.fileSize ?? 0) > limits.bytes) {
+        skipped.push(d.title);
+        continue;
+      }
+      const content = await this.storage.load(d.id);
+      if (d.contentHash && sha256(content) !== d.contentHash) {
+        skipped.push(d.title);
+        continue;
+      }
+      total += content.length;
+      pdfs.push({ title: d.title, pdf: content });
+    }
+    return { pdfs, skipped };
+  }
+
   async list(caller: AuthUser, query: ListDocumentsQueryDto): Promise<Paginated<DocumentView>> {
     const where: Prisma.DocumentWhereInput = {
       agencyId: caller.agencyId,

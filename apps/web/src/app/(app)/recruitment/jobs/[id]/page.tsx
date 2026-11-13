@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { JobForm } from '@/components/recruitment/job-form';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { InterviewQuestions } from '@/components/ai/ai-assist';
 import { DetailList, ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { disciplineLabel, humanize } from '@/lib/labels';
@@ -90,6 +91,7 @@ export default function JobPage() {
         <h2 className="mb-3 text-base font-semibold text-slate-900">Description</h2>
         <div className="whitespace-pre-line text-sm text-slate-800">{j.description}</div>
       </Card>
+      {manage && <InterviewQuestions context={{ jobTitle: j.title, discipline: j.discipline, location: j.location }} />}
       <div>
         <ButtonLink href="/recruitment" variant="secondary">
           Back to recruitment

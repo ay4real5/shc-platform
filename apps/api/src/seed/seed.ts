@@ -11,6 +11,7 @@ import { PhiContext } from '../common/crypto/phi-crypto.service.js';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { messageContentContext } from '../modules/messaging/message-content.js';
 import { RbacSyncService } from '../modules/rbac/rbac-sync.service.js';
+import { documentContentContext } from '../modules/documents/document-storage.js';
 import type { PrismaService } from '../database/prisma.service.js';
 import { DEMO_TOTP_SECRET, runDemoSeed } from './demo-seed.js';
 
@@ -39,6 +40,7 @@ try {
       : undefined,
     encryptSupervisionNotes: keyring ? (text) => new Uint8Array(encryptPhi(text, PhiContext.SupervisionNotes, keyring)) : undefined,
     encryptHealthAnswers: keyring ? (json) => new Uint8Array(encryptPhi(json, PhiContext.HealthAnswers, keyring)) : undefined,
+    encryptDocument: keyring ? (content, documentId) => new Uint8Array(encryptPhiBytes(content, documentContentContext(documentId), keyring)) : undefined,
   });
   console.log('\nDemo agency seeded (all data is FAKE).\n');
   console.table(summary.counts);

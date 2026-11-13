@@ -23,6 +23,7 @@ import { ComplianceModule } from './modules/compliance/compliance.module.js';
 import { RecruitmentModule } from './modules/recruitment/recruitment.module.js';
 import { TrainingModule } from './modules/training/training.module.js';
 import { AiModule } from './modules/ai/claude.service.js';
+import { AiHelpModule } from './modules/ai/ai-help.js';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { AiModule } from './modules/ai/claude.service.js';
     TrainingModule,
     RecruitmentModule,
     AiModule,
+    AiHelpModule,
     NotificationsModule,
     RealtimeModule,
     ScheduleModule.forRoot(),

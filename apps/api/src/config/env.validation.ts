@@ -183,27 +183,29 @@ export class EnvironmentVariables {
   @IsBoolean()
   RATE_LIMITS_DISABLED: boolean = false;
 
-  // ── In-app AI assistant (D-092). Off until ANTHROPIC_API_KEY is set; in production also needs the BAA confirmed.
+  // ── AI help for admins and managers (S-022). Off until ANTHROPIC_API_KEY is set; in production also needs
+  // AI_DPA_CONFIRMED (UK GDPR paperwork naming Anthropic as a processor).
   /** Anthropic API key for the assistant (a secret — App Settings / .env only). */
   @Transform(trimmed)
   @IsOptional()
   @IsString()
   ANTHROPIC_API_KEY?: string;
 
-  /** Which Claude model answers. Haiku 4.5 is the low-cost default; Sonnet/Opus can be set here without a code change. */
+  /** Which Claude model answers (S-022). Another model can be set here without a code change. */
   @Transform(trimmed)
   @IsOptional()
-  @Matches(/^claude-[a-z0-9-]+$/, { message: 'ASSISTANT_MODEL must be a Claude model id, e.g. claude-haiku-4-5' })
-  ASSISTANT_MODEL: string = 'claude-haiku-4-5';
+  @Matches(/^claude-[a-z0-9-]+$/, { message: 'ASSISTANT_MODEL must be a Claude model id, e.g. claude-opus-5-5' })
+  ASSISTANT_MODEL: string = 'claude-opus-5-5';
 
   /**
-   * Set to true only once a Business Associate Agreement with Anthropic is signed: the assistant sends patient
-   * details to the model, so production refuses to turn it on without this.
+   * Set to true only once the company's data processing agreement and privacy notice name Anthropic as a processor
+   * (UK GDPR, including the transfer outside the UK). AI help sends staff details to the model, so production refuses
+   * to turn it on without this (S-022).
    */
   @Transform(({ value }) => (value === undefined || value === '' ? undefined : String(value).trim().toLowerCase() === 'true' || value === true))
   @IsOptional()
   @IsBoolean()
-  ASSISTANT_BAA_CONFIRMED: boolean = false;
+  AI_DPA_CONFIRMED: boolean = false;
 
   // ── Outside notification channels (D-071). Each stays off until its settings are present — and must only be
   // switched on once the provider has signed a BAA (P2-11, P3-19). Texts are PHI-free either way.

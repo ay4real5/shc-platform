@@ -24,6 +24,8 @@ export const PERMISSION_CATALOGUE = {
   health: ['read'],
   /** Schedule and record supervisions, appraisals and spot checks, and read their notes (S3-04). */
   supervisions: ['manage'],
+  /** AI help (S-022): drafting and questions about the company's policies. Admins and managers only. */
+  ai: ['use'],
 } as const;
 
 type Catalogue = typeof PERMISSION_CATALOGUE;
