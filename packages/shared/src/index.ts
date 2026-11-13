@@ -16,3 +16,4 @@ export * from './constants/training.js';
 export * from './constants/holiday.js';
 export * from './constants/supervisions.js';
 export * from './constants/staff-import.js';
+export * from './constants/inspection.js';

@@ -7,6 +7,7 @@ import { CareCertificateController, CareCertificateService } from './care-certif
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
 import { StaffImportController, StaffImportService } from './staff-import.js';
+import { InspectionController, InspectionService } from './inspection.js';
 import { CredentialsService } from './credentials.service.js';
 import { DbsController, DbsService } from './dbs.js';
 import { HealthController, HealthService } from './health.js';
@@ -19,8 +20,8 @@ import { TimeOffService } from './time-off.service.js';
 
 @Module({
   imports: [AuthModule],
-  controllers: [StaffImportController, DashboardController, SupervisionsController, CareCertificateController, HolidayController, RightToWorkController, DbsController, HealthController, StaffController, TimeOffController],
-  providers: [StaffImportService, DashboardService, SupervisionsService, SupervisionRemindersJob, CareCertificateService, HolidayService, StaffService, CredentialsService, TimeOffService, OnboardingService, RightToWorkService, DbsService, HealthService],
+  controllers: [InspectionController, StaffImportController, DashboardController, SupervisionsController, CareCertificateController, HolidayController, RightToWorkController, DbsController, HealthController, StaffController, TimeOffController],
+  providers: [InspectionService, StaffImportService, DashboardService, SupervisionsService, SupervisionRemindersJob, CareCertificateService, HolidayService, StaffService, CredentialsService, TimeOffService, OnboardingService, RightToWorkService, DbsService, HealthService],
   exports: [StaffService, TimeOffService, OnboardingService],
 })
 export class StaffModule {}
