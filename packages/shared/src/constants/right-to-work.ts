@@ -6,10 +6,16 @@
 
 export const RTW_METHODS = ['share_code', 'manual_document', 'idsp'] as const;
 export type RtwMethod = (typeof RTW_METHODS)[number];
-export const RTW_METHOD_LABELS: Record<RtwMethod, string> = {
+/**
+ * A check done before the company used SHC, brought in by the staff spreadsheet import (S4-01). Never offered on the
+ * record form: the next real check is recorded as a share code or manual check.
+ */
+export const RTW_IMPORTED_METHOD = 'imported';
+export const RTW_METHOD_LABELS: Record<RtwMethod | typeof RTW_IMPORTED_METHOD, string> = {
   share_code: 'Online check with a share code',
   manual_document: 'Manual check of original documents',
   idsp: 'Digital ID check (certified provider)',
+  imported: 'Checked before SHC (imported from spreadsheet)',
 };
 
 /**
