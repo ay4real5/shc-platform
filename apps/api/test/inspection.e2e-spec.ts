@@ -98,8 +98,9 @@ describe.skipIf(!hasDb)('CQC inspection pack (e2e)', () => {
 
   it('builds packs for chosen people, with their documents', async () => {
     const res = await http().get(`/api/v1/inspection/packs?ids=${complete.staffId},${worker.staffId}`).set(coordinator.auth).expect(200);
-    expect(res.body.data).toHaveLength(2);
-    const pack = res.body.data.find((p: { staffId: string }) => p.staffId === complete.staffId);
+    expect(res.body.data.company).toMatch(/^Inspection Test/);
+    expect(res.body.data.packs).toHaveLength(2);
+    const pack = res.body.data.packs.find((p: { staffId: string }) => p.staffId === complete.staffId);
     expect(pack.items.find((i: { key: string }) => i.key === 'right_to_work')).toMatchObject({ status: 'ok', details: ['Copy of the check on file.'] });
     expect(pack.items.find((i: { key: string }) => i.key === 'conduct').status).toBe('paper');
     expect(pack.documents).toEqual([expect.objectContaining({ title: 'RTW check', documentType: 'right_to_work' })]);

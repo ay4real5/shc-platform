@@ -2377,3 +2377,22 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   are a setup job. The hiring rule applies too: nobody can import a role with more access than their own.
 - No onboarding packs are sent to imported staff (they're already working); send them per person if needed.
 
+### S-020 — CQC inspection pack (S4-02)
+2026-11-13 · Claude Code
+- **What:** each person's staff file checked against Regulation 19 / Schedule 3 from records SHC already holds:
+  identity and photo (1), Enhanced DBS (2), conduct in previous care work / references (3–4), qualifications and
+  training for the role (5), full employment history (6), health (7), plus Right to Work and supervision/appraisal
+  (Regulation 18). Rules are pure in `@alora/shared` `inspection.ts`.
+- **Four statuses:** in order (evidenced in SHC), on paper file (recorded, e.g. imported, but evidence held outside SHC),
+  needs attention (due within 28–30 days, waiting for review, Right to Work copy not uploaded, supervision overdue),
+  missing (a gap an inspector would find). A file is "ready" when nothing is missing.
+- **Identity** is proved by the Right to Work check (photo in the passport or share code record); imported checks count
+  as paper unless an ID or Right to Work document is uploaded.
+- **Care Certificate:** new care staff aren't flagged missing during their first 12 weeks (shown as in progress).
+- **API:** `GET /inspection/overview` (active staff, least ready first) and `GET /inspection/packs?ids=` (up to 100, with
+  the company name and date for the cover). `compliance:read` + `staff:read`; packs are audited (`INSPECTION_PACK`). Shows
+  dates, status and the DBS certificate number only: never health answers, what a DBS says, or a share code.
+- **Printing:** the pack page prints from the browser ("Print / save as PDF"): cover sheet, then one person per page;
+  the app's top bar and footer are hidden in print. No server-side PDF library.
+- Demo seed: DBS credentials are now marked verified by the coordinator, so only imported ones show "on paper".
+

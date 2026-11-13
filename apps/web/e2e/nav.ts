@@ -10,6 +10,7 @@ const MENU_OF: Record<string, string> = {
   Academy: 'People',
   Documents: 'Compliance',
   Compliance: 'Compliance',
+  'CQC inspection pack': 'Compliance',
   'Audit log': 'Compliance',
   Users: 'Admin',
   Roles: 'Admin',

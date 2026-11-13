@@ -80,10 +80,15 @@ export class InspectionService {
       .sort((a, b) => b.counts.missing - a.counts.missing || b.counts.attention - a.counts.attention || a.name.localeCompare(b.name));
   }
 
-  async packs(caller: AuthUser, ids: string[]): Promise<InspectionPack[]> {
+  /** Packs for chosen people, with the company name and the date, for the cover page. */
+  async packs(caller: AuthUser, ids: string[]): Promise<{ company: string; generatedOn: string; packs: InspectionPack[] }> {
     const packs = await this.build(caller, { id: { in: [...new Set(ids)] } });
     if (packs.length !== new Set(ids).size) throw new BadRequestException('Some of these people are not in your company');
-    return packs.sort((a, b) => a.name.localeCompare(b.name));
+    const [agency, generatedOn] = await Promise.all([
+      this.prisma.agency.findUniqueOrThrow({ where: { id: caller.agencyId }, select: { name: true } }),
+      this.clock.todayString(caller.agencyId),
+    ]);
+    return { company: agency.name, generatedOn, packs: packs.sort((a, b) => a.name.localeCompare(b.name)) };
   }
 
   private async build(caller: AuthUser, where: { isActive?: boolean; id?: { in: string[] } }): Promise<InspectionPack[]> {

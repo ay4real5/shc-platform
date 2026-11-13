@@ -28,8 +28,8 @@
 Stage 3. Done: S3-01 (expiry alerts for every check, S-012), S3-02 (Care Certificate + training matrix, S-013),
 S3-03 (holiday allowance, balance, absence and Bradford factor, S-014), S3-04 (supervisions, appraisals and spot checks,
 S-015), S3-05 (manager dashboard, S-016), S3-06 (staff phone app catches up with the website, S-017), S3-08 (SHC's own navy and gold look, S-018).
-Stage 4 (Ayo, 13 Nov): S4-01 staff spreadsheet import done (S-019, `/staff/import`). Next: S4-02 CQC inspection pack,
-then S4-03 design polish. S3-07 (go-live) is on hold until Ayo says so (Azure is signed in on the laptop; SHC would get
+Stage 4 (Ayo, 13 Nov): S4-01 staff spreadsheet import (S-019, `/staff/import`) and S4-02 CQC inspection pack (S-020,
+`/compliance/inspection`) done. Next: S4-03 design polish. S3-07 (go-live) is on hold until Ayo says so (Azure is signed in on the laptop; SHC would get
 its own `shc-prod` group in UK South). The phone app has not been tried on a real phone since S3-06: run `npm run start -w @alora/mobile`
 and open it in Expo Go with `EXPO_PUBLIC_API_URL` set to the computer's network address.
 
@@ -58,6 +58,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-13 | Claude Code | S4-02 | CQC inspection pack: team overview (least ready first) and printable packs per person (Schedule 3 + Right to Work + supervision). Shared 7 tests, API e2e 3, browser test passes; PDF printed and checked. |
 | 2026-11-13 | Claude Code | S4-01 | Staff spreadsheet import (template, preview, import with checks). Shared 18 new tests, API unit 16 + e2e 4, browser test passes. |
 | 2026-11-13 | Claude Code | S3-08 | Ayo: SHC and Primordial are different companies, so nothing visual may be shared. New look (navy and gold): Source Serif/Sans fonts, shield logo and icons, navy top bar with drop-downs (was Primordial's sidebar), new sign-in, dashboard header, careers frame, emails and phone app; "Unlock Primordial Health" text fixed in the phone app; design guard in lint. Browser 25/25, API unit 88/88, mobile 41/41, Android bundle builds. |
 | 2026-11-13 | Claude Code | S3-06 | Staff app: "Needs doing" on home, contracts and policies to read and sign (file opened in the phone's viewer), health questionnaire, supervision records to read and sign, Care Certificate progress, holiday left and working days; UK dates and £. Mobile typecheck/lint clean, unit 41/41, Android bundle builds, every API call checked against the dev API as the demo care worker. Not yet tried on a real phone. |

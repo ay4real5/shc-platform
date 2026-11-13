@@ -121,7 +121,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-30 bg-brand-900 text-white shadow-[0_1px_0_rgb(0_0_0_/_0.2)]">
+      <header className="sticky top-0 z-30 print:hidden bg-brand-900 text-white shadow-[0_1px_0_rgb(0_0_0_/_0.2)]">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 md:px-8">
           <Link href="/" className="shrink-0 focus-visible:outline-2 focus-visible:outline-accent-400" aria-label="SHC home">
             <Logo tone="dark" tagline={false} />
@@ -208,11 +208,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <main key={pathname} className="mx-auto w-full max-w-7xl flex-1 animate-fade-in px-4 py-6 md:px-8 md:py-8">
+      <main key={pathname} className="mx-auto w-full max-w-7xl flex-1 animate-fade-in px-4 py-6 md:px-8 md:py-8 print:max-w-none print:p-0">
         {children}
       </main>
 
-      <footer className="border-t border-slate-200 bg-white">
+      <footer className="print:hidden border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-slate-500 md:px-8">
           <span>SHC · UK hosted · UK GDPR</span>
           <span>Staff records are confidential. Access is logged.</span>

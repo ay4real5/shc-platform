@@ -168,7 +168,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       // Credentials: most valid, some expiring within the month, one already expired — so alerts have data.
       const dbsExpiry = staffNo === 2 ? addDays(today, -5) : addDays(today, staffNo % 4 === 0 ? rand.int(3, 25) : rand.int(90, 700));
       const rows = [
-        { staffProfileId: profile.id, credentialType: 'dbs_enhanced', credentialName: 'Enhanced DBS with adult barred list (FAKE)', credentialNumber: `00${rand.int(1000000000, 9999999999)}`, expiryDate: toDate(dbsExpiry) },
+        { staffProfileId: profile.id, credentialType: 'dbs_enhanced', credentialName: 'Enhanced DBS with adult barred list (FAKE)', credentialNumber: `00${rand.int(1000000000, 9999999999)}`, expiryDate: toDate(dbsExpiry), verifiedById: coordinatorId, verifiedAt: new Date() },
         { staffProfileId: profile.id, credentialType: 'right_to_work', credentialName: 'Right to Work check', expiryDate: staffNo % 5 === 0 ? toDate(addDays(today, rand.int(20, 60))) : null },
         { staffProfileId: profile.id, credentialType: 'moving_handling', credentialName: 'Moving & handling', expiryDate: toDate(addDays(today, rand.int(-10, 365))) },
       ];
