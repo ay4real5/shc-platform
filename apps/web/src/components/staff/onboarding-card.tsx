@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth/auth-provider';
 export function ReadinessBar({ percent }: { percent: number }) {
   return (
     <span className="flex items-center gap-2">
-      <span className="h-2 w-24 overflow-hidden rounded-full bg-slate-200" aria-hidden>
+      <span className="h-2 w-24 overflow-hidden rounded-sm bg-slate-200" aria-hidden>
         <span className={`block h-full ${percent === 100 ? 'bg-emerald-500' : 'bg-brand-600'}`} style={{ width: `${percent}%` }} />
       </span>
       <span className="text-sm font-medium text-slate-800">{percent}% ready</span>
@@ -49,7 +49,7 @@ export function OnboardingCard({ staffId }: { staffId: string }) {
                   {i.label}
                   {!i.required && <span className="font-normal text-slate-500"> (optional)</span>}
                   {i.cqc && (
-                    <span className="ml-1.5 rounded-full bg-brand-50 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-brand-800" title="Required by CQC Regulation 19, Schedule 3">
+                    <span className="ml-1.5 rounded-sm bg-brand-50 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-brand-800" title="Required by CQC Regulation 19, Schedule 3">
                       CQC
                     </span>
                   )}

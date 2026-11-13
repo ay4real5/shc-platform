@@ -51,7 +51,7 @@ export async function scheduleClockOutReminder(visitId: string, at: Date): Promi
       identifier: reminderId(visitId),
       content: {
         title: 'Still on a visit?',
-        body: 'Your visit was scheduled to end. Remember to clock out in Primordial Health.',
+        body: 'Your visit was scheduled to end. Remember to clock out in SHC.',
         data: { visitId },
       },
       trigger: {

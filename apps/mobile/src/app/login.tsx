@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BrandMark, Button, Card, ErrorText, GradientHeader, Input, colors, styles } from '@/components/ui';
+import { BrandMark, Button, Card, ErrorText, GradientHeader, Input, colors, styles, serif } from '@/components/ui';
 import { errorMessage, useAuth } from '@/lib/auth-context';
 
 /** Email + password, then an authenticator code if the account has 2FA on. */
@@ -35,8 +35,8 @@ export default function LoginScreen() {
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1 }}>
       <GradientHeader style={{ paddingTop: insets.top + 48, paddingBottom: 72, alignItems: 'center' }}>
         <BrandMark size={64} />
-        <Text style={{ color: colors.white, fontSize: 30, fontWeight: '800', marginTop: 16 }}>SHC</Text>
-        <Text style={{ color: '#9aeedd', fontSize: 16, marginTop: 4 }}>Staff app</Text>
+        <Text style={{ color: colors.white, fontSize: 30, fontWeight: '700', fontFamily: serif, marginTop: 16 }}>SHC</Text>
+        <Text style={{ color: colors.headerMuted, fontSize: 16, marginTop: 4 }}>Staff app</Text>
       </GradientHeader>
       <View style={{ paddingHorizontal: 20, marginTop: -44 }}>
       <Card style={{ padding: 20, gap: 16 }}>

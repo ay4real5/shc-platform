@@ -70,8 +70,8 @@ export function CareCertificatePanel({ staffId, isSelf }: { staffId: string; isS
               {c.completed} of {c.total} standards signed off
               {c.dueBy && <span className={c.overdue ? 'font-semibold text-red-700' : 'text-slate-600'}> · {c.overdue ? 'overdue, was due' : 'due by'} {formatDate(c.dueBy)}</span>}
             </p>
-            <div className="h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label="Care Certificate progress" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
-              <div className="h-full rounded-full bg-brand-600" style={{ width: `${percent}%` }} />
+            <div className="h-2 overflow-hidden rounded-sm bg-slate-100" role="progressbar" aria-label="Care Certificate progress" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
+              <div className="h-full rounded-sm bg-brand-600" style={{ width: `${percent}%` }} />
             </div>
           </div>
           {!c.startedOn && <p className="text-xs text-slate-600">Add a start date to the staff record to see when it&rsquo;s due (12 weeks after starting).</p>}

@@ -127,7 +127,7 @@ export function StagePanel({ app }: { app: ApplicationDetail }) {
         <h2 className="text-base font-semibold text-slate-900">Next step</h2>
         <ol className="flex flex-wrap items-center gap-1 text-xs" aria-label="Stages">
           {(['applied', 'screened', 'interview', 'offer', 'hired'] as const).map((s) => (
-            <li key={s} className={`rounded-full px-2.5 py-1 ${app.stage === s ? 'bg-brand-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
+            <li key={s} className={`rounded-sm px-2.5 py-1 ${app.stage === s ? 'bg-brand-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
               {APPLICATION_STAGE_LABELS[s]}
             </li>
           ))}

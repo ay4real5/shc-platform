@@ -2323,3 +2323,30 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   with the award date and no empty checklist.
 - **UK formats:** app dates are now en-GB and money is in £. Tests accept "Sep" or "Sept", because the month
   abbreviation depends on the phone's Intl data.
+
+### S-018 — SHC's own look: navy and gold (replaces D-103 for SHC)
+- **Why:** SHC and Primordial are different companies (Ayo, 13 Nov 2026). SHC was built on a copy of Primordial's
+  code, which is fine for the engine (sign-in, security, audit), but nothing visual may be shared. Ayo chose navy and gold.
+- **Tokens** (`apps/web/src/app/globals.css`): `brand-*` is now navy (`brand-900` #1B2A4A), `accent-*` gold
+  (`accent-500` #C9A227), `canvas` cream #FAF7F0, `ink` navy. Tailwind's radius scale is overridden for square-ish corners.
+  Shadows are a hairline; there are no glows or gradients. `.bg-mesh` is gone; `.bg-hero` is a navy band with a faint
+  diagonal stripe and a gold rule.
+- **Type:** Source Serif 4 headings and Source Sans 3 text (was Plus Jakarta Sans and Inter). The phone app uses
+  the phone's serif (Georgia/serif) for headings.
+- **Layout:** a navy top bar (Dashboard, Recruitment, Staff, Messages, then People / Compliance / Admin drop-downs)
+  with a gold rule under the current page. This replaces Primordial's dark sidebar. Phone width gets a full-width
+  menu. There is a footer line. The nav landmark keeps the name "Main"; browser tests open drop-downs through
+  `e2e/nav.ts` `goTo()`.
+- **Logo:** a navy shield with a gold S and inner rule. It is used in the web logo, the favicon and Apple icon, and
+  the phone app icon, adaptive icon and splash (cream background), rendered from one SVG.
+- **Also changed:**
+  - sign-in page: form on cream, navy panel with a serif headline;
+  - dashboard header and flat stat cards with a coloured left rule;
+  - square status tags;
+  - careers page header (navy band, gold rule);
+  - notification email template (navy header with a gold rule);
+  - phone app (navy header band with a gold rule, gold initials, square corners, gold badges with navy text);
+  - "Unlock Primordial Health" in the phone app now says "Unlock SHC".
+- **Guard:** `apps/web/scripts/check-colors.mjs` (part of `npm run lint -w @alora/web`) fails on Primordial's
+  teal/coral values, its fonts, `bg-mesh` and `expo-linear-gradient`. It checks the website, the phone app, app.json,
+  the logo files and the email template.

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { goTo } from './nav';
 
 /** The coordinator checks holiday balances and sickness for the whole company (FAKE demo data). */
 test('holiday & absence report', async ({ page }) => {
@@ -8,7 +9,7 @@ test('holiday & absence report', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible({ timeout: 20_000 });
 
-  await page.getByRole('link', { name: 'Holiday & absence' }).click();
+  await goTo(page, 'Holiday & absence');
   await expect(page.getByRole('heading', { name: 'Holiday & absence' })).toBeVisible({ timeout: 20_000 });
   await page.getByLabel('Sort by').selectOption('bradford');
   // The demo data has one person with four sickness spells: top of the list, flagged.

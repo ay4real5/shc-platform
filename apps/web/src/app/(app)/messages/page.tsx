@@ -92,7 +92,7 @@ export default function MessagesPage() {
                       {c.lastMessage?.content}
                     </span>
                     {c.unread > 0 && (
-                      <span className="shrink-0 rounded-full bg-brand-700 px-1.5 text-xs font-medium text-white" aria-label={`${c.unread} unread`}>
+                      <span className="shrink-0 rounded-sm bg-brand-700 px-1.5 text-xs font-medium text-white" aria-label={`${c.unread} unread`}>
                         {c.unread}
                       </span>
                     )}

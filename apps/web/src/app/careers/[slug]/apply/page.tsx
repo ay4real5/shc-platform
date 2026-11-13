@@ -19,7 +19,7 @@ export default function GeneralApplicationPage() {
       <Link href={`/careers/${slug}`} className="text-sm text-brand-800 hover:underline">
         ← All jobs
       </Link>
-      <h1 className="font-display text-[28px] font-extrabold tracking-tight text-ink">Apply to work with us</h1>
+      <h1 className="font-display text-[28px] font-bold tracking-tight text-ink">Apply to work with us</h1>
       <ErrorAlert error={page.error} />
       {page.data && <ApplicationForm slug={slug} />}
     </CareersShell>

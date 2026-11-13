@@ -8,7 +8,7 @@ export function PageHeader({ title, subtitle, actions }: { title: ReactNode; sub
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="font-display text-[26px] font-extrabold tracking-tight text-ink">{title}</h1>
+        <h1 className="font-display text-[26px] font-bold tracking-tight text-ink">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-slate-600">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -101,7 +101,7 @@ export function StatusBadge({ status }: { status: string }) {
     lost: 'bg-slate-100 text-slate-600 ring-slate-500/20',
   };
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ring-1 ring-inset ${tones[status] ?? tones.discharged}`}>
+    <span className={`inline-flex items-center gap-1 rounded-sm px-2.5 py-0.5 text-xs font-medium capitalize ring-1 ring-inset ${tones[status] ?? tones.discharged}`}>
       {status.replaceAll('_', ' ')}
     </span>
   );

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { goTo } from './nav';
 
 async function signIn(page: Page, email: string) {
   await page.goto('/login');
@@ -27,7 +28,7 @@ test('supervisions: sign a record, then book one', async ({ page }) => {
   await expect(page).toHaveURL(/\/login$/, { timeout: 20_000 });
 
   await signIn(page, 'care.coordinator@demo.shc.test');
-  await page.getByRole('link', { name: 'Supervisions' }).click();
+  await goTo(page, 'Supervisions');
   await expect(page.getByRole('heading', { name: 'Supervisions' })).toBeVisible({ timeout: 20_000 });
   await page.getByLabel('Only show people who are overdue').check();
   await expect(page.getByText(/Overdue since/).first()).toBeVisible();

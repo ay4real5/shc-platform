@@ -243,7 +243,7 @@ export function SupervisionToSignCard() {
   return (
     <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
       <p className="flex items-center gap-2 text-sm text-slate-800">
-        <ClipboardSignature aria-hidden className="h-5 w-5 text-accent-600" />
+        <ClipboardSignature aria-hidden className="h-5 w-5 text-accent-700" />
         Your {first.typeLabel.toLowerCase()} record from {formatDate(first.heldOn)} is ready to read and sign.
       </p>
       <ButtonLink href={`/staff/${first.staffId}#supervisions`} variant="accent">

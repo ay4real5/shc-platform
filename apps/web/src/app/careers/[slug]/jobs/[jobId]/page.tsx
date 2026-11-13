@@ -30,7 +30,7 @@ export default function CareersJobPage() {
       <ErrorAlert error={data.error} />
       {job && (
         <>
-          <h1 className="font-display text-[28px] font-extrabold tracking-tight text-ink">{job.title}</h1>
+          <h1 className="font-display text-[28px] font-bold tracking-tight text-ink">{job.title}</h1>
           <Card className="p-5">
             <DetailList
               items={[

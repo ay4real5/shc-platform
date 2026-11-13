@@ -3,7 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Linking, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Avatar, Button, Card, ErrorText, GradientHeader, ListRow, Pill, SectionTitle, colors } from '@/components/ui';
+import { Avatar, Button, Card, ErrorText, GradientHeader, ListRow, Pill, SectionTitle, colors, serif } from '@/components/ui';
 import { errorMessage, useAuth } from '@/lib/auth-context';
 import { useOffline } from '@/lib/offline';
 import { humanize } from '@/lib/visits';
@@ -98,13 +98,13 @@ export default function ProfileScreen() {
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: 40 }}>
       <GradientHeader style={{ paddingTop: insets.top + 24, alignItems: 'center', paddingBottom: 32 }}>
         <Avatar first={user.firstName} last={user.lastName} size={84} />
-        <Text style={{ color: colors.white, fontSize: 24, fontWeight: '800', marginTop: 12 }}>
+        <Text style={{ color: colors.white, fontSize: 24, fontWeight: '700', fontFamily: serif, marginTop: 12 }}>
           {user.firstName} {user.lastName}
         </Text>
-        <Text style={{ color: '#9aeedd', fontSize: 15, marginTop: 2 }}>
+        <Text style={{ color: colors.headerMuted, fontSize: 15, marginTop: 2 }}>
           {staff ? `${staff.discipline} · ${role}` : role}
         </Text>
-        {user.agency?.name ? <Text style={{ color: '#5fdcc8', fontSize: 13, marginTop: 4 }}>{user.agency.name}</Text> : null}
+        {user.agency?.name ? <Text style={{ color: colors.headerSubtle, fontSize: 13, marginTop: 4 }}>{user.agency.name}</Text> : null}
       </GradientHeader>
 
       <View style={{ padding: 20, gap: 12 }}>

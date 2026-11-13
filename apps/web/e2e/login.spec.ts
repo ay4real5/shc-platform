@@ -19,10 +19,15 @@ test('an admin signs in, sees live numbers, navigates and signs out', async ({ p
   await expect(activeStaff).toContainText(/\D(1[2-9]|[2-9]\d)$/); // 12 seeded care staff, plus anyone other tests hired
 
   const nav = page.getByRole('navigation', { name: 'Main' });
-  for (const item of ['Staff', 'Onboarding', 'Academy', 'Compliance', 'Users']) {
-    await expect(nav.getByRole('link', { name: item })).toBeVisible();
+  // Straight in the top bar, and the drop-downs an admin gets (S-018).
+  for (const item of ['Dashboard', 'Recruitment', 'Staff', 'Messages']) {
+    await expect(nav.getByRole('link', { name: item, exact: true })).toBeVisible();
   }
-  await nav.getByRole('link', { name: 'Staff' }).click();
+  for (const menu of ['People', 'Compliance', 'Admin']) await expect(nav.getByRole('button', { name: menu })).toBeVisible();
+  await nav.getByRole('button', { name: 'Admin' }).click();
+  await expect(nav.getByRole('link', { name: 'Users' })).toBeVisible();
+  await nav.getByRole('button', { name: 'Admin' }).click();
+  await nav.getByRole('link', { name: 'Staff', exact: true }).click();
   await expect(page).toHaveURL(/\/staff$/);
 
   const reloaded = page.waitForEvent('load'); // sign-out is a full page load; don't race it

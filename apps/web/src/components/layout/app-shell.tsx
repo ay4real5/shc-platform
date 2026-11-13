@@ -1,22 +1,88 @@
 'use client';
 
-import { LogOut, Menu, X } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { Logo, LogoMark } from '@/components/brand/logo';
 import { roleLabel } from '@/lib/labels';
 import { MessagesBadge } from './messages-badge';
-import { NAV_GROUPS, NAVIGATION } from './navigation';
+import { NAV_MENUS, NAVIGATION, type NavItem } from './navigation';
 import { NotificationBell } from './notification-bell';
 
 /** The SHC mark. Sizes come from the h-/w- classes; text sizes are ignored. */
 export function BrandMark({ className = 'h-9 w-9' }: { className?: string }) {
-  return <LogoMark className={className.replaceAll(/text-\S+/g, '')} />;
+  return <LogoMark className={className.replaceAll(/text-\S+/g, '')} />;
 }
 
-/** Signed-in frame: guards the route, shows the permission-filtered sidebar and the idle warning. */
+const LINK = 'relative flex items-center gap-2 px-3 py-2 text-[15px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-accent-400';
+
+/** A top-bar link; the current page gets a gold rule underneath. */
+function TopLink({ item, active }: { item: NavItem; active: boolean }) {
+  return (
+    <Link href={item.href} aria-current={active ? 'page' : undefined} className={`${LINK} ${active ? 'text-white' : 'text-brand-100 hover:text-white'}`}>
+      {item.label}
+      {item.href === '/messages' && <MessagesBadge />}
+      {active && <span aria-hidden className="absolute inset-x-3 -bottom-[13px] h-[3px] bg-accent-500" />}
+    </Link>
+  );
+}
+
+/** A drop-down in the top bar (People, Compliance, Admin). Closes on a click outside, Escape or navigation. */
+function Menu_({ label, items, activeHref }: { label: string; items: NavItem[]; activeHref: string | undefined }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const holdsActive = items.some((i) => i.href === activeHref);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => box.current && !box.current.contains(e.target as Node) && setOpen(false);
+    const escape = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+  const id = `menu-${label.toLowerCase()}`;
+  return (
+    <div className="relative" ref={box}>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((v) => !v)}
+        className={`${LINK} ${holdsActive || open ? 'text-white' : 'text-brand-100 hover:text-white'}`}
+      >
+        {label}
+        <ChevronDown aria-hidden className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+        {holdsActive && <span aria-hidden className="absolute inset-x-3 -bottom-[13px] h-[3px] bg-accent-500" />}
+      </button>
+      <ul id={id} hidden={!open} className="absolute left-0 top-full z-40 mt-3 min-w-56 border border-slate-200 border-t-[3px] border-t-accent-500 bg-white py-1 shadow-[var(--shadow-lift)]">
+        {items.map((item) => {
+          const active = item.href === activeHref;
+          const Icon = item.icon;
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                onClick={() => setOpen(false)}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-3 px-4 py-2.5 text-sm ${active ? 'bg-brand-50 font-semibold text-brand-900' : 'text-slate-800 hover:bg-canvas hover:text-brand-900'}`}
+              >
+                <Icon aria-hidden className="h-4 w-4 text-brand-500" />
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+/** Signed-in frame (S-018): navy top bar with menus, the page on cream underneath. Guards the route and shows the idle warning. */
 export function AppShell({ children }: { children: ReactNode }) {
   const { status, user, can, logout, idleWarning } = useAuth();
   const router = useRouter();
@@ -36,7 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (status !== 'authenticated' || !user || mustChangePassword || mustSetUp2fa) {
     return (
       <div className="flex min-h-screen items-center justify-center gap-3 text-sm text-slate-500" aria-live="polite">
-        <BrandMark className="h-8 w-8 animate-pulse text-sm" />
+        <BrandMark className="h-8 w-8 animate-pulse" />
         Loading…
       </div>
     );
@@ -48,119 +114,110 @@ export function AppShell({ children }: { children: ReactNode }) {
     .map((item) => item.href)
     .filter((href) => (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)))
     .sort((a, b) => b.length - a.length)[0];
+  const top = items.filter((i) => i.menu === null);
+  const menus = NAV_MENUS.map((m) => ({ label: m, items: items.filter((i) => i.menu === m) })).filter((m) => m.items.length);
   const initials = `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase();
   const role = roleLabel(user.roles[0] ?? '');
 
-  const nav = (label: string, onNavigate?: () => void) => (
-    <nav className="flex flex-col gap-5 px-3" aria-label={label}>
-      {NAV_GROUPS.map((group) => {
-        const groupItems = items.filter((item) => item.group === group);
-        if (!groupItems.length) return null;
-        return (
-          <div key={group} className="flex flex-col gap-0.5">
-            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-200">{group}</p>
-            {groupItems.map((item) => {
-              const active = item.href === activeHref;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onNavigate}
-                  aria-current={active ? 'page' : undefined}
-                  className={`group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all duration-200 ${
-                    active
-                      ? 'bg-gradient-to-r from-white/15 to-white/[0.04] font-semibold text-white shadow-[inset_0_1px_0_rgb(255_255_255_/_0.08)]'
-                      : 'text-brand-100/85 hover:translate-x-0.5 hover:bg-white/[0.06] hover:text-white'
-                  }`}
-                >
-                  {active && <span aria-hidden className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-accent-400 shadow-[0_0_12px_rgb(249_115_98_/_0.8)]" />}
-                  <Icon aria-hidden className={`h-[18px] w-[18px] shrink-0 transition-colors ${active ? 'text-accent-300' : 'text-brand-300 group-hover:text-brand-100'}`} />
-                  <span className="truncate">{item.label}</span>
-                  {item.href === '/messages' && <MessagesBadge />}
-                </Link>
-              );
-            })}
-          </div>
-        );
-      })}
-    </nav>
-  );
-
-  const sidebar = (label: string, onNavigate?: () => void) => (
-    <div className="relative flex h-full flex-col overflow-hidden bg-ink">
-      {/* Soft glow behind the logo and at the foot of the sidebar. */}
-      <div aria-hidden className="pointer-events-none absolute -left-16 -top-24 h-64 w-64 rounded-full bg-brand-500/30 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-20 h-56 w-56 rounded-full bg-accent-500/15 blur-3xl" />
-      <div className="relative px-5 py-5">
-        <Logo tone="dark" />
-      </div>
-      <div className="scroll-quiet relative flex-1 overflow-y-auto pb-4">{nav(label, onNavigate)}</div>
-      <div className="relative border-t border-white/10 p-3">
-        <div className="flex items-center gap-3 rounded-xl bg-white/[0.04] px-2 py-2">
-          <span aria-hidden className="rounded-full bg-gradient-to-br from-brand-300 to-accent-400 p-[2px]">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-ink font-display text-sm font-bold text-white">{initials}</span>
-          </span>
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-sm font-medium text-white">
-              {user.firstName} {user.lastName}
-            </p>
-            <p className="truncate text-xs text-brand-300">{role}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void logout()}
-            aria-label="Sign out"
-            title="Sign out"
-            className="rounded-lg p-2 text-brand-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-brand-400"
-          >
-            <LogOut aria-hidden className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="flex min-h-screen">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 md:block">{sidebar('Main')}</aside>
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-30 bg-brand-900 text-white shadow-[0_1px_0_rgb(0_0_0_/_0.2)]">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 md:px-8">
+          <Link href="/" className="shrink-0 focus-visible:outline-2 focus-visible:outline-accent-400" aria-label="SHC home">
+            <Logo tone="dark" tagline={false} />
+          </Link>
 
-      {menuOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <button type="button" aria-label="Close menu" className="absolute inset-0 bg-ink/40" onClick={() => setMenuOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-72 shadow-2xl">{sidebar('Main (mobile)', () => setMenuOpen(false))}</aside>
+          <nav aria-label="Main" className="ml-4 hidden items-center gap-1 xl:flex">
+            {top.map((item) => (
+              <TopLink key={item.href} item={item} active={item.href === activeHref} />
+            ))}
+            {menus.map((m) => (
+              <Menu_ key={m.label} label={m.label} items={m.items} activeHref={activeHref} />
+            ))}
+          </nav>
+
+          <div className="ml-auto flex items-center gap-2">
+            <NotificationBell />
+            <div className="hidden items-center gap-3 border-l border-white/15 pl-4 md:flex">
+              <span aria-hidden className="inline-flex h-9 w-9 items-center justify-center bg-accent-500 font-display text-sm font-bold text-brand-950">
+                {initials}
+              </span>
+              <span className="leading-tight">
+                <span className="block text-sm font-semibold">
+                  {user.firstName} {user.lastName}
+                </span>
+                <span className="block text-xs text-brand-200">{role}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => void logout()}
+                aria-label="Sign out"
+                title="Sign out"
+                className="p-2 text-brand-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-accent-400"
+              >
+                <LogOut aria-hidden className="h-4 w-4" />
+              </button>
+            </div>
+            <button
+              type="button"
+              className="p-2 text-white hover:bg-white/10 xl:hidden"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              {menuOpen ? <X aria-hidden className="h-5 w-5" /> : <Menu aria-hidden className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
+
+        {menuOpen && (
+          <nav aria-label="Main (mobile)" className="max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-white/10 bg-brand-950 px-4 pb-4 xl:hidden">
+            {[{ label: 'Menu', items: top }, ...menus].map((group) => (
+              <div key={group.label} className="pt-4">
+                <p className="pb-1 text-xs font-semibold uppercase tracking-[0.14em] text-accent-300">{group.label}</p>
+                <ul>
+                  {group.items.map((item) => {
+                    const active = item.href === activeHref;
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setMenuOpen(false)}
+                          aria-current={active ? 'page' : undefined}
+                          className={`flex items-center gap-2 border-l-[3px] px-3 py-2.5 text-[15px] ${active ? 'border-accent-500 font-semibold text-white' : 'border-transparent text-brand-100'}`}
+                        >
+                          {item.label}
+                          {item.href === '/messages' && <MessagesBadge />}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+            <button type="button" onClick={() => void logout()} className="mt-4 flex items-center gap-2 px-3 py-2 text-brand-100 md:hidden">
+              <LogOut aria-hidden className="h-4 w-4" /> Sign out
+            </button>
+          </nav>
+        )}
+      </header>
+
+      {idleWarning && (
+        <div role="alert" className="border-b border-amber-200 bg-amber-50 px-8 py-2 text-sm text-amber-900">
+          You will be signed out in about a minute because of inactivity. Move the mouse or press a key to stay signed in.
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-brand-900/[0.06] bg-white/70 px-4 py-3 backdrop-blur-xl md:px-8">
-          <button
-            type="button"
-            className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 md:hidden"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            onClick={() => setMenuOpen((v) => !v)}
-          >
-            {menuOpen ? <X aria-hidden className="h-5 w-5" /> : <Menu aria-hidden className="h-5 w-5" />}
-          </button>
-          <span className="flex items-center gap-2 font-display font-bold text-ink md:hidden">
-            <BrandMark className="h-7 w-7" /> SHC<span className="-ml-2 text-accent-500">.</span>
-          </span>
-          <div className="ml-auto flex items-center gap-3">
-            <NotificationBell />
-          </div>
-        </header>
+      <main key={pathname} className="mx-auto w-full max-w-7xl flex-1 animate-fade-in px-4 py-6 md:px-8 md:py-8">
+        {children}
+      </main>
 
-        {idleWarning && (
-          <div role="alert" className="border-b border-amber-200 bg-amber-50 px-8 py-2 text-sm text-amber-900">
-            You will be signed out in about a minute because of inactivity. Move the mouse or press a key to stay
-            signed in.
-          </div>
-        )}
-
-        <main key={pathname} className="mx-auto w-full max-w-7xl flex-1 animate-fade-in px-4 py-6 md:px-8 md:py-8">
-          {children}
-        </main>
-      </div>
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-slate-500 md:px-8">
+          <span>SHC · UK hosted · UK GDPR</span>
+          <span>Staff records are confidential. Access is logged.</span>
+        </div>
+      </footer>
     </div>
   );
 }

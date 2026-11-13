@@ -127,10 +127,13 @@ task with a good handoff note is worth more than a finished one nobody can find.
 - Call the API with `useAuth().request(path)` (adds the token, renews once on 401). Never store tokens anywhere.
 - Gate UI with `useAuth().can('patients:read')` — cosmetic only; the API enforces permissions.
 - Pages under `src/app/(app)/` are signed-in only (AppShell guard).
-- Colours come only from the design tokens in `src/app/globals.css` (D-103): `brand-*` (teal), `accent-*` (coral),
-  `canvas`, `ink`, plus slate/emerald/amber/rose/sky for neutrals and status. `npm run lint -w @alora/web` fails on
-  violet/indigo/fuchsia/purple/pink classes. Headings use `font-display` (Plus Jakarta Sans); the logo is
-  `components/brand/logo.tsx`. Mobile colours live in `colors` in `apps/mobile/src/components/ui.tsx`.
+- **SHC has its own look, never Primordial's (DECISIONS S-018).** Colours come only from the design tokens in
+  `src/app/globals.css`: `brand-*` (navy), `accent-*` (gold), `canvas` (cream), `ink`, plus
+  slate/emerald/amber/rose/sky for neutrals and status. Headings use `font-display` (Source Serif 4), text Source Sans 3.
+  Square-ish corners, flat cards, no gradients or glows. Navigation is the navy top bar with drop-downs
+  (`components/layout/navigation.ts`). The logo is the shield in `components/brand/logo.tsx`. Mobile colours live in
+  `colors` in `apps/mobile/src/components/ui.tsx`. `npm run lint -w @alora/web` fails on other colour families and on
+  any Primordial colour, font or mesh background in the website, phone app or emails.
 
 ### File naming
 - NestJS: `kebab-case` (`care-plans.service.ts`); DTOs: `*.dto.ts`

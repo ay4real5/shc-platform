@@ -77,7 +77,7 @@ export default function ReferencePage() {
   const r = info.data;
   return (
     <CareersShell company={r?.company}>
-      <h1 className="font-display text-[28px] font-extrabold tracking-tight text-ink">Reference request</h1>
+      <h1 className="font-display text-[28px] font-bold tracking-tight text-ink">Reference request</h1>
       {!token && <Alert>This page needs the link from the reference email. Please open the link again.</Alert>}
       {info.isLoading && token && <p className="text-sm text-slate-500">Loading…</p>}
       <ErrorAlert error={info.error ?? respond.error} />

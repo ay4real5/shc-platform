@@ -107,8 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login: async (email, password) => finish(await session.login(email, password)),
       verifyTwoFactor: async (token, code) => finish(await session.verifyTwoFactor(token, { code })),
       unlock: async () => {
-        const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Unlock Primordial Health' });
-        if (!result.success) return result.error === 'not_enrolled' ? 'Set a passcode on this phone to unlock Primordial Health.' : null;
+        const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Unlock SHC' });
+        if (!result.success) return result.error === 'not_enrolled' ? 'Set a passcode on this phone to unlock SHC.' : null;
         try {
           const token = await session.renew();
           if (!token) {

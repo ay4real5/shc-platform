@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { goTo } from './nav';
 import { answerTwoFactor } from './two-factor';
 
 const PASSWORD = 'Demo-Password-1!';
@@ -19,7 +20,7 @@ test('an admin adds a user, turns them into staff, and manages credentials, avai
   const stamp = Date.now();
 
   // 1. Create the login.
-  await nav(page).getByRole('link', { name: 'Users' }).click();
+  await goTo(page, 'Users');
   await page.getByRole('link', { name: 'Add user' }).click();
   await page.getByLabel('First name').fill('Robin');
   await page.getByLabel('Last name').fill(`Newhire${stamp}`);

@@ -164,7 +164,7 @@ export function ManagerDashboard({ data, error }: { data: ManagerDashboardData |
           <ol className="mb-3 grid grid-cols-4 gap-2 text-center" aria-label="Applicants by stage">
             {data.hiring.byStage.map((s) => (
               <li key={s.stage} className="rounded-xl bg-canvas px-2 py-3">
-                <p className="tabular font-display text-2xl font-extrabold text-ink">{s.count}</p>
+                <p className="tabular font-display text-2xl font-bold text-ink">{s.count}</p>
                 <p className="text-xs text-slate-600">{s.label}</p>
               </li>
             ))}

@@ -558,7 +558,7 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
-/// Primordial Academy (D-102): a short training module with a quiz. Passing can record a credential.
+/// Academy (D-102): a short training module with a quiz. Passing can record a credential.
 model TrainingCourse {
   id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   agencyId        String   @map("agency_id") @db.Uuid

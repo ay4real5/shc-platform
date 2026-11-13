@@ -3,7 +3,7 @@ import { router, useFocusEffect, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Card, ErrorText, GradientHeader, colors, styles, type IconName } from '@/components/ui';
+import { Card, ErrorText, GradientHeader, colors, styles, type IconName, serif } from '@/components/ui';
 import { errorMessage, useAuth } from '@/lib/auth-context';
 
 interface Alert {
@@ -93,8 +93,8 @@ export default function AlertsScreen() {
       <GradientHeader style={{ paddingTop: insets.top + 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <View>
-            <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800' }}>Alerts</Text>
-            <Text style={{ color: '#9aeedd', fontSize: 15, marginTop: 4 }}>{unread ? `${unread} unread` : 'You’re all caught up'}</Text>
+            <Text style={{ color: colors.white, fontSize: 26, fontWeight: '700', fontFamily: serif }}>Alerts</Text>
+            <Text style={{ color: colors.headerMuted, fontSize: 15, marginTop: 4 }}>{unread ? `${unread} unread` : 'You’re all caught up'}</Text>
           </View>
           {unread > 0 && (
             <Pressable accessibilityRole="button" onPress={() => void markAll()} style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 }}>
@@ -138,7 +138,7 @@ export default function AlertsScreen() {
               if (target) router.push(target);
             }}
           >
-            <Card style={[{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }, !item.isRead && { borderWidth: 1, borderColor: '#9aeedd' }]}>
+            <Card style={[{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }, !item.isRead && { borderWidth: 1, borderColor: colors.accent }]}>
               <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
                 <Ionicons name={ICONS[item.type] ?? 'notifications'} size={20} color={colors.brand} />
               </View>
@@ -147,7 +147,7 @@ export default function AlertsScreen() {
                 {item.body ? <Text style={{ fontSize: 14, color: colors.muted }}>{item.body}</Text> : null}
                 <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{ago(item.createdAt)}</Text>
               </View>
-              {!item.isRead && <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: '#ef5a46', marginTop: 6 }} />}
+              {!item.isRead && <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: colors.accent, marginTop: 6 }} />}
             </Card>
           </Pressable>
         )}

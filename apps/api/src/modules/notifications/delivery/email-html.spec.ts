@@ -13,7 +13,7 @@ describe('emailHtml', () => {
 
   it('links addresses inside a sentence', () => {
     expect(emailHtml('s', 'Open SHC for details: https://app.example.test')).toContain(
-      'Open SHC for details: <a href="https://app.example.test" style="color:#0f766e;word-break:break-all">https://app.example.test</a>',
+      'Open SHC for details: <a href="https://app.example.test" style="color:#263c63;word-break:break-all">https://app.example.test</a>',
     );
   });
 

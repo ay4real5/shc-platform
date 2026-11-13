@@ -60,7 +60,7 @@ export default function ApplicationPage() {
             <li key={i} className="rounded-xl border border-slate-200 p-3 text-sm">
               <p className="font-medium text-slate-900">
                 {h.kind === 'gap' ? 'Gap' : `${h.jobTitle} at ${h.employer}`}
-                {h.wasCareRole && <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-800">care role</span>}
+                {h.wasCareRole && <span className="ml-2 rounded-sm bg-brand-50 px-2 py-0.5 text-xs text-brand-800">care role</span>}
               </p>
               <p className="text-slate-600">
                 {formatDate(h.startDate)} to {h.endDate ? formatDate(h.endDate) : 'now'}

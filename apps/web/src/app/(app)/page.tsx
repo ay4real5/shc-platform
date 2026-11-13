@@ -13,11 +13,12 @@ import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { useAgencyToday } from '@/lib/use-agency-today';
 
+/** Stat card accents (S-018): a coloured rule on the left and a plain icon. */
 const TONES = {
-  brand: { tile: 'bg-gradient-to-br from-brand-100 to-brand-200 text-brand-800', bar: 'from-brand-400 to-brand-600' },
-  accent: { tile: 'bg-gradient-to-br from-accent-50 to-accent-200 text-accent-700', bar: 'from-accent-300 to-accent-500' },
-  amber: { tile: 'bg-gradient-to-br from-amber-50 to-amber-200 text-amber-800', bar: 'from-amber-300 to-amber-500' },
-  sky: { tile: 'bg-gradient-to-br from-sky-50 to-sky-200 text-sky-800', bar: 'from-sky-300 to-sky-500' },
+  brand: { icon: 'text-brand-600', bar: 'border-l-brand-700' },
+  accent: { icon: 'text-accent-700', bar: 'border-l-accent-500' },
+  amber: { icon: 'text-amber-700', bar: 'border-l-amber-500' },
+  sky: { icon: 'text-sky-700', bar: 'border-l-sky-600' },
 } as const;
 
 const noSubscribe = () => () => {};
@@ -46,28 +47,22 @@ function StatCard({
   tone: keyof typeof TONES;
 }) {
   const content = (
-    <Card className="group relative flex items-start justify-between gap-4 overflow-hidden p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]">
-      <span aria-hidden className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${TONES[tone].bar} opacity-80`} />
+    <Card className={`flex h-full items-start justify-between gap-4 border-l-4 p-5 transition-shadow hover:shadow-[var(--shadow-lift)] ${TONES[tone].bar}`}>
       <div>
-        <p className="text-sm font-medium text-slate-500">{label}</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">{label}</p>
         {loading ? (
           <span aria-hidden className="skeleton mt-3 block h-8 w-16" />
         ) : (
-          <p className="tabular mt-2 font-display text-4xl font-extrabold tracking-tight text-ink" aria-live="polite">
+          <p className="tabular mt-2 font-display text-4xl font-semibold text-ink" aria-live="polite">
             {value ?? '—'}
           </p>
         )}
       </div>
-      <span
-        aria-hidden
-        className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110 ${TONES[tone].tile}`}
-      >
-        <Icon className="h-5 w-5" />
-      </span>
+      <Icon aria-hidden className={`h-6 w-6 shrink-0 ${TONES[tone].icon}`} />
     </Card>
   );
   return href ? (
-    <Link href={href} className="rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
+    <Link href={href} className="block h-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500">
       {content}
     </Link>
   ) : (
@@ -80,7 +75,7 @@ export default function DashboardPage() {
   const today = useAgencyToday();
   const greeting = useGreeting();
   const chip =
-    'inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur transition-all hover:-translate-y-0.5 hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-white';
+    'inline-flex items-center gap-2 border border-white/30 px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-accent-400 hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-accent-400';
 
   const manager = useManagerDashboard(can('staff:read'));
   const m = manager.data;
@@ -91,19 +86,15 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="bg-mesh relative overflow-hidden rounded-[28px] p-6 text-white shadow-[var(--shadow-lift)] md:p-9">
-        {/* Decorative rings echoing the logo's spark. */}
-        <div aria-hidden className="absolute -right-10 -top-10 h-48 w-48 rounded-full border border-white/10" />
-        <div aria-hidden className="absolute -right-2 -top-2 h-28 w-28 rounded-full border border-accent-300/30" />
-        <div aria-hidden className="absolute right-12 top-12 h-4 w-4 rounded-full bg-accent-400 shadow-[0_0_24px_rgb(249_115_98_/_0.9)]" />
-        <p className="relative inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-brand-100 ring-1 ring-white/15">
+      <div className="bg-hero rounded-md p-6 text-white md:p-9">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-300">
           {new Date(`${today}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })}
         </p>
-        <h1 className="relative mt-3 font-display text-3xl font-extrabold tracking-tight md:text-[40px] md:leading-tight">
-          {greeting}, <span className="bg-gradient-to-r from-brand-100 to-accent-300 bg-clip-text text-transparent">{user?.firstName}</span>
+        <h1 className="mt-3 font-display text-3xl font-semibold md:text-[40px] md:leading-tight">
+          {greeting}, {user?.firstName}
         </h1>
-        <p className="relative mt-2 max-w-xl text-brand-100">Who is ready to work, what is expiring, and what needs your attention first.</p>
-        <div className="relative mt-6 flex flex-wrap gap-2">
+        <p className="mt-2 max-w-xl text-brand-100">Who is ready to work, what is expiring, and what needs your attention first.</p>
+        <div className="mt-6 flex flex-wrap gap-2">
           {can('staff:create') && (
             <Link href="/staff/new" className={chip}>
               <UserPlus aria-hidden className="h-4 w-4" /> Add staff member

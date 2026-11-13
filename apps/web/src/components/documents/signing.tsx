@@ -49,7 +49,7 @@ export function ToSignCard() {
   return (
     <Card className="flex flex-col gap-3 p-5">
       <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
-        <FileSignature aria-hidden className="h-5 w-5 text-accent-600" /> Documents to sign ({pending.length})
+        <FileSignature aria-hidden className="h-5 w-5 text-accent-700" /> Documents to sign ({pending.length})
       </h2>
       <ul className="divide-y divide-slate-100 text-sm">
         {pending.map((r) => (

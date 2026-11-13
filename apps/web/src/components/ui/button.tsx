@@ -4,17 +4,17 @@ import type { ButtonHTMLAttributes, ComponentProps } from 'react';
 type Variant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
 
 const VARIANTS: Record<Variant, string> = {
-  primary:
-    'bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 text-white shadow-[var(--shadow-glow)] hover:-translate-y-px hover:brightness-110 disabled:opacity-60 disabled:shadow-none disabled:hover:translate-y-0',
-  // Coral, for the one action on a page you most want people to notice. Dark text keeps it readable.
-  accent: 'bg-gradient-to-br from-accent-300 to-accent-400 font-semibold text-accent-900 shadow-sm shadow-accent-700/25 hover:-translate-y-px hover:brightness-105 disabled:opacity-60',
-  secondary: 'border border-slate-200 bg-white text-slate-800 shadow-sm hover:border-brand-300 hover:bg-brand-50/60 hover:text-brand-800 disabled:opacity-50',
+  // Solid navy (S-018): flat, no gradients or glows.
+  primary: 'bg-brand-800 text-white hover:bg-brand-900 disabled:opacity-60',
+  // Gold, for the one action on a page you most want people to notice. Navy text keeps it readable.
+  accent: 'bg-accent-500 font-semibold text-brand-950 hover:bg-accent-400 disabled:opacity-60',
+  secondary: 'border border-brand-200 bg-white text-brand-900 hover:border-brand-400 hover:bg-brand-50 disabled:opacity-50',
   ghost: 'text-slate-700 hover:bg-slate-100 disabled:opacity-50',
   danger: 'bg-rose-600 text-white shadow-sm hover:bg-rose-700 disabled:bg-rose-600/60',
 };
 
 const BASE =
-  'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:active:scale-100';
+  'inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500 disabled:cursor-not-allowed';
 
 export function Button({
   variant = 'primary',

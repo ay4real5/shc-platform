@@ -37,7 +37,7 @@ export default function CompliancePage() {
           <Link key={label} href={href} className="rounded-2xl focus-visible:outline-2 focus-visible:outline-brand-600">
             <Card className={`h-full p-4 transition-shadow hover:shadow-[var(--shadow-lift)] ${value > 0 ? 'border-amber-300' : ''}`}>
               <p className="text-xs text-slate-600">{label}</p>
-              <p className={`font-display text-3xl font-extrabold ${value > 0 ? 'text-amber-800' : 'text-ink'}`}>{value}</p>
+              <p className={`font-display text-3xl font-bold ${value > 0 ? 'text-amber-800' : 'text-ink'}`}>{value}</p>
               <p className="text-xs text-slate-500">{hint}</p>
             </Card>
           </Link>

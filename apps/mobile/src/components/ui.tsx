@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { ComponentProps, ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -15,36 +14,43 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-/** Teal palette (D-103): teal brand, coral accent — the same tokens as the dashboard. */
+/** SHC palette (S-018): navy and gold on warm cream, the same tokens as the website. Nothing shared with Primordial. */
 export const colors = {
-  brand: '#0f766e',
-  brandDark: '#115e59',
-  brandSoft: '#ccf7ee',
-  ink: '#042f2e',
-  indigo: '#134e4a',
-  text: '#0f172a',
+  brand: '#263c63',
+  brandDark: '#1b2a4a',
+  brandSoft: '#e1e8f3',
+  ink: '#1b2a4a',
+  navyDeep: '#111b31',
+  text: '#1e293b',
   muted: '#5b6477',
-  border: '#e2e8f0',
+  border: '#e2ddd0',
   danger: '#be123c',
   dangerBg: '#fff1f2',
   success: '#047857',
   successBg: '#ecfdf5',
   warning: '#92400e',
   warningBg: '#fffbeb',
-  bg: '#f6faf9',
+  bg: '#faf7f0',
   white: '#ffffff',
-  accent: '#f97362',
-  accentSoft: '#fff4f2',
-  /** Secondary text on the dark teal header band. */
-  headerSubtle: '#9aeedd',
+  /** Gold: highlights, badges, the header rule. Navy text on it, never white. */
+  accent: '#c9a227',
+  accentSoft: '#fbf7ea',
+  onAccent: '#111b31',
+  /** Gold text on the navy header band. */
+  headerSubtle: '#e3c55e',
+  /** Secondary text on the navy header band. */
+  headerMuted: '#c3d0e6',
 };
+
+/** Serif headings (S-018), from the phone's own fonts. */
+export const serif = Platform.select({ ios: 'Georgia', default: 'serif' });
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
 /** Soft card shadow on both platforms. */
 export const shadow: ViewStyle = Platform.select({
-  ios: { shadowColor: '#042f2e', shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
-  default: { elevation: 2 },
+  ios: { shadowColor: '#1b2a4a', shadowOpacity: 0.05, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } },
+  default: { elevation: 1 },
 }) as ViewStyle;
 
 /** Large, high-contrast controls: staff use the app one-handed, often outdoors. */
@@ -110,7 +116,7 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
 }
 
 const PILL: Record<string, [string, string]> = {
-  scheduled: ['#ccf7ee', '#115e59'],
+  scheduled: ['#e1e8f3', '#1b2a4a'],
   in_progress: ['#e0f2fe', '#075985'],
   completed: ['#ecfdf5', '#047857'],
   missed: ['#fff1f2', '#be123c'],
@@ -121,25 +127,18 @@ const PILL: Record<string, [string, string]> = {
 export function Pill({ status, label }: { status: string; label?: string }) {
   const [bg, fg] = PILL[status] ?? ['#f1f5f9', '#475569'];
   return (
-    <View style={{ backgroundColor: bg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' }}>
+    <View style={{ backgroundColor: bg, borderRadius: 4, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' }}>
       <Text style={{ color: fg, fontSize: 13, fontWeight: '600' }}>{label ?? status.charAt(0).toUpperCase() + status.slice(1).replaceAll('_', ' ')}</Text>
     </View>
   );
 }
 
-/** Round initials badge. */
+/** Initials badge: a gold square with navy letters. */
 export function Avatar({ first, last, size = 44 }: { first: string; last: string; size?: number }) {
   return (
-    <LinearGradient
-      colors={['#2fc2ae', '#ef5a46']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center' }}
-    >
-      <Text style={{ color: colors.white, fontWeight: '700', fontSize: size * 0.38 }}>
-        {`${first.charAt(0)}${last.charAt(0)}`.toUpperCase()}
-      </Text>
-    </LinearGradient>
+    <View style={{ width: size, height: size, borderRadius: 6, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: size * 0.38, fontFamily: serif }}>{`${first.charAt(0)}${last.charAt(0)}`.toUpperCase()}</Text>
+    </View>
   );
 }
 
@@ -192,47 +191,41 @@ export function ListRow({
   );
 }
 
-/** The deep-teal header band at the top of the main tabs, with a coral glow. */
+/** The navy header band at the top of the main tabs, with a gold rule underneath (S-018). */
 export function GradientHeader({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  return (
-    <LinearGradient colors={['#042f2e', '#0f766e', '#14a896']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, style]}>
-      <View pointerEvents="none" style={styles.headerGlow} />
-      {children}
-    </LinearGradient>
-  );
+  return <View style={[styles.header, style]}>{children}</View>;
 }
 
 export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, padding: 20, gap: 16 },
   center: { flex: 1, backgroundColor: colors.bg, padding: 24, gap: 16, justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: '800', color: colors.ink, letterSpacing: -0.3 },
+  title: { fontSize: 28, fontWeight: '700', color: colors.ink, fontFamily: serif },
   subtitle: { fontSize: 16, color: colors.muted },
   label: { fontSize: 15, fontWeight: '600', color: colors.text },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 14,
+    borderRadius: 6,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 17,
     backgroundColor: colors.white,
     color: colors.text,
   },
-  button: { borderRadius: 16, paddingVertical: 15, alignItems: 'center', minHeight: 54, justifyContent: 'center', paddingHorizontal: 16 },
+  button: { borderRadius: 6, paddingVertical: 15, alignItems: 'center', minHeight: 54, justifyContent: 'center', paddingHorizontal: 16 },
   primary: { backgroundColor: colors.brand },
-  secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#9aeedd' },
+  secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#c3d0e6' },
   dangerButton: { backgroundColor: colors.dangerBg, borderWidth: 1, borderColor: '#fecdd3' },
   buttonText: { fontSize: 17, fontWeight: '700' },
   error: { color: colors.danger, backgroundColor: colors.dangerBg, padding: 12, borderRadius: 12, fontSize: 15 },
-  card: { backgroundColor: colors.white, borderRadius: 20, padding: 16, gap: 4 },
+  card: { backgroundColor: colors.white, borderRadius: 8, borderWidth: 1, borderColor: colors.border, padding: 16, gap: 4 },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 8, marginLeft: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, minHeight: 52 },
   rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-  rowIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' },
+  rowIcon: { width: 34, height: 34, borderRadius: 6, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' },
   rowLabel: { flex: 1, fontSize: 16, fontWeight: '500' },
   rowValue: { fontSize: 15, color: colors.muted, maxWidth: '45%' },
-  header: { paddingHorizontal: 20, paddingBottom: 24, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, overflow: 'hidden' },
-  headerGlow: { position: 'absolute', right: -60, top: -60, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(249,115,98,0.22)' },
+  header: { paddingHorizontal: 20, paddingBottom: 24, backgroundColor: colors.brandDark, borderBottomWidth: 4, borderBottomColor: colors.accent },
 });
 
 /** The SHC mark, the same drawing as the app icon. */

@@ -20,7 +20,7 @@ export default function CareersListPage() {
   return (
     <CareersShell company={page.data?.company.name}>
       <div>
-        <h1 className="font-display text-[28px] font-extrabold tracking-tight text-ink">Work with us</h1>
+        <h1 className="font-display text-[28px] font-bold tracking-tight text-ink">Work with us</h1>
         <p className="mt-1 text-slate-600">
           {page.data ? `${page.data.jobs.length} open ${page.data.jobs.length === 1 ? 'job' : 'jobs'}${page.data.company.town ? ` in and around ${page.data.company.town}` : ''}.` : ' '}
         </p>

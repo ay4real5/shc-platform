@@ -1,63 +1,38 @@
-import { ClipboardCheck, HeartHandshake, ShieldCheck, Sparkles, UserPlus } from 'lucide-react';
+import { Check } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Logo } from '@/components/brand/logo';
 
 const POINTS = [
-  { icon: UserPlus, text: 'Recruitment: careers page to signed contract' },
-  { icon: ClipboardCheck, text: 'CQC-ready staff files: Right to Work, DBS, references' },
-  { icon: Sparkles, text: 'Expiry alerts before anything lapses' },
-  { icon: ShieldCheck, text: 'UK hosted, UK GDPR compliant, encrypted and audited' },
+  'Recruitment, from careers page to signed contract',
+  'CQC-ready staff files: Right to Work, DBS and references',
+  'Alerts before any check or training lapses',
+  'UK hosted, UK GDPR compliant, encrypted and audited',
 ];
 
-/** Signed-out pages (sign in, password reset, 2FA setup): brand panel on the left, the form on the right (D-103). */
+/** Signed-out pages (sign in, password reset, 2FA setup), S-018: the form on cream, a navy panel on the right. */
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <main className="grid min-h-screen lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-      <section aria-label="SHC" className="bg-mesh relative hidden overflow-hidden p-12 text-white lg:flex lg:flex-col">
-        {/* Floating glass card: a glimpse of the product. */}
-        <div aria-hidden className="absolute right-10 top-28 w-64 rotate-3 rounded-3xl border border-white/15 bg-white/10 p-4 shadow-2xl backdrop-blur-md">
-          <div className="flex items-center gap-2 text-xs text-brand-100">
-            <HeartHandshake className="h-4 w-4 text-accent-300" /> New starters
-          </div>
-          <p className="mt-2 font-display text-3xl font-extrabold">
-            92% <span className="text-base font-semibold text-brand-200">ready</span>
-          </p>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15">
-            <div className="h-full w-4/5 rounded-full bg-gradient-to-r from-brand-300 to-accent-400" />
-          </div>
-          <p className="mt-2 text-xs text-brand-100">3 new starters · 1 reference to chase</p>
+    <main className="grid min-h-screen bg-canvas lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+      <div className="flex flex-col px-4 py-8 sm:px-10">
+        <Logo />
+        <div className="flex flex-1 items-center justify-center py-10">
+          <div className="w-full max-w-md animate-fade-in">{children}</div>
         </div>
-
-        <div className="relative">
-          <Logo tone="dark" />
-        </div>
-        <div className="relative mt-auto max-w-md">
-          <p className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight">
-            Your care team,
-            <br />
-            <span className="bg-gradient-to-r from-brand-200 via-brand-100 to-accent-300 bg-clip-text text-transparent">ready to care.</span>
-          </p>
-          <p className="mt-4 text-brand-100">Recruitment, onboarding and compliance in one place, so every carer starts ready and stays compliant.</p>
-          <ul className="mt-8 flex flex-col gap-3.5">
-            {POINTS.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-3 text-sm text-brand-50">
-                <span aria-hidden className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
-                  <Icon className="h-4 w-4 text-accent-200" />
-                </span>
-                {text}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-      <div className="bg-mesh-light flex items-center justify-center p-4 sm:p-8 lg:bg-none">
-        <div className="w-full max-w-md animate-fade-in">
-          <div className="mb-8 lg:hidden">
-            <Logo />
-          </div>
-          {children}
-        </div>
+        <p className="text-xs text-slate-600">SHC · Staff records are confidential.</p>
       </div>
+      <section aria-label="About SHC" className="bg-hero hidden flex-col justify-center border-b-0 border-l-4 border-l-accent-500 p-14 text-white lg:flex">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-300">Care workforce platform</p>
+        <p className="mt-4 max-w-md font-display text-[42px] font-semibold leading-[1.12]">Every carer ready. Every file in order.</p>
+        <span aria-hidden className="mt-6 block h-[3px] w-16 bg-accent-500" />
+        <ul className="mt-8 flex max-w-md flex-col gap-4">
+          {POINTS.map((text) => (
+            <li key={text} className="flex items-start gap-3 text-[15px] text-brand-50">
+              <Check aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-accent-400" />
+              {text}
+            </li>
+          ))}
+        </ul>
+      </section>
     </main>
   );
 }

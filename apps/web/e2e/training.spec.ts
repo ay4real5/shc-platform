@@ -1,4 +1,5 @@
 import { expect, request, test } from '@playwright/test';
+import { goTo } from './nav';
 
 const API = (process.env.API_URL ?? 'http://localhost:3001/api/v1') + '/';
 
@@ -22,7 +23,7 @@ test('training matrix and Care Certificate sign-off', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible({ timeout: 20_000 });
 
-  await page.getByRole('link', { name: 'Training matrix' }).click();
+  await goTo(page, 'Training matrix');
   await expect(page.getByRole('heading', { name: 'Training matrix' })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole('columnheader', { name: /Care Certificate/ })).toBeVisible();
   await expect(page.getByText(/^\d+\/16$/).first()).toBeVisible(); // someone part-way through

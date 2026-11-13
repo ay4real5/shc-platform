@@ -49,7 +49,7 @@ export function HealthPromptCard() {
   return (
     <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
       <p className="flex items-center gap-2 text-sm text-slate-800">
-        <HeartPulse aria-hidden className="h-5 w-5 text-accent-600" /> Please fill in your health questionnaire before you start.
+        <HeartPulse aria-hidden className="h-5 w-5 text-accent-700" /> Please fill in your health questionnaire before you start.
       </p>
       <ButtonLink href="/health" variant="accent">
         Fill it in

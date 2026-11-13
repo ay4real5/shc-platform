@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { Button, Card, ErrorText, colors } from '@/components/ui';
+import { Button, Card, ErrorText, colors, serif } from '@/components/ui';
 import { errorMessage, useAuth } from '@/lib/auth-context';
 
 interface Lesson {
@@ -67,7 +67,7 @@ export default function CourseScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, gap: 14, paddingBottom: 48 }}>
-      <Text style={{ fontSize: 22, fontWeight: '800', color: colors.ink }}>{lesson.title}</Text>
+      <Text style={{ fontSize: 22, fontWeight: '700', fontFamily: serif, color: colors.ink }}>{lesson.title}</Text>
       <Card style={{ gap: 10 }}>
         {lesson.content.split(/\n\s*\n/).map((p, i) => (
           <Text key={i} style={{ fontSize: 16, lineHeight: 24, color: colors.text }}>

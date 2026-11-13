@@ -3,7 +3,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { useLiveSocket } from '@/lib/realtime';
 import type { AppNotification } from '@/lib/types/notifications';
@@ -58,23 +57,21 @@ export function NotificationBell() {
   const count = unread.data ?? 0;
   return (
     <div className="relative" ref={panel}>
-      <Button
-        variant="ghost"
+      <button
+        type="button"
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={count ? `Notifications, ${count} unread` : 'Notifications'}
         onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1.5 p-2 text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-accent-400"
       >
-        <Bell aria-hidden className="h-5 w-5 text-slate-600" />
+        <Bell aria-hidden className="h-5 w-5 text-accent-200" />
         {count > 0 && (
-          <span
-            className="rounded-full bg-accent-600 px-1.5 text-xs font-semibold text-white"
-            aria-hidden
-          >
+          <span className="bg-accent-500 px-1.5 text-xs font-bold text-brand-950" aria-hidden>
             {count > 99 ? '99+' : count}
           </span>
         )}
-      </Button>
+      </button>
       {open && (
         <div
           role="region"

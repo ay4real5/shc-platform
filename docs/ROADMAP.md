@@ -41,6 +41,7 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 - [x] **S3-04** `agent` Supervisions and appraisals: schedule, record, remind.
 - [x] **S3-05** `agent` Manager dashboard: who can't work yet and why, what expires this month, hiring at a glance.
 - [x] **S3-06** `agent` Staff phone app (reuse the caregiver app): documents, training, holiday, messages.
+- [x] **S3-08** `agent` SHC's own look (navy and gold), nothing shared with Primordial's design (S-018).
 - [ ] **S3-07** `agent`+`human` UK hosting (Azure UK South), domain, email sender; manager training.
 
 ## Needs Ayo (`human`)

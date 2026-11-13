@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
-import { Button, ErrorText, GradientHeader, colors } from '@/components/ui';
+import { Button, ErrorText, GradientHeader, colors, serif } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
 import { useOffline } from '@/lib/offline';
 
@@ -35,8 +35,8 @@ export default function UnlockScreen() {
         <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name="lock-closed" size={38} color={colors.white} />
         </View>
-        <Text style={{ color: colors.white, fontSize: 26, fontWeight: '800', textAlign: 'center' }}>SHC is locked</Text>
-        <Text style={{ color: '#9aeedd', fontSize: 16, textAlign: 'center' }}>
+        <Text style={{ color: colors.white, fontSize: 26, fontWeight: '700', fontFamily: serif, textAlign: 'center' }}>SHC is locked</Text>
+        <Text style={{ color: colors.headerMuted, fontSize: 16, textAlign: 'center' }}>
           Unlock with Face ID, fingerprint or your phone passcode.
         </Text>
       </View>

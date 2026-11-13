@@ -4,7 +4,7 @@ import { router, useFocusEffect, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Avatar, Card, ErrorText, GradientHeader, Pill, SectionTitle, colors, type IconName } from '@/components/ui';
+import { Avatar, Card, ErrorText, GradientHeader, Pill, SectionTitle, colors, type IconName, serif } from '@/components/ui';
 import { errorMessage, useAuth } from '@/lib/auth-context';
 import {
   careCertificateText,
@@ -131,7 +131,7 @@ export default function HomeScreen() {
           <Avatar first={user.firstName} last={user.lastName} size={52} />
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.headerSubtle, fontSize: 14, fontWeight: '600' }}>{today ? longDate(today) : ''}</Text>
-            <Text style={{ color: colors.white, fontSize: 24, fontWeight: '800' }}>
+            <Text style={{ color: colors.white, fontSize: 24, fontWeight: '700', fontFamily: serif }}>
               {greeting(hour)}, {user.firstName}
             </Text>
           </View>

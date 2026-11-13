@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { goTo } from './nav';
 
 async function signIn(page: Page, email: string) {
   if (!page.url().endsWith('/login')) await page.goto('/login');
@@ -22,7 +23,7 @@ test('a policy is sent to everyone, a care worker signs it from the home page, a
   test.setTimeout(150_000);
   const title = `Safeguarding policy ${Date.now()}`;
   await signIn(page, 'care.coordinator@demo.shc.test');
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Documents' }).click();
+  await goTo(page, 'Documents');
   await expect(page.getByRole('heading', { name: 'Company documents' })).toBeVisible({ timeout: 20_000 });
   await page.getByLabel('Title').fill(title);
   await page.getByLabel('File (PDF)').setInputFiles({ name: 'policy.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n% FAKE policy\n%%EOF\n') });
@@ -47,7 +48,7 @@ test('a policy is sent to everyone, a care worker signs it from the home page, a
   // The office sees it.
   await signOut(page);
   await signIn(page, 'care.coordinator@demo.shc.test');
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Documents' }).click();
+  await goTo(page, 'Documents');
   const again = page.getByRole('listitem').filter({ hasText: title });
   await again.getByRole('button', { name: 'Who has signed' }).click();
   await expect(again.getByText(/^1 of \d+ signed\./)).toBeVisible({ timeout: 20_000 });
