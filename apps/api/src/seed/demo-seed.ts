@@ -76,6 +76,8 @@ const STAFF_PLAN: { discipline: Discipline; count: number; role: string }[] = [
   { discipline: 'care_worker', count: 6, role: 'care_worker' },
   { discipline: 'support_worker', count: 4, role: 'support_worker' },
 ];
+/** Demo regions (S-028): staff are spread across them in turn. */
+export const DEMO_REGIONS = ['Greater Manchester', 'Bristol', 'Teesside'] as const;
 const OFFICE_ROLES = ['super_admin', 'agency_admin', 'registered_manager', 'care_coordinator', 'recruiter'];
 
 export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): Promise<SeedSummary> {
@@ -99,6 +101,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       postcode: 'M1 1AA',
       timezone,
       careersSlug: DEMO_CAREERS_SLUG,
+      settings: { regions: [...DEMO_REGIONS] },
     },
   });
 
@@ -154,6 +157,7 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
           agencyId: DEMO_AGENCY_ID,
           employeeId: `D${String(staffNo).padStart(4, '0')}`,
           discipline: plan.discipline,
+          region: DEMO_REGIONS[staffNo % DEMO_REGIONS.length],
           employmentType: rand.pick(['full_time', 'full_time', 'part_time', 'zero_hours', 'bank']),
           hireDate: toDate(addDays(today, ccInProgress ? -rand.int(20, 70) : i === 0 ? -rand.int(400, 1500) : -rand.int(30, 1500))),
           daysPerWeek: i === 0 ? 5 : rand.pick([5, 5, 4, 3, 2.5]), // demo logins: full time, for stable tests
@@ -352,6 +356,7 @@ async function seedNurses(prisma: PrismaClient, coordinatorId: string, passwordH
         agencyId: DEMO_AGENCY_ID,
         employeeId: `D${String(staffNo).padStart(4, '0')}`,
         discipline: n.discipline,
+        region: DEMO_REGIONS[staffNo % DEMO_REGIONS.length],
         employmentType: 'bank',
         hireDate: toDate(hireDate),
         daysPerWeek: 3,

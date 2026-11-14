@@ -59,7 +59,7 @@ healthcare staffing service (RGN/RMN/RNLD nurses, HCAs, AHPs, doctors) across ni
 recruitment. These make SHC fit that business.
 - [x] **S5-01** `agent` Clinical and staffing roles (RGN, RMN, RNLD, HCA, AHP, doctor) with NMC/HCPC/GMC register
   checks: panel on the Checks tab, number formats, renewal reminders, inspection pack line, import column (S-027).
-- [ ] **S5-02** `agent` Regions: company list of regions, region on each staff member, region filters everywhere.
+- [x] **S5-02** `agent` Regions: company list of regions, region on each staff member, region filters everywhere.
 - [ ] **S5-03** `agent` Complex-care training: Oliver McGowan, MCA/DoLS, mental health, PBS/restrictive practice,
   epilepsy, clinical skills (optional).
 - [ ] **S5-04** `agent` Sponsored worker (visa) tracker: visa route/expiry, CoS, sponsor-duty reminders, list for

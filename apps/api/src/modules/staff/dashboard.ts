@@ -1,5 +1,5 @@
 import { APPLICATION_STAGE_LABELS, OPEN_APPLICATION_STAGES, type ApplicationStage } from '@alora/shared';
-import { Controller, Get, Injectable } from '@nestjs/common';
+import { Controller, Get, Injectable, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
@@ -8,6 +8,7 @@ import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CareCertificateService } from './care-certificate.js';
 import { CredentialsService } from './credentials.service.js';
+import { RegionQueryDto } from './dto/staff.dto.js';
 import { OnboardingService } from './onboarding.service.js';
 import { SupervisionsService } from './supervisions.js';
 
@@ -57,15 +58,16 @@ export class DashboardService {
     private readonly supervisions: SupervisionsService,
   ) {}
 
-  async manager(caller: AuthUser): Promise<ManagerDashboard> {
+  /** `region` (S-028) narrows the staff figures (readiness, expiries, training); hiring and approvals stay company-wide. */
+  async manager(caller: AuthUser, region?: string): Promise<ManagerDashboard> {
     const agencyId = caller.agencyId;
     const today = await this.clock.todayString(agencyId);
     const weekAgo = new Date(`${addDays(today, -7)}T00:00:00Z`);
     const in7Days = new Date(`${addDays(today, 8)}T00:00:00Z`);
     const [readiness, expiring, matrix, supervisions, openJobs, newApplications, stages, interviews, waiting, timeOff, health] = await Promise.all([
-      this.onboarding.overview(caller),
-      this.credentials.expiring(caller, 30),
-      this.careCertificate.matrix(caller),
+      this.onboarding.overview(caller, region),
+      this.credentials.expiring(caller, 30, region),
+      this.careCertificate.matrix(caller, region),
       this.supervisions.overview(agencyId),
       this.prisma.jobPosting.count({ where: { agencyId, status: 'open' } }),
       this.prisma.application.count({ where: { agencyId, createdAt: { gte: weekAgo } } }),
@@ -126,7 +128,7 @@ export class DashboardController {
   /** Everything a manager needs first thing (staff:read). */
   @Permissions('staff:read')
   @Get('manager')
-  manager(@CurrentUser() caller: AuthUser) {
-    return this.dashboard.manager(caller);
+  manager(@CurrentUser() caller: AuthUser, @Query() query: RegionQueryDto) {
+    return this.dashboard.manager(caller, query.region);
   }
 }

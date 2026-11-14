@@ -27,7 +27,7 @@ export interface CredentialView {
 }
 
 export interface ExpiringCredential extends CredentialView {
-  staff: { id: string; firstName: string; lastName: string; discipline: string };
+  staff: { id: string; firstName: string; lastName: string; discipline: string; region: string | null };
 }
 
 type CredentialRow = Prisma.StaffCredentialGetPayload<object>;
@@ -122,17 +122,17 @@ export class CredentialsService {
   }
 
   /** Active staff's credentials that are expired or expire within `withinDays`, soonest first. */
-  async expiring(caller: AuthUser, withinDays: number): Promise<ExpiringCredential[]> {
+  async expiring(caller: AuthUser, withinDays: number, region?: string): Promise<ExpiringCredential[]> {
     const today = await this.clock.todayString(caller.agencyId);
     const rows = await this.prisma.staffCredential.findMany({
       where: {
         expiryDate: { lte: toDate(addDays(today, withinDays)) },
         status: 'active',
-        staffProfile: { agencyId: caller.agencyId, isActive: true },
+        staffProfile: { agencyId: caller.agencyId, isActive: true, ...(region ? { region } : {}) },
       },
       include: {
         staffProfile: {
-          select: { id: true, discipline: true, user: { select: { firstName: true, lastName: true } } },
+          select: { id: true, discipline: true, region: true, user: { select: { firstName: true, lastName: true } } },
         },
       },
       orderBy: { expiryDate: 'asc' },
@@ -145,6 +145,7 @@ export class CredentialsService {
         firstName: row.staffProfile.user.firstName,
         lastName: row.staffProfile.user.lastName,
         discipline: row.staffProfile.discipline,
+        region: row.staffProfile.region,
       },
     }));
   }

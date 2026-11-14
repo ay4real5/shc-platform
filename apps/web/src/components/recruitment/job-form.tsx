@@ -1,5 +1,6 @@
 'use client';
 
+import { useRegions } from '@/lib/region';
 import { DISCIPLINES, EMPLOYMENT_TYPES } from '@alora/shared';
 import { useState, type FormEvent } from 'react';
 import { AiAssist } from '@/components/ai/ai-assist';
@@ -15,6 +16,7 @@ import type { Job } from '@/lib/types/recruitment';
 export function JobForm({ job, submitLabel, onSubmit }: { job?: Job; submitLabel: string; onSubmit(body: Record<string, unknown>): Promise<void> }) {
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const regions = useRegions();
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -65,7 +67,12 @@ export function JobForm({ job, submitLabel, onSubmit }: { job?: Job; submitLabel
             </option>
           ))}
         </SelectField>
-        <Field label="Location" name="location" required maxLength={150} defaultValue={job?.location} hint="As applicants will see it, e.g. Manchester (M14)." />
+        <Field label="Location" name="location" required maxLength={150} defaultValue={job?.location} list="region-options" hint="As applicants will see it, e.g. Manchester (M14). Your regions are suggested." />
+        <datalist id="region-options">
+          {regions.map((r) => (
+            <option key={r} value={r} />
+          ))}
+        </datalist>
         <Field label="Hours" name="hours" maxLength={150} defaultValue={job?.hours ?? ''} hint="e.g. 16 to 37.5 hours a week, days and weekends." />
         <Field label="Pay from (£)" name="payFrom" type="number" step="0.01" min={0} defaultValue={job?.payFrom ?? ''} />
         <Field label="Pay to (£)" name="payTo" type="number" step="0.01" min={0} defaultValue={job?.payTo ?? ''} />

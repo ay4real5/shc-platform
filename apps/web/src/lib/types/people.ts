@@ -42,6 +42,8 @@ export interface StaffSummary {
   lastName: string;
   employeeId: string | null;
   discipline: string;
+  /** One of the company's regions (S-028), or null. */
+  region: string | null;
   employmentType: string;
   isActive: boolean;
   skills: string[];

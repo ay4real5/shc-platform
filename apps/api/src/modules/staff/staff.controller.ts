@@ -30,6 +30,7 @@ import {
   UpdateCredentialDto,
   UpdateStaffDto,
   OnboardingRequirementsDto,
+  RegionQueryDto,
 } from './dto/staff.dto.js';
 import { StaffService } from './staff.service.js';
 
@@ -54,8 +55,8 @@ export class StaffController {
   /** Every active staff member's readiness, least ready first. */
   @Permissions('staff:read')
   @Get('onboarding')
-  onboardingOverview(@CurrentUser() caller: AuthUser) {
-    return this.onboarding.overview(caller);
+  onboardingOverview(@CurrentUser() caller: AuthUser, @Query() query: RegionQueryDto) {
+    return this.onboarding.overview(caller, query.region);
   }
 
   /** Credentials each discipline needs (agency setting, with defaults). */
@@ -100,7 +101,7 @@ export class StaffController {
   @Permissions('staff:read')
   @Get('expiring-credentials')
   expiring(@CurrentUser() caller: AuthUser, @Query() query: ExpiringCredentialsQueryDto) {
-    return this.credentials.expiring(caller, query.withinDays);
+    return this.credentials.expiring(caller, query.withinDays, query.region);
   }
 
   /** Users who can be given a staff profile (active, no profile yet). */

@@ -2501,3 +2501,17 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Import:** "Registration number" column, put on the role's register credential (not verified: check in SHC).
 - **Demo:** two FAKE nurses (Ada Okafor RGN, checked; Ben Hartley RMN, unchecked and renewing soon), seeded last so the
   rest of the demo doesn't change. FAKE PINs start `00Z`.
+
+### S-028 — Regions (S5-02)
+- **Why:** Support Health Care Ltd works across nine English regions; one list of 50+ staff is hard to manage.
+- **Data:** the company's regions live in `agencies.settings.regions` (Admin → Company, one per line, up to 30, tidied
+  by `cleanRegions`). Each staff member has `staff_profiles.region` (migration `20261114000100_staff_region`, indexed with
+  agency), checked against the list; set on the staff form, the spreadsheet import ("Region" column) or left empty.
+  `GET /agency/regions` (staff:read) feeds pickers.
+- **Filters (server side, optional `region` query):** staff list, onboarding, expiring checks, training matrix,
+  inspection overview and the manager dashboard (staff figures only; hiring and approvals stay company-wide).
+- **Web:** one region choice shared by all those pages (`lib/region.tsx`, remembered in the browser; a stale value is
+  ignored). Companies with no regions never see a region control. Job adverts suggest regions as locations.
+- **Also:** `DISCIPLINE_DEFAULT_ROLE` now `satisfies Record<Discipline, string>`, so a new job role can't be added without
+  a login role (S5-01's roles were missing; they'd have fallen back to care worker).
+- **Demo:** three regions (Greater Manchester, Bristol, Teesside), staff spread across them in turn.

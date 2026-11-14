@@ -9,12 +9,14 @@ import { Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader, Pager, StatusBadge } from '@/components/ui/data-display';
 import { SelectField } from '@/components/ui/form-controls';
 import { Field } from '@/components/ui/field';
+import { RegionFilter, regionParam, useRegion } from '@/lib/region';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { disciplineLabel, humanize } from '@/lib/labels';
 import type { StaffSummary } from '@/lib/types/people';
 
 export default function StaffPage() {
   const { request, can } = useAuth();
+  const [region] = useRegion();
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
   const [discipline, setDiscipline] = useState('');
@@ -37,13 +39,14 @@ export default function StaffPage() {
   const ready = new Map((readiness.data ?? []).map((r) => [r.staffId, r]));
 
   const staff = useQuery({
-    queryKey: ['staff', { debounced, discipline, active, page }],
+    queryKey: ['staff', { debounced, discipline, active, page, region }],
     placeholderData: keepPreviousData,
     queryFn: () => {
       const params = new URLSearchParams({ page: String(page), limit: '25' });
       if (debounced) params.set('search', debounced);
       if (discipline) params.set('discipline', discipline);
       if (active) params.set('isActive', active);
+      if (region) params.set('region', region);
       return request<StaffSummary[]>(`/staff?${params}`);
     },
   });
@@ -55,6 +58,7 @@ export default function StaffPage() {
         subtitle="Care and support workers, office staff: job roles, checks, availability and holidays."
         actions={
           <>
+            <RegionFilter />
             <ButtonLink href="/staff/onboarding" variant="secondary">
               Onboarding
             </ButtonLink>

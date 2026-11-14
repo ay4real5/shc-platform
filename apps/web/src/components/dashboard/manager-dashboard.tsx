@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { ErrorAlert, StatusBadge, formatDate } from '@/components/ui/data-display';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { regionParam, useRegion } from '@/lib/region';
 import { disciplineLabel } from '@/lib/labels';
 
 export interface ManagerDashboardData {
@@ -38,10 +39,11 @@ export interface ManagerDashboardData {
 
 export function useManagerDashboard(enabled: boolean) {
   const { request } = useAuth();
+  const [region] = useRegion();
   return useQuery({
-    queryKey: ['dashboard', 'manager'],
+    queryKey: ['dashboard', 'manager', region],
     enabled,
-    queryFn: async () => (await request<ManagerDashboardData>('/dashboard/manager')).data,
+    queryFn: async () => (await request<ManagerDashboardData>(`/dashboard/manager${regionParam(region)}`)).data,
   });
 }
 

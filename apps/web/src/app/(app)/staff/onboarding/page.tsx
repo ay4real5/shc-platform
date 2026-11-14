@@ -8,6 +8,7 @@ import { ReadinessBar } from '@/components/staff/onboarding-card';
 import { Button } from '@/components/ui/button';
 import { Alert, Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader } from '@/components/ui/data-display';
+import { RegionFilter, regionParam, useRegion } from '@/lib/region';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { disciplineLabel } from '@/lib/labels';
 
@@ -23,9 +24,10 @@ interface Row {
 /** Who is ready to work and what's left for the rest (D-101), plus the checks each job role needs. */
 export default function OnboardingPage() {
   const { request, can } = useAuth();
+  const [region] = useRegion();
   const queryClient = useQueryClient();
   const [showReady, setShowReady] = useState(false);
-  const overview = useQuery({ queryKey: ['staff', 'onboarding'], queryFn: async () => (await request<Row[]>('/staff/onboarding')).data });
+  const overview = useQuery({ queryKey: ['staff', 'onboarding', region], queryFn: async () => (await request<Row[]>(`/staff/onboarding${regionParam(region)}`)).data });
   const requirements = useQuery({
     queryKey: ['staff', 'onboarding', 'requirements'],
     queryFn: async () => (await request<Record<string, string[]>>('/staff/onboarding/requirements')).data,
@@ -55,7 +57,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex max-w-5xl flex-col gap-6">
-      <PageHeader title="Onboarding" subtitle="Who is ready to work, and what's still missing for everyone else." />
+      <PageHeader title="Onboarding" subtitle="Who is ready to work, and what's still missing for everyone else." actions={<RegionFilter />} />
       <Card className="flex flex-col gap-3 p-4">
         <label className="flex items-center gap-2 text-sm text-slate-800">
           <input type="checkbox" checked={showReady} onChange={(e) => setShowReady(e.target.checked)} /> Show people who are ready too

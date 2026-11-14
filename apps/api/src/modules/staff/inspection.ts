@@ -1,5 +1,6 @@
 import { DBS_LEVEL_LABELS, RTW_METHOD_LABELS, inspectionItems, inspectionSummary, type DbsLevel, type InspectionItem } from '@alora/shared';
 import { BadRequestException, Controller, Get, Injectable, Query } from '@nestjs/common';
+import { RegionQueryDto } from './dto/staff.dto.js';
 import { ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsUUID } from 'class-validator';
@@ -26,6 +27,7 @@ export interface InspectionPerson {
   staffId: string;
   name: string;
   discipline: string;
+  region: string | null;
   employeeId: string | null;
   hireDate: string | null;
   isActive: boolean;
@@ -49,6 +51,7 @@ export interface InspectionPack extends InspectionPerson {
 const SELECT = {
   id: true,
   discipline: true,
+  region: true,
   employeeId: true,
   hireDate: true,
   isActive: true,
@@ -73,8 +76,8 @@ export class InspectionService {
   ) {}
 
   /** Every active staff member, least ready first. */
-  async overview(caller: AuthUser): Promise<InspectionOverviewRow[]> {
-    const packs = await this.build(caller, { isActive: true });
+  async overview(caller: AuthUser, region?: string): Promise<InspectionOverviewRow[]> {
+    const packs = await this.build(caller, { isActive: true, ...(region ? { region } : {}) });
     return packs
       .map(({ items, documents: _documents, ...rest }) => ({ ...rest, missing: items.filter((i) => i.status === 'missing').map((i) => i.title) }))
       .sort((a, b) => b.counts.missing - a.counts.missing || b.counts.attention - a.counts.attention || a.name.localeCompare(b.name));
@@ -91,7 +94,7 @@ export class InspectionService {
     return { company: agency.name, generatedOn, packs: packs.sort((a, b) => a.name.localeCompare(b.name)) };
   }
 
-  private async build(caller: AuthUser, where: { isActive?: boolean; id?: { in: string[] } }): Promise<InspectionPack[]> {
+  private async build(caller: AuthUser, where: { isActive?: boolean; region?: string; id?: { in: string[] } }): Promise<InspectionPack[]> {
     const [rows, today] = await Promise.all([
       this.prisma.staffProfile.findMany({ where: { ...where, agencyId: caller.agencyId }, select: SELECT }),
       this.clock.todayString(caller.agencyId),
@@ -163,6 +166,7 @@ export class InspectionService {
         staffId: r.id,
         name: `${r.user.firstName} ${r.user.lastName}`,
         discipline: r.discipline,
+        region: r.region,
         employeeId: r.employeeId,
         hireDate: fromDate(r.hireDate),
         isActive: r.isActive,
@@ -183,8 +187,8 @@ export class InspectionController {
   /** Team health check: every active person's staff file, least ready first. */
   @Permissions('compliance:read', 'staff:read')
   @Get('overview')
-  overview(@CurrentUser() caller: AuthUser) {
-    return this.inspection.overview(caller);
+  overview(@CurrentUser() caller: AuthUser, @Query() query: RegionQueryDto) {
+    return this.inspection.overview(caller, query.region);
   }
 
   /** Full packs for the people an inspector asked about (?ids=a,b,c). */

@@ -8,6 +8,7 @@ import { InspectionOverviewRow, StatusChip } from '@/components/inspection/inspe
 import { ButtonLink } from '@/components/ui/button';
 import { Alert, Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader } from '@/components/ui/data-display';
+import { RegionFilter, regionParam, useRegion } from '@/lib/region';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { disciplineLabel } from '@/lib/labels';
 
@@ -19,12 +20,13 @@ type Filter = 'all' | 'gaps' | 'ready';
  */
 export default function InspectionPage() {
   const { request } = useAuth();
+  const [region] = useRegion();
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<Filter>('all');
 
   const overview = useQuery({
-    queryKey: ['inspection', 'overview'],
-    queryFn: async () => (await request<InspectionOverviewRow[]>('/inspection/overview')).data,
+    queryKey: ['inspection', 'overview', region],
+    queryFn: async () => (await request<InspectionOverviewRow[]>(`/inspection/overview${regionParam(region)}`)).data,
   });
   const rows = useMemo(() => overview.data ?? [], [overview.data]);
   const shown = rows.filter((r) => (filter === 'gaps' ? !r.ready : filter === 'ready' ? r.ready : true));
@@ -48,11 +50,14 @@ export default function InspectionPage() {
         title="CQC inspection pack"
         subtitle="Every staff file checked against Regulation 19 and Schedule 3. Fix gaps before an inspector finds them, and print a pack in one click."
         actions={
-          rows.length > 0 && (
+          <>
+            <RegionFilter />
+            {rows.length > 0 && (
             <ButtonLink href={packHref(rows.map((r) => r.staffId).slice(0, 100))} variant="secondary">
               Pack for everyone
             </ButtonLink>
-          )
+            )}
+          </>
         }
       />
       <ErrorAlert error={overview.error} />

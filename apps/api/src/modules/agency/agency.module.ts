@@ -1,8 +1,8 @@
 import { BadRequestException, Body, Controller, Get, Injectable, Module, Patch } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { DEFAULT_LEAVE_YEAR_START_MONTH, DEFAULT_SUPERVISION_INTERVALS, SUPERVISION_TYPES, type SupervisionType } from '@alora/shared';
-import { IsBoolean, IsInt, IsObject, IsNotEmpty, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+import { DEFAULT_LEAVE_YEAR_START_MONTH, DEFAULT_SUPERVISION_INTERVALS, MAX_REGIONS, SUPERVISION_TYPES, agencyRegions, cleanRegions, type SupervisionType } from '@alora/shared';
+import { ArrayMaxSize, IsArray, IsBoolean, IsInt, IsObject, IsNotEmpty, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 import { Audit } from '../../common/decorators/audit.decorator.js';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Permissions } from '../../common/decorators/permissions.decorator.js';
@@ -68,6 +68,14 @@ export class UpdateAgencyDto {
   @IsOptional()
   @IsObject()
   supervisionEveryMonths?: Partial<Record<SupervisionType, number>>;
+
+  /** The company's regions (S-028), e.g. ["Greater Manchester", "Bristol"]. Replaces the list; [] removes regions. */
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_REGIONS * 2)
+  @IsString({ each: true })
+  @MaxLength(200, { each: true })
+  regions?: string[];
 }
 
 export interface AgencyView {
@@ -83,6 +91,7 @@ export interface AgencyView {
   recognitionBadges: boolean;
   leaveYearStartMonth: number;
   supervisionEveryMonths: Record<SupervisionType, number>;
+  regions: string[];
 }
 
 const SELECT = {
@@ -111,7 +120,13 @@ function view({ settings, ...agency }: Prisma.AgencyGetPayload<{ select: typeof 
   const supervisionEveryMonths = Object.fromEntries(
     SUPERVISION_TYPES.map((t) => [t, typeof custom[t] === 'number' ? (custom[t] as number) : DEFAULT_SUPERVISION_INTERVALS[t].everyMonths]),
   ) as Record<SupervisionType, number>;
-  return { ...agency, recognitionBadges: recognitionEnabled(settings), leaveYearStartMonth: typeof month === 'number' ? month : DEFAULT_LEAVE_YEAR_START_MONTH, supervisionEveryMonths };
+  return {
+    ...agency,
+    recognitionBadges: recognitionEnabled(settings),
+    leaveYearStartMonth: typeof month === 'number' ? month : DEFAULT_LEAVE_YEAR_START_MONTH,
+    supervisionEveryMonths,
+    regions: agencyRegions(settings),
+  };
 }
 
 /**
@@ -126,8 +141,20 @@ export class AgencyService {
     return view(await this.prisma.agency.findUniqueOrThrow({ where: { id: caller.agencyId }, select: SELECT }));
   }
 
+  /** Just the region names (S-028), for anyone who works with staff lists. */
+  async regions(caller: AuthUser): Promise<string[]> {
+    const agency = await this.prisma.agency.findUniqueOrThrow({ where: { id: caller.agencyId }, select: { settings: true } });
+    return agencyRegions(agency.settings);
+  }
+
   async update(caller: AuthUser, dto: UpdateAgencyDto): Promise<AgencyView> {
-    const { recognitionBadges, leaveYearStartMonth, supervisionEveryMonths, ...fields } = dto;
+    const { recognitionBadges, leaveYearStartMonth, supervisionEveryMonths, regions: regionInput, ...fields } = dto;
+    let regions: string[] | undefined;
+    if (regionInput) {
+      const cleaned = cleanRegions(regionInput);
+      if (cleaned.problem) throw new BadRequestException(cleaned.problem);
+      regions = cleaned.regions;
+    }
     if (supervisionEveryMonths) {
       for (const [k, v] of Object.entries(supervisionEveryMonths)) {
         if (!(SUPERVISION_TYPES as readonly string[]).includes(k) || !Number.isInteger(v) || v < 1 || v > 24) {
@@ -136,12 +163,13 @@ export class AgencyService {
       }
     }
     let settings: Prisma.InputJsonObject | undefined;
-    if (recognitionBadges !== undefined || leaveYearStartMonth !== undefined || supervisionEveryMonths !== undefined) {
+    if (recognitionBadges !== undefined || leaveYearStartMonth !== undefined || supervisionEveryMonths !== undefined || regions !== undefined) {
       const current = await this.prisma.agency.findUniqueOrThrow({ where: { id: caller.agencyId }, select: { settings: true } });
       settings = {
         ...(isObject(current.settings) ? current.settings : {}),
         ...(recognitionBadges !== undefined ? { recognitionBadges } : {}),
         ...(leaveYearStartMonth !== undefined ? { leaveYearStartMonth } : {}),
+        ...(regions !== undefined ? { regions } : {}),
         ...(supervisionEveryMonths !== undefined
           ? { supervisionEveryMonths: { ...(isObject(current.settings) && isObject(current.settings.supervisionEveryMonths) ? current.settings.supervisionEveryMonths : {}), ...supervisionEveryMonths } }
           : {}),
@@ -160,6 +188,13 @@ export class AgencyController {
   @Get()
   get(@CurrentUser() caller: AuthUser) {
     return this.agency.get(caller);
+  }
+
+  /** The company's regions, for region filters and pickers (S-028). */
+  @Permissions('staff:read')
+  @Get('regions')
+  regions(@CurrentUser() caller: AuthUser) {
+    return this.agency.regions(caller);
   }
 
   @Permissions('settings:update')

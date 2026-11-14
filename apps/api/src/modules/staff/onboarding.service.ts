@@ -12,6 +12,7 @@ const SELECT = {
   id: true,
   userId: true,
   discipline: true,
+  region: true,
   hireDate: true,
   hourlyRate: true,
   addressLine1: true,
@@ -122,9 +123,9 @@ export class OnboardingService {
   }
 
   /** Every active staff member's readiness, least ready first. */
-  async overview(caller: AuthUser): Promise<{ staffId: string; name: string; discipline: string; percent: number; ready: boolean; missing: string[] }[]> {
+  async overview(caller: AuthUser, region?: string): Promise<{ staffId: string; name: string; discipline: string; region: string | null; percent: number; ready: boolean; missing: string[] }[]> {
     const [rows, requirements, today] = await Promise.all([
-      this.prisma.staffProfile.findMany({ where: { agencyId: caller.agencyId, isActive: true }, select: SELECT }),
+      this.prisma.staffProfile.findMany({ where: { agencyId: caller.agencyId, isActive: true, ...(region ? { region } : {}) }, select: SELECT }),
       this.requirements(caller.agencyId),
       this.clock.todayString(caller.agencyId),
     ]);
@@ -136,6 +137,7 @@ export class OnboardingService {
           staffId: row.id,
           name: `${row.user.firstName} ${row.user.lastName}`,
           discipline: row.discipline,
+          region: row.region,
           percent: c.percent,
           ready: c.ready,
           missing: c.items.filter((i) => i.required && !i.done).map((i) => i.label),

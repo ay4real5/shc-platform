@@ -32,6 +32,7 @@ export interface ImportPlanRow {
   lastName: string;
   email: string;
   discipline: Discipline | null;
+  region: string | null;
   employmentType: EmploymentType;
   phone: string | null;
   hireDate: string | null;
@@ -69,6 +70,8 @@ export interface ImportContext {
   existingEmails: Set<string>;
   /** Employee IDs already used in this company (lower-case). */
   existingEmployeeIds: Set<string>;
+  /** The company's regions (S-028); empty when it has none. */
+  regions?: string[];
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -292,12 +295,18 @@ export function planImport(csv: string, ctx: ImportContext): ImportPlan {
       warnings.push(`No ${register.numberLabel}: add it and check the ${register.body} register before they work`);
     }
 
+    // Region (S-028): must be one of the company's, matched ignoring case.
+    const regionText = get('region');
+    const region = regionText ? ((ctx.regions ?? []).find((r) => r.toLowerCase() === regionText.toLowerCase()) ?? null) : null;
+    if (regionText && !region) errors.push(`Region "${regionText}" isn't one of your regions (Admin, Company)`);
+
     plan.rows.push({
       row: rowNumber,
       firstName,
       lastName,
       email,
       discipline,
+      region,
       employmentType,
       phone,
       hireDate,

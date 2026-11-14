@@ -16,7 +16,7 @@ test('an admin signs in, sees live numbers, navigates and signs out', async ({ p
   await expect(page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ })).toBeVisible();
 
   const activeStaff = page.getByRole('link', { name: /Active staff/ });
-  await expect(activeStaff).toContainText(/\D(1[2-9]|[2-9]\d)$/); // 12 seeded care staff, plus anyone other tests hired
+  await expect(activeStaff).toContainText(/^(1[4-9]|[2-9]\d)\D/); // number first (S-025): 14 seeded staff, plus anyone other tests hired
 
   const nav = page.getByRole('navigation', { name: 'Main' });
   // Straight in the top bar, and the drop-downs an admin gets (S-018).

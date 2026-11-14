@@ -1,4 +1,4 @@
-import { CREDENTIAL_TYPE_LABELS, DBS_ALERT_DAYS, DBS_LEVEL_LABELS, DBS_LEVELS_FOR_CARE, DISCIPLINE_DEFAULT_ROLE, RTW_ALERT_DAYS, RTW_IMPORTED_METHOD, dbsNextDue } from '@alora/shared';
+import { CREDENTIAL_TYPE_LABELS, DBS_ALERT_DAYS, DBS_LEVEL_LABELS, DBS_LEVELS_FOR_CARE, DISCIPLINE_DEFAULT_ROLE, RTW_ALERT_DAYS, RTW_IMPORTED_METHOD, agencyRegions, dbsNextDue } from '@alora/shared';
 import { Body, Controller, HttpCode, HttpStatus, Injectable, Logger, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
@@ -68,15 +68,17 @@ export class StaffImportService {
 
   async run(caller: AuthUser, dto: StaffImportDto): Promise<StaffImportResult> {
     const dryRun = dto.dryRun ?? false;
-    const [today, users, ids] = await Promise.all([
+    const [today, users, ids, agency] = await Promise.all([
       this.clock.todayString(caller.agencyId),
       this.prisma.user.findMany({ select: { email: true } }),
       this.prisma.staffProfile.findMany({ where: { agencyId: caller.agencyId, employeeId: { not: null } }, select: { employeeId: true } }),
+      this.prisma.agency.findUniqueOrThrow({ where: { id: caller.agencyId }, select: { settings: true } }),
     ]);
     const plan = planImport(dto.csv, {
       today,
       existingEmails: new Set(users.map((u) => u.email.toLowerCase())),
       existingEmployeeIds: new Set(ids.map((p) => p.employeeId!.toLowerCase())),
+      regions: agencyRegions(agency.settings),
     });
 
     // Roles each job role gets, and whether the caller may hand that access out (same rule as hiring).
@@ -151,6 +153,7 @@ export class StaffImportService {
           userId: user.id,
           agencyId: caller.agencyId,
           discipline: row.discipline!,
+          region: row.region,
           employmentType: row.employmentType,
           employeeId: row.employeeId,
           hireDate: toDate(row.hireDate ?? undefined) ?? null,

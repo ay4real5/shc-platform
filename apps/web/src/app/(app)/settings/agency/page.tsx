@@ -22,6 +22,7 @@ interface Agency {
   careersSlug: string | null;
   leaveYearStartMonth: number;
   supervisionEveryMonths: Record<string, number>;
+  regions: string[];
 }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -62,6 +63,9 @@ export default function AgencySettingsPage() {
       if (v && v !== a?.supervisionEveryMonths[t]) every[t] = v;
     }
     if (Object.keys(every).length) body.supervisionEveryMonths = every;
+    // Regions (S-028): one per line; the API tidies and checks them.
+    const regions = String(form.get('regions') ?? '').split(/\r?\n/).map((r) => r.trim()).filter(Boolean);
+    if (regions.join('|') !== (a?.regions ?? []).join('|')) body.regions = regions;
     save.mutate(body);
   };
 
@@ -107,6 +111,25 @@ export default function AgencySettingsPage() {
                 ))}
               </SelectField>
             ))}
+            <div className="flex flex-col gap-1 sm:col-span-2">
+              <label htmlFor="regions" className="text-sm font-medium text-slate-700">
+                Regions
+              </label>
+              <textarea
+                id="regions"
+                name="regions"
+                rows={5}
+                defaultValue={a.regions.join('\n')}
+                disabled={!editable}
+                aria-describedby="regions-hint"
+                placeholder={'Greater Manchester\nBristol\nTeesside'}
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:bg-slate-50"
+              />
+              <p id="regions-hint" className="text-xs text-slate-600">
+                One per line, up to 30. Give each staff member a region, then filter staff lists, the dashboard and the inspection pack by region. Leave empty if
+                you work in one area.
+              </p>
+            </div>
             <p className="text-sm text-slate-600 sm:col-span-2">Timezone: {a.timezone}</p>
             {editable && (
               <div className="flex flex-col gap-2 sm:col-span-2">

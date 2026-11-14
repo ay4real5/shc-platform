@@ -132,6 +132,13 @@ export class CreateStaffDto {
   @IsString()
   @MaxLength(5000)
   notes?: string;
+
+  /** One of the company's regions (S-028); "" clears it. */
+  @IsOptional()
+  @Transform(trimmed)
+  @IsString()
+  @MaxLength(60)
+  region?: string;
 }
 
 export class UpdateStaffDto extends PartialType(OmitType(CreateStaffDto, ['userId'] as const)) {}
@@ -159,6 +166,19 @@ export class ListStaffQueryDto extends PaginationQueryDto {
   @IsBoolean()
   isActive?: boolean;
 
+  /** Only staff in this region (S-028). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  region?: string;
+}
+
+/** Optional region filter for staff lists and the dashboard (S-028). */
+export class RegionQueryDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  region?: string;
 }
 
 export class CreateCredentialDto {
@@ -217,6 +237,12 @@ export class CreateCredentialDto {
 export class UpdateCredentialDto extends PartialType(CreateCredentialDto) {}
 
 export class ExpiringCredentialsQueryDto {
+  /** Only staff in this region (S-028). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  region?: string;
+
   /** Include credentials expiring within this many days (and already expired ones). Default 30. */
   @IsOptional()
   @Type(() => Number)

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader, StatusBadge, formatDate } from '@/components/ui/data-display';
 import { SelectField } from '@/components/ui/form-controls';
+import { RegionFilter, regionParam, useRegion } from '@/lib/region';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { disciplineLabel } from '@/lib/labels';
 import type { ExpiringCredential } from '@/lib/types/people';
@@ -13,15 +14,16 @@ import type { ExpiringCredential } from '@/lib/types/people';
 /** Agency-wide list of expired and soon-expiring credentials for active staff, soonest first. */
 export default function CredentialsAttentionPage() {
   const { request } = useAuth();
+  const [region] = useRegion();
   const [withinDays, setWithinDays] = useState('30');
   const list = useQuery({
-    queryKey: ['staff', 'expiring-credentials', withinDays],
-    queryFn: async () => (await request<ExpiringCredential[]>(`/staff/expiring-credentials?withinDays=${withinDays}`)).data,
+    queryKey: ['staff', 'expiring-credentials', withinDays, region],
+    queryFn: async () => (await request<ExpiringCredential[]>(`/staff/expiring-credentials?withinDays=${withinDays}${regionParam(region, '&')}`)).data,
   });
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Credentials needing attention" subtitle="Expired, or expiring soon, for active staff." />
+      <PageHeader title="Credentials needing attention" subtitle="Expired, or expiring soon, for active staff." actions={<RegionFilter />} />
       <Card className="flex flex-col gap-4 p-4">
         <SelectField label="Expiring within" value={withinDays} onChange={(e) => setWithinDays(e.target.value)} className="w-48">
           <option value="7">7 days</option>

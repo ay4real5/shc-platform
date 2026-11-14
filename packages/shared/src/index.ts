@@ -18,3 +18,4 @@ export * from './constants/supervisions.js';
 export * from './constants/staff-import.js';
 export * from './constants/inspection.js';
 export * from './constants/registration.js';
+export * from './constants/regions.js';

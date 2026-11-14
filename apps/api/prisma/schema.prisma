@@ -219,6 +219,8 @@ model StaffProfile {
   employeeId          String?   @map("employee_id") @db.VarChar(50)
   /// Job role (care_worker, team_leader, …; @alora/shared DISCIPLINES).
   discipline          String    @db.VarChar(20)
+  /// One of the company's regions (agencies.settings.regions, S-028). Null = not set.
+  region              String?   @db.VarChar(60)
   hireDate            DateTime? @map("hire_date") @db.Date
   /// Contracted working days a week (S3-03), for statutory holiday (5.6 weeks, max 28 days). Null = 5.
   daysPerWeek         Decimal?  @map("days_per_week") @db.Decimal(3, 1)
@@ -267,6 +269,7 @@ model StaffProfile {
   @@unique([agencyId, employeeId])
   @@index([agencyId])
   @@index([agencyId, discipline])
+  @@index([agencyId, region])
   @@map("staff_profiles")
 }
 

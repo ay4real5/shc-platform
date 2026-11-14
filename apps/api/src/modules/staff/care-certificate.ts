@@ -21,8 +21,10 @@ import {
   ParseIntPipe,
   ParseUUIDPipe,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { RegionQueryDto } from './dto/staff.dto.js';
 import { Transform } from 'class-transformer';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { Audit } from '../../common/decorators/audit.decorator.js';
@@ -143,14 +145,15 @@ export class CareCertificateService {
   }
 
   /** Every active member of staff against the training they need: valid, expiring, expired or missing. */
-  async matrix(caller: AuthUser): Promise<TrainingMatrix> {
+  async matrix(caller: AuthUser, region?: string): Promise<TrainingMatrix> {
     const today = await this.clock.todayString(caller.agencyId);
     const types = TRAINING_MATRIX.map((t) => t.type);
     const profiles = await this.prisma.staffProfile.findMany({
-      where: { agencyId: caller.agencyId, isActive: true, user: { isActive: true } },
+      where: { agencyId: caller.agencyId, isActive: true, user: { isActive: true }, ...(region ? { region } : {}) },
       select: {
         id: true,
         discipline: true,
+        region: true,
         hireDate: true,
         user: { select: { firstName: true, lastName: true } },
         credentials: { where: { status: 'active', credentialType: { in: types } }, select: { credentialType: true, expiryDate: true, alertDaysBefore: true } },
@@ -185,7 +188,7 @@ export class CareCertificateService {
       const inProgress = needsCareCertificate(p.discipline) && cells.care_certificate?.state === 'missing';
       const dueBy = p.hireDate ? addDays(fromDate(p.hireDate)!, CARE_CERTIFICATE_WEEKS * 7) : null;
       return {
-        staff: { id: p.id, name: `${p.user.firstName} ${p.user.lastName}`, discipline: p.discipline },
+        staff: { id: p.id, name: `${p.user.firstName} ${p.user.lastName}`, discipline: p.discipline, region: p.region },
         cells,
         careCertificate: inProgress ? { completed: p._count.careCertificate, total: TOTAL, dueBy, overdue: Boolean(dueBy && dueBy < today) } : null,
       };
@@ -263,7 +266,7 @@ export class CareCertificateController {
   /** Who has which training: valid, expiring, expired or missing, per active member of staff. */
   @Permissions('staff:read')
   @Get('training/matrix')
-  matrix(@CurrentUser() caller: AuthUser) {
-    return this.careCertificate.matrix(caller);
+  matrix(@CurrentUser() caller: AuthUser, @Query() query: RegionQueryDto) {
+    return this.careCertificate.matrix(caller, query.region);
   }
 }

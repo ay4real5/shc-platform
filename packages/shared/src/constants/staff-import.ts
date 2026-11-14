@@ -34,6 +34,7 @@ export const IMPORT_COLUMNS: readonly ImportColumn[] = [
   { key: 'jobRole', header: 'Job role', help: 'Care worker, Senior care worker, Support worker, Team leader, Healthcare assistant, Nurse (RGN), RMN, RNLD, AHP, Doctor, Care coordinator, Manager or Office.', required: true, example: 'Care worker' },
   { key: 'contract', header: 'Contract', help: 'Full time, Part time, Zero hours, Bank or Contractor. Blank = Full time.', example: 'Part time' },
   { key: 'startDate', header: 'Start date', help: 'Date they started, e.g. 14/03/2022.', example: '14/03/2022' },
+  { key: 'region', header: 'Region', help: 'One of your regions (Admin, Company), if you use them.', example: '' },
   { key: 'employeeId', header: 'Employee ID', help: 'Payroll number, if you use one.', example: 'E1001' },
   { key: 'dateOfBirth', header: 'Date of birth', help: 'e.g. 02/07/1990.', example: '' },
   { key: 'addressLine1', header: 'Address', help: 'First line of their address.', example: '' },

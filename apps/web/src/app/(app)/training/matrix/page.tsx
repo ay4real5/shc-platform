@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader, formatDate } from '@/components/ui/data-display';
+import { RegionFilter, regionParam, useRegion } from '@/lib/region';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { disciplineLabel } from '@/lib/labels';
 
@@ -33,14 +34,15 @@ const hasGap = (r: Matrix['rows'][number]) => Object.values(r.cells).some((c) =>
 /** Who has which training (S3-02): one row per active member of staff, one column per training their role needs. */
 export default function TrainingMatrixPage() {
   const { request } = useAuth();
+  const [region] = useRegion();
   const [gapsOnly, setGapsOnly] = useState(false);
-  const matrix = useQuery({ queryKey: ['training', 'matrix'], queryFn: async () => (await request<Matrix>('/training/matrix')).data });
+  const matrix = useQuery({ queryKey: ['training', 'matrix', region], queryFn: async () => (await request<Matrix>(`/training/matrix${regionParam(region)}`)).data });
   const m = matrix.data;
   const rows = m ? (gapsOnly ? m.rows.filter(hasGap) : m.rows) : [];
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Training matrix" subtitle="Everyone's training at a glance: in date, expiring within its warning window, expired or missing. Ready for a CQC inspection." />
+      <PageHeader title="Training matrix" subtitle="Everyone's training at a glance: in date, expiring within its warning window, expired or missing. Ready for a CQC inspection." actions={<RegionFilter />} />
       <Card className="flex flex-col gap-4 p-4">
         <ErrorAlert error={matrix.error} />
         <label className="flex items-center gap-2 text-sm text-slate-700">

@@ -8,6 +8,7 @@ import { ErrorAlert } from '@/components/ui/data-display';
 import { Field } from '@/components/ui/field';
 import { SelectField, TextAreaField } from '@/components/ui/form-controls';
 import { disciplineLabel, humanize } from '@/lib/labels';
+import { useRegions } from '@/lib/region';
 import type { StaffCandidate, StaffDetail } from '@/lib/types/people';
 
 const TEXT = [
@@ -36,6 +37,7 @@ export function StaffForm({
 }) {
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const regions = useRegions();
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -51,6 +53,7 @@ export function StaffForm({
       if (value) body[key] = Number(value);
     }
     body.canDrive = form.get('canDrive') === 'on';
+    if (form.has('region')) body.region = String(form.get('region') ?? ''); // '' clears it (S-028)
     for (const key of LISTS) {
       const raw = form.get(key);
       if (raw === null) continue;
@@ -97,6 +100,16 @@ export function StaffForm({
             </option>
           ))}
         </SelectField>
+        {regions.length > 0 && (
+          <SelectField label="Region" name="region" defaultValue={v('region')}>
+            <option value="">Not set</option>
+            {regions.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </SelectField>
+        )}
         <SelectField label="Employment type" name="employmentType" defaultValue={v('employmentType') || 'full_time'}>
           {EMPLOYMENT_TYPES.map((t) => (
             <option key={t} value={t}>

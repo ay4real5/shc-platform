@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { Permission } from '@alora/shared';
+import { agencyRegions, type Permission } from '@alora/shared';
 import { PhiContext, PhiCryptoService } from '../../common/crypto/phi-crypto.service.js';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { Paginated } from '../../common/dto/pagination.dto.js';
@@ -36,6 +36,8 @@ export interface StaffSummary {
   lastName: string;
   employeeId: string | null;
   discipline: string;
+  /** One of the company's regions (S-028), or null. */
+  region: string | null;
   employmentType: string;
   isActive: boolean;
   skills: string[];
@@ -107,6 +109,7 @@ export class StaffService {
     const where: Prisma.StaffProfileWhereInput = {
       agencyId: caller.agencyId,
       ...(query.discipline ? { discipline: query.discipline } : {}),
+      ...(query.region ? { region: query.region } : {}),
       ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
       ...(query.search
         ? {
@@ -163,6 +166,7 @@ export class StaffService {
     if (await this.prisma.staffProfile.count({ where: { userId: dto.userId } })) {
       throw new ConflictException('This user already has a staff profile');
     }
+    await this.assertRegion(caller.agencyId, dto.region);
     const profile = await this.saveOrConflict(() =>
       this.prisma.staffProfile.create({
         data: {
@@ -178,6 +182,7 @@ export class StaffService {
 
   async update(caller: AuthUser, id: string, dto: UpdateStaffDto): Promise<StaffDetail> {
     await this.find(caller, id);
+    await this.assertRegion(caller.agencyId, dto.region);
     const profile = await this.saveOrConflict(() =>
       this.prisma.staffProfile.update({ where: { id }, data: this.fields(dto), include: PROFILE_INCLUDE }),
     );
@@ -385,10 +390,18 @@ export class StaffService {
       'skills', 'languages', 'notes',
     ] as const;
     for (const key of copy) if (dto[key] !== undefined) data[key] = dto[key];
+    if (dto.region !== undefined) data.region = dto.region || null;
     if (dto.hireDate !== undefined) data.hireDate = toDate(dto.hireDate);
     if (dto.dateOfBirth !== undefined) data.dateOfBirth = toDate(dto.dateOfBirth);
     if (dto.niNumber !== undefined) data.niNumberEncrypted = this.crypto.encrypt(dto.niNumber, PhiContext.StaffNiNumber);
     return data;
+  }
+
+  /** A region must be one of the company's (S-028); "" (clear) is always fine. */
+  private async assertRegion(agencyId: string, region: string | undefined): Promise<void> {
+    if (!region) return;
+    const agency = await this.prisma.agency.findUniqueOrThrow({ where: { id: agencyId }, select: { settings: true } });
+    if (!agencyRegions(agency.settings).includes(region)) throw new BadRequestException(`"${region}" isn't one of your regions (Admin, Company)`);
   }
 
   private async saveOrConflict<T>(save: () => Promise<T>): Promise<T> {
@@ -411,6 +424,7 @@ function toSummary(profile: Profile): StaffSummary {
     lastName: profile.user.lastName,
     employeeId: profile.employeeId,
     discipline: profile.discipline,
+    region: profile.region,
     employmentType: profile.employmentType,
     isActive: profile.isActive,
     skills: profile.skills,

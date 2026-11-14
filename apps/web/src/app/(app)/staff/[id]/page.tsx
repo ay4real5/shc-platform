@@ -93,6 +93,7 @@ export default function StaffMemberPage() {
               </h1>
               <p className="mt-0.5 text-sm text-slate-700">
                 {disciplineLabel(s.discipline)} · {humanize(s.employmentType)}
+                {s.region && <> · {s.region}</>}
                 {s.employeeId && <> · {s.employeeId}</>}
                 {s.hireDate && <> · Started {formatDate(s.hireDate)}</>}
               </p>

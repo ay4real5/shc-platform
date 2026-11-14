@@ -11,6 +11,7 @@ import { HolidayBalanceCard } from '@/components/staff/holiday';
 import { SupervisionToSignCard } from '@/components/staff/supervisions-panel';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { RegionFilter } from '@/lib/region';
 import { useAgencyToday } from '@/lib/use-agency-today';
 
 /** Stat card colours (S-025): the icon sits in a soft tinted badge. */
@@ -119,6 +120,7 @@ export default function DashboardPage() {
       <HealthPromptCard />
       <SupervisionToSignCard />
       <HolidayBalanceCard />
+      {can('staff:read') && <RegionFilter className="self-end" />}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {can('staff:read') && (
           <>

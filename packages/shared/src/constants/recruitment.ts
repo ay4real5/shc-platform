@@ -1,3 +1,4 @@
+import type { Discipline } from './staff.js';
 /**
  * Recruitment (S1-04/S1-05): job adverts, applications and the hiring pipeline.
  * Employment history follows CQC Regulation 19 / Schedule 3: a full history with a written explanation of any gaps.
@@ -103,8 +104,13 @@ export const DISCIPLINE_DEFAULT_ROLE: Record<string, string> = {
   senior_care_worker: 'senior_care_worker',
   support_worker: 'support_worker',
   team_leader: 'team_leader',
+  hca: 'care_worker',
   nurse: 'senior_care_worker',
+  nurse_rmn: 'senior_care_worker',
+  nurse_rnld: 'senior_care_worker',
+  ahp: 'senior_care_worker',
+  doctor: 'senior_care_worker',
   care_coordinator: 'care_coordinator',
   manager: 'registered_manager',
   office: 'care_coordinator',
-};
+} satisfies Record<Discipline, string>;
