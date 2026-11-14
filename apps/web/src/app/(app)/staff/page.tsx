@@ -115,7 +115,7 @@ export default function StaffPage() {
               <tr key={s.id}>
                 <td className="py-2 pr-4">
                   <span className="flex items-center gap-3">
-                    <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-accent-600 text-xs font-semibold text-white">
+                    <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 ring-2 ring-accent-400 text-xs font-semibold text-white">
                       {s.firstName[0]}
                       {s.lastName[0]}
                     </span>

@@ -140,7 +140,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="ml-auto flex items-center gap-2">
             <NotificationBell />
             <div className="hidden items-center gap-3 border-l border-slate-200 pl-4 md:flex">
-              <span aria-hidden className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-accent-600 font-display text-sm font-bold text-white">
+              <span aria-hidden className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 ring-2 ring-accent-400 font-display text-sm font-bold text-white">
                 {initials}
               </span>
               <span className="leading-tight">

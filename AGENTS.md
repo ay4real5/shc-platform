@@ -127,13 +127,15 @@ task with a good handoff note is worth more than a finished one nobody can find.
 - Call the API with `useAuth().request(path)` (adds the token, renews once on 401). Never store tokens anywhere.
 - Gate UI with `useAuth().can('patients:read')` — cosmetic only; the API enforces permissions.
 - Pages under `src/app/(app)/` are signed-in only (AppShell guard).
-- **SHC has its own look, never Primordial's (DECISIONS S-018, current design S-025).** Colours come only from the design
-  tokens in `src/app/globals.css`: `brand-*` (royal blue), `accent-*` (violet, used sparingly), `canvas` (light grey
-  page), `ink`, plus slate for neutrals and emerald/amber/rose/sky for status. Headings use `font-display` (Manrope),
-  text Figtree. Crisp white cards (`rounded-xl`, soft shadow) on the grey page; no coloured side lines. The only
-  gradient is blue into violet (`.bg-hero`, avatars, the accent button). Navigation is the white top bar with
-  drop-downs (`components/layout/navigation.ts`); the current page is a soft blue pill. The logo is the "SHC" wordmark
-  in `components/brand/logo.tsx`. Mobile colours live in `colors` in `apps/mobile/src/components/ui.tsx`.
+- **SHC has its own look, never Primordial's (DECISIONS S-018; layout S-025; colours and logo S-029, taken from
+  Support Health Care Ltd's own website and logo).** Colours come only from the design tokens in `src/app/globals.css`:
+  `brand-*` (their leaf green; 500 is their exact #669A40 for large areas, 600+ for buttons, links and small text),
+  `accent-*` (their lime ring, 400 = #CACC2C, with dark green text on it), `canvas` (soft green-grey page), `ink`
+  (their near-black green), plus slate for neutrals and emerald/amber/rose/sky for status. Headings use `font-display`
+  (Manrope), text Figtree. Crisp white cards (`rounded-xl`, soft shadow); no coloured side lines. Avatars are green discs
+  with a lime ring, like their logo. Navigation is the white top bar with drop-downs (`components/layout/navigation.ts`);
+  the current page is a soft green pill. The logo mark (`components/brand/logo.tsx`) is drawn after theirs: green disc,
+  lime ring, house roof, "SHC". Mobile colours live in `colors` in `apps/mobile/src/components/ui.tsx`.
   `npm run lint -w @alora/web` fails on other colour families and on any Primordial colour, font or mesh background in
   the website, phone app or emails.
 

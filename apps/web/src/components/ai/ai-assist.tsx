@@ -74,7 +74,7 @@ export function AiAssist({ kind, field, label, context }: { kind: DraftKind; fie
     <div ref={anchor} className="flex flex-col gap-2">
       <div>
         <Button type="button" variant="secondary" onClick={run} disabled={draft.isPending} className="border-accent-500 px-3 py-1.5 text-xs">
-          <Sparkles aria-hidden className="h-3.5 w-3.5 text-accent-600" /> {draft.isPending ? 'Writing…' : label}
+          <Sparkles aria-hidden className="h-3.5 w-3.5 text-brand-600" /> {draft.isPending ? 'Writing…' : label}
         </Button>
       </div>
       {hint && <p className="text-xs text-amber-800">{hint}</p>}
@@ -82,7 +82,7 @@ export function AiAssist({ kind, field, label, context }: { kind: DraftKind; fie
       {draft.data && (
         <div className="flex flex-col gap-2 rounded-xl border border-accent-200 bg-accent-50/60 p-3">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-900">
-            <Sparkles aria-hidden className="h-3.5 w-3.5 text-accent-600" /> AI draft
+            <Sparkles aria-hidden className="h-3.5 w-3.5 text-brand-600" /> AI draft
           </p>
           <div className="max-h-80 overflow-y-auto whitespace-pre-wrap text-sm text-ink">{draft.data}</div>
           <p className="text-xs text-slate-600">{AI_CHECK_NOTE}</p>
@@ -126,7 +126,7 @@ export function InterviewQuestions({ context }: { context: DraftContext }) {
       </label>
       <div>
         <Button type="button" variant="secondary" disabled={draft.isPending} className="border-accent-500" onClick={() => draft.mutate({ kind: 'interview_questions', notes: notes.trim() || 'No extra notes.', ...context })}>
-          <Sparkles aria-hidden className="h-4 w-4 text-accent-600" /> {draft.isPending ? 'Writing…' : draft.data ? 'Suggest different questions' : 'Suggest interview questions'}
+          <Sparkles aria-hidden className="h-4 w-4 text-brand-600" /> {draft.isPending ? 'Writing…' : draft.data ? 'Suggest different questions' : 'Suggest interview questions'}
         </Button>
       </div>
       <ErrorAlert error={draft.error} />

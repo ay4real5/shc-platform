@@ -74,7 +74,7 @@ export default function DocumentsScreen() {
           {index === pending.length && signed.length > 0 && <SectionTitle>Signed</SectionTitle>}
           <Pressable accessibilityRole="button" accessibilityLabel={`${item.document.title}, ${item.status === 'pending' ? 'to sign' : 'signed'}`} onPress={() => router.push(`/documents/${item.id}`)}>
             <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Ionicons name={item.status === 'pending' ? 'create-outline' : 'checkmark-done-outline'} size={22} color={item.status === 'pending' ? colors.accent : colors.success} />
+              <Ionicons name={item.status === 'pending' ? 'create-outline' : 'checkmark-done-outline'} size={22} color={item.status === 'pending' ? colors.warning : colors.success} />
               <View style={{ flex: 1, gap: 4 }}>
                 <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{item.document.title}</Text>
                 <Text style={{ fontSize: 13, color: colors.muted }}>

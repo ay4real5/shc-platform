@@ -1,11 +1,12 @@
 @import "tailwindcss";
 
 /*
- * SHC design system (DECISIONS S-025, replaces S-018/S-023): crisp white cards on a cool light-grey page, one vivid
- * royal blue (`brand-*`) with violet (`accent-*`) used sparingly for highlights and the welcome banner, Manrope headings
- * and Figtree text, rounded corners and soft shadows. Nothing shared with Primordial (its teal/coral, its fonts,
- * mesh backgrounds). Colours come ONLY from these tokens plus Tailwind's slate (neutrals) and emerald/amber/rose/sky
- * (status). `npm run lint` (scripts/check-colors.mjs) fails on other colour families and on Primordial's look.
+ * SHC design system (DECISIONS S-029, colours from Support Health Care Ltd's own website and logo; layout from S-025):
+ * crisp white cards on a soft green-grey page, their leaf green (`brand-*`) for buttons, links and the current page, and
+ * their lime (`accent-*`) as the highlight, like the ring around their logo. Manrope headings and Figtree text, rounded
+ * corners and soft shadows. Nothing shared with Primordial (its teal/coral, its fonts, mesh backgrounds). Colours come
+ * ONLY from these tokens plus Tailwind's slate (neutrals) and emerald/amber/rose/sky (status). `npm run lint`
+ * (scripts/check-colors.mjs) fails on other colour families and on Primordial's look.
  */
 @theme inline {
   --font-sans: var(--font-body);
@@ -14,39 +15,42 @@
 }
 
 @theme {
-  /* Royal blue: primary buttons, links, active states. 600 (#2F52E8) is the brand colour (5.9:1 on white). */
-  --color-brand-50: #eef3ff;
-  --color-brand-100: #dfe8ff;
-  --color-brand-200: #c4d4ff;
-  --color-brand-300: #9db6ff;
-  --color-brand-400: #6f8fff;
-  --color-brand-500: #4a6cf7;
-  --color-brand-600: #2f52e8;
-  --color-brand-700: #2442c9;
-  --color-brand-800: #1f37a3;
-  --color-brand-900: #1d3281;
-  --color-brand-950: #141f4d;
+  /*
+   * Leaf green, from their logo. 500 (#669A40) is their exact green: use it for large areas and decoration. Buttons,
+   * links and small text use 600 (#4F7A31, 5:1 on white) or darker, so white text on them stays readable.
+   */
+  --color-brand-50: #f2f7ed;
+  --color-brand-100: #e3eed8;
+  --color-brand-200: #c8deb3;
+  --color-brand-300: #a5c784;
+  --color-brand-400: #85b05c;
+  --color-brand-500: #669a40;
+  --color-brand-600: #4f7a31;
+  --color-brand-700: #44692a;
+  --color-brand-800: #3a5925;
+  --color-brand-900: #2c441c;
+  --color-brand-950: #1a2710;
 
-  /* Violet: the second colour, for highlights, icon badges and the banner gradient. Small text uses 600 or darker. */
-  --color-accent-50: #f5f2ff;
-  --color-accent-100: #ece6ff;
-  --color-accent-200: #dacfff;
-  --color-accent-300: #bfa9ff;
-  --color-accent-400: #9f7bff;
-  --color-accent-500: #8257ff;
-  --color-accent-600: #6a35f0;
-  --color-accent-700: #5a28d2;
-  --color-accent-800: #4a22a8;
-  --color-accent-900: #3d1f86;
+  /* Lime, the ring around their logo. 400 (#CACC2C) is their exact lime: fills with dark green text (9:1), rings, bars. */
+  --color-accent-50: #fafbe6;
+  --color-accent-100: #f4f5c8;
+  --color-accent-200: #e9eb98;
+  --color-accent-300: #dadc5e;
+  --color-accent-400: #cacc2c;
+  --color-accent-500: #a8aa1f;
+  --color-accent-600: #8a8c19;
+  --color-accent-700: #6b6d15;
+  --color-accent-800: #545612;
+  --color-accent-900: #45470f;
 
-  /* Cool light-grey page so white cards look sharp; near-black text. */
-  --color-canvas: #f5f7fb;
-  --color-ink: #0f172a;
+  /* Soft green-grey page so white cards look sharp; their near-black green for text. */
+  --color-canvas: #f4f7f1;
+  --color-ink: #1a2710;
 
   /* Soft, layered shadows: cards float a little off the page. */
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
-  --shadow-lift: 0 4px 6px -1px rgb(15 23 42 / 0.06), 0 12px 24px -6px rgb(15 23 42 / 0.12);
-  --shadow-glow: 0 8px 24px -8px rgb(47 82 232 / 0.45);
+  --shadow-card: 0 1px 2px rgb(26 39 16 / 0.04), 0 1px 3px rgb(26 39 16 / 0.07);
+  --shadow-lift: 0 4px 6px -1px rgb(26 39 16 / 0.06), 0 12px 24px -6px rgb(26 39 16 / 0.13);
+  --shadow-glow: 0 8px 24px -8px rgb(79 122 49 / 0.5);
 
   --animate-fade-in: fade-in 0.35s ease-out both;
   --animate-shimmer: shimmer 1.4s linear infinite;
@@ -88,18 +92,21 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
-/* The welcome banner (dashboard greeting, sign-in, careers): royal blue into violet, with a soft light in one corner. */
+/*
+ * The welcome banner (dashboard greeting, sign-in, careers): deep green into their leaf green, with a soft lime light in
+ * one corner, like the ring on their logo.
+ */
 .bg-hero {
   background-color: var(--color-brand-700);
   background-image:
-    radial-gradient(circle at 85% 0%, rgb(255 255 255 / 0.18), transparent 45%),
-    linear-gradient(120deg, var(--color-brand-800) 0%, var(--color-brand-600) 50%, var(--color-accent-600) 100%);
+    radial-gradient(circle at 88% 0%, rgb(202 204 44 / 0.35), transparent 42%),
+    linear-gradient(120deg, var(--color-brand-900) 0%, var(--color-brand-700) 55%, var(--color-brand-600) 100%);
 }
 
 /* Loading placeholders. */
 .skeleton {
   border-radius: 0.375rem;
-  background: linear-gradient(90deg, #e9edf3 0, #f3f5f9 40%, #e9edf3 80%) 0 0 / 800px 100%;
+  background: linear-gradient(90deg, #e6ece1 0, #f2f5ef 40%, #e6ece1 80%) 0 0 / 800px 100%;
   animation: var(--animate-shimmer);
 }
 

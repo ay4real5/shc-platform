@@ -14,13 +14,13 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-/** SHC palette (S-025): royal blue and violet, white cards on light grey, the same tokens as the website. Nothing shared with Primordial. */
+/** SHC palette (S-029): Support Health Care's leaf green and lime, white cards on soft green-grey, the same tokens as the website. */
 export const colors = {
-  brand: '#2f52e8',
-  brandDark: '#2442c9',
-  brandSoft: '#eef3ff',
-  ink: '#0f172a',
-  navyDeep: '#141f4d',
+  brand: '#4f7a31',
+  brandDark: '#2c441c',
+  brandSoft: '#f2f7ed',
+  ink: '#1a2710',
+  navyDeep: '#1a2710',
   text: '#1e293b',
   muted: '#64748b',
   border: '#e2e8f0',
@@ -30,16 +30,16 @@ export const colors = {
   successBg: '#ecfdf5',
   warning: '#92400e',
   warningBg: '#fffbeb',
-  bg: '#f5f7fb',
+  bg: '#f4f7f1',
   white: '#ffffff',
-  /** Violet: highlights and badges. White text on it. */
-  accent: '#6a35f0',
-  accentSoft: '#f5f2ff',
-  onAccent: '#ffffff',
-  /** Light text on the blue header band. */
-  headerSubtle: '#dfe8ff',
-  /** Secondary text on the blue header band. */
-  headerMuted: '#c4d4ff',
+  /** Lime (their logo ring): highlights and badges. Dark green text on it. */
+  accent: '#cacc2c',
+  accentSoft: '#fafbe6',
+  onAccent: '#1a2710',
+  /** Light text on the green header band. */
+  headerSubtle: '#e9eb98',
+  /** Secondary text on the green header band. */
+  headerMuted: '#c8deb3',
 };
 
 /** Headings (S-025): the phone's own modern sans-serif, bold. (Name kept so existing styles don't change.) */
@@ -49,7 +49,7 @@ export type IconName = ComponentProps<typeof Ionicons>['name'];
 
 /** Soft card shadow on both platforms. */
 export const shadow: ViewStyle = Platform.select({
-  ios: { shadowColor: '#0f172a', shadowOpacity: 0.05, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } },
+  ios: { shadowColor: '#1a2710', shadowOpacity: 0.05, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } },
   default: { elevation: 1 },
 }) as ViewStyle;
 
@@ -116,7 +116,7 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
 }
 
 const PILL: Record<string, [string, string]> = {
-  scheduled: ['#eef3ff', '#1d3281'],
+  scheduled: ['#f2f7ed', '#2c441c'],
   in_progress: ['#e0f2fe', '#075985'],
   completed: ['#ecfdf5', '#047857'],
   missed: ['#fff1f2', '#be123c'],
@@ -214,7 +214,7 @@ export const styles = StyleSheet.create({
   },
   button: { borderRadius: 6, paddingVertical: 15, alignItems: 'center', minHeight: 54, justifyContent: 'center', paddingHorizontal: 16 },
   primary: { backgroundColor: colors.brand },
-  secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#c4d4ff' },
+  secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#c8deb3' },
   dangerButton: { backgroundColor: colors.dangerBg, borderWidth: 1, borderColor: '#fecdd3' },
   buttonText: { fontSize: 17, fontWeight: '700' },
   error: { color: colors.danger, backgroundColor: colors.dangerBg, padding: 12, borderRadius: 12, fontSize: 15 },

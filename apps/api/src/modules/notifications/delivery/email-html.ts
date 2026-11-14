@@ -18,7 +18,7 @@ function lineHtml(line: string): string {
   for (const match of line.matchAll(URL_PATTERN)) {
     const url = match[0];
     out += escapeHtml(line.slice(last, match.index));
-    out += `<a href="${escapeHtml(url)}" style="color:#2f52e8;word-break:break-all">${escapeHtml(url)}</a>`;
+    out += `<a href="${escapeHtml(url)}" style="color:#4f7a31;word-break:break-all">${escapeHtml(url)}</a>`;
     last = match.index + url.length;
   }
   return out + escapeHtml(line.slice(last));
@@ -28,10 +28,10 @@ function lineHtml(line: string): string {
 function buttonHtml(url: string): string {
   const href = escapeHtml(url);
   return (
-    `<p style="margin:24px 0"><a href="${href}" style="display:inline-block;background:#2f52e8;color:#ffffff;` +
+    `<p style="margin:24px 0"><a href="${href}" style="display:inline-block;background:#4f7a31;color:#ffffff;` +
     `text-decoration:none;font-weight:600;padding:12px 22px;border-radius:4px">Open ${PRODUCT_NAME}</a></p>` +
     `<p style="margin:0 0 16px;font-size:13px;color:#64748b">Or copy this link: ` +
-    `<a href="${href}" style="color:#2f52e8;word-break:break-all">${href}</a></p>`
+    `<a href="${href}" style="color:#4f7a31;word-break:break-all">${href}</a></p>`
   );
 }
 
@@ -65,11 +65,11 @@ export function emailHtml(subject: string, text: string): string {
     '<!doctype html><html lang="en"><head><meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width,initial-scale=1">',
     `<title>${escapeHtml(subject)}</title></head>`,
-    '<body style="margin:0;padding:0;background:#f5f7fb">',
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fb"><tr><td align="center" style="padding:24px 12px">',
+    '<body style="margin:0;padding:0;background:#f4f7f1">',
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7f1"><tr><td align="center" style="padding:24px 12px">',
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:6px;overflow:hidden;border:1px solid #e2e8f0">',
-    `<tr><td style="background:#2f52e8;padding:18px 24px;font-family:Segoe UI,Arial,sans-serif;font-size:20px;font-weight:700;letter-spacing:2px;color:#ffffff">${PRODUCT_NAME}</td></tr>`,
-    `<tr><td style="padding:24px;font-family:Segoe UI,Arial,sans-serif;font-size:15px;line-height:1.55;color:#0f172a">${paragraphs}</td></tr>`,
+    `<tr><td style="background:#4f7a31;border-bottom:4px solid #cacc2c;padding:18px 24px;font-family:Segoe UI,Arial,sans-serif;font-size:20px;font-weight:700;letter-spacing:2px;color:#ffffff">${PRODUCT_NAME}</td></tr>`,
+    `<tr><td style="padding:24px;font-family:Segoe UI,Arial,sans-serif;font-size:15px;line-height:1.55;color:#1a2710">${paragraphs}</td></tr>`,
     '<tr><td style="padding:16px 24px;border-top:1px solid #e2e8f0;font-family:Segoe UI,Arial,sans-serif;font-size:12px;color:#64748b">',
     `${PRODUCT_NAME} · This is an automated message; replies aren’t read.`,
     '</td></tr></table></td></tr></table></body></html>',

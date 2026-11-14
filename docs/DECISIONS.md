@@ -2515,3 +2515,19 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Also:** `DISCIPLINE_DEFAULT_ROLE` now `satisfies Record<Discipline, string>`, so a new job role can't be added without
   a login role (S5-01's roles were missing; they'd have fallen back to care worker).
 - **Demo:** three regions (Greater Manchester, Bristol, Teesside), staff spread across them in turn.
+
+### S-029 — Support Health Care's own colours and a logo after theirs (replaces S-025's blue/violet)
+- **Why:** Ayo asked for SHC to take its colours and logo idea from Michael's website (supporthealthcareservices.co.uk).
+- **Colours, read from their site's CSS and logo:** leaf green `#669A40` (most used), lime `#CACC2C` (their logo's
+  ring), dark green `#4D7430`, near-black green `#1A2710` for text. Tokens: `brand-500` is their exact green, used for large
+  areas; buttons, links and small text use `brand-600` `#4F7A31` (5:1 on white) because their green with white text is
+  only 3.4:1. `accent-400` is their exact lime, always with dark green text (9:1). Page `#F4F7F1`, white cards (S-025
+  layout kept).
+- **Logo:** their logo is a green disc inside a lime ring, a white house roof with a small window over a serif "SH", and
+  "Support Health Care" on a green tab. The SHC mark follows that idea (disc, ring, roof, window, serif "SHC") as our own
+  drawing, not a copy of their file. The full company name and their real logo file go on the careers page via the
+  company logo upload (S5-05).
+- **Banner:** deep green into their green with a soft lime glow. Avatars: green disc with a lime ring. Accent button: lime
+  with dark green text. The floating Ask AI button: green with a lime ring.
+- **Phone app and emails** follow (emails: green header with a lime stripe). Lime is too pale for icons on white, so
+  phone icons use green, and "pending" uses amber.

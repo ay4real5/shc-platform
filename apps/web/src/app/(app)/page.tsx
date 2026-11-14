@@ -17,7 +17,7 @@ import { useAgencyToday } from '@/lib/use-agency-today';
 /** Stat card colours (S-025): the icon sits in a soft tinted badge. */
 const TONES = {
   brand: 'bg-brand-50 text-brand-600',
-  accent: 'bg-accent-50 text-accent-600',
+  accent: 'bg-accent-100 text-accent-700',
   amber: 'bg-amber-50 text-amber-600',
   emerald: 'bg-emerald-50 text-emerald-600',
   rose: 'bg-rose-50 text-rose-600',

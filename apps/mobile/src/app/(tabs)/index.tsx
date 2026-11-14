@@ -168,7 +168,7 @@ export default function HomeScreen() {
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }}
                 >
                   <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
-                    <Ionicons name={t.icon} size={18} color={colors.accent} />
+                    <Ionicons name={t.icon} size={18} color={colors.brand} />
                   </View>
                   <Text style={{ flex: 1, color: colors.text, fontSize: 16, fontWeight: '600' }}>{t.text}</Text>
                   <Ionicons name="chevron-forward" size={18} color="#94a3b8" />

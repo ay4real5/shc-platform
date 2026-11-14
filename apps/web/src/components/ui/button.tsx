@@ -4,10 +4,10 @@ import type { ButtonHTMLAttributes, ComponentProps } from 'react';
 type Variant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
 
 const VARIANTS: Record<Variant, string> = {
-  // Solid royal blue (S-025).
+  // Solid green (S-029).
   primary: 'bg-brand-600 text-white shadow-sm hover:bg-brand-700 disabled:opacity-60',
-  // Blue into violet, for the one action on a page you most want people to notice.
-  accent: 'bg-gradient-to-r from-brand-600 to-accent-600 font-semibold text-white shadow-[var(--shadow-glow)] hover:from-brand-700 hover:to-accent-700 disabled:opacity-60',
+  // Their lime, with dark green text, for the one action on a page you most want people to notice (S-029).
+  accent: 'bg-accent-400 font-semibold text-brand-950 shadow-sm hover:bg-accent-300 disabled:opacity-60',
   secondary: 'border border-slate-300 bg-white text-slate-800 shadow-sm hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800 disabled:opacity-50',
   ghost: 'text-slate-700 hover:bg-slate-100 disabled:opacity-50',
   danger: 'bg-rose-600 text-white shadow-sm hover:bg-rose-700 disabled:bg-rose-600/60',

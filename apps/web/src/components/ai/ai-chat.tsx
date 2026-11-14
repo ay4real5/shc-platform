@@ -139,7 +139,7 @@ export function AiChat() {
                       </p>
                     ) : (
                       <p className="mr-4 flex items-center gap-2 text-sm text-slate-500">
-                        <Sparkles aria-hidden className="h-4 w-4 animate-pulse text-accent-600" /> Reading your policies…
+                        <Sparkles aria-hidden className="h-4 w-4 animate-pulse text-brand-600" /> Reading your policies…
                       </p>
                     )}
                   </li>
@@ -187,7 +187,7 @@ export function AiChat() {
         aria-expanded={open}
         aria-label={open ? 'Close Ask AI' : 'Ask AI'}
         title="Ask AI about your policies"
-        className="fixed bottom-6 right-4 z-50 inline-flex h-14 items-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-accent-600 px-5 font-semibold text-white shadow-[var(--shadow-glow)] transition hover:-translate-y-0.5 hover:from-brand-700 hover:to-accent-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:right-6"
+        className="fixed bottom-6 right-4 z-50 inline-flex h-14 items-center gap-2 rounded-full bg-brand-600 px-5 font-semibold text-white shadow-[var(--shadow-glow)] ring-4 ring-accent-400/60 transition hover:-translate-y-0.5 hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:right-6"
       >
         {open ? <X aria-hidden className="h-5 w-5" /> : <Sparkles aria-hidden className="h-5 w-5" />}
         <span className="hidden sm:inline">{open ? 'Close' : 'Ask AI'}</span>
