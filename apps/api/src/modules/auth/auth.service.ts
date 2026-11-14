@@ -1,3 +1,4 @@
+import { skipsTwoFactor } from './two-factor/demo-two-factor.js';
 import { twoFactorPolicy } from './two-factor/two-factor-policy.js';
 import {
   BadRequestException,
@@ -58,6 +59,7 @@ export class AuthService {
   private readonly maxAttempts: number;
   private readonly lockoutMs: number;
   private readonly passwordMaxAgeDays: number;
+  private readonly demoSkipTwoFactor: boolean;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -71,6 +73,7 @@ export class AuthService {
     this.maxAttempts = config.get('LOGIN_MAX_ATTEMPTS', { infer: true });
     this.lockoutMs = config.get('LOGIN_LOCKOUT_MINUTES', { infer: true }) * 60_000;
     this.passwordMaxAgeDays = config.get('PASSWORD_MAX_AGE_DAYS', { infer: true });
+    this.demoSkipTwoFactor = config.get('DEMO_SKIP_TWO_FACTOR', { infer: true });
   }
 
   async login(email: string, password: string, client: ClientInfo): Promise<LoginResult | TwoFactorChallenge> {
@@ -104,7 +107,7 @@ export class AuthService {
       return fail('wrong_password', { locked: await this.registerFailure(user.id, auditBase) });
     }
 
-    if (user.is2faEnabled) {
+    if (user.is2faEnabled && !skipsTwoFactor(this.demoSkipTwoFactor, user.email)) {
       // Password is right, but no session until a TOTP code is verified at /auth/2fa/verify.
       // Failed-attempt counters are only reset once the whole login succeeds.
       await this.audit.record({ ...auditBase, action: 'LOGIN_2FA_CHALLENGE' });

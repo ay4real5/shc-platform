@@ -2454,3 +2454,11 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   backgrounds. SHC is a muted, grey-green sage with an earthy terracotta, serif headings, flat cards and square corners.
   The design guard still bans every Primordial teal and coral value. Mobile (`colors` in `apps/mobile/src/components/ui.tsx`),
   emails and the logo (sage shield, terracotta S) use the same palette.
+
+### S-024 — Laptop demo: admins sign in with just the password
+- **Why:** the owner wants to show and try SHC before setting up an authenticator app.
+- **How:** `DEMO_SKIP_TWO_FACTOR=true` (default false) skips the code step and the "set up 2FA" lock, but **only** for
+  the FAKE `@demo.shc.test` accounts (`.test` is a reserved domain, so no real person can have one). Every real account
+  keeps mandatory 2FA (D-045). The API refuses to start with it in production. Helper:
+  `modules/auth/two-factor/demo-two-factor.ts` (with a spec). The browser-test helper `answerTwoFactor` now also
+  accepts going straight in.

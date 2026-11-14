@@ -28,7 +28,10 @@ function totp(step: number, secret = DEMO_TOTP_SECRET): string {
  */
 export async function answerTwoFactor(page: Page): Promise<void> {
   const field = page.getByLabel('Authentication code');
-  await expect(field).toBeVisible();
+  const signedIn = page.getByRole('heading', { name: /Welcome|Good (morning|afternoon|evening)/ });
+  // With DEMO_SKIP_TWO_FACTOR=true on a laptop (S-024) the demo admins go straight in, with no code to answer.
+  await expect(field.or(signedIn)).toBeVisible({ timeout: 20_000 });
+  if (!(await field.isVisible())) return;
   for (let attempt = 0; attempt < 2; attempt++) {
     const step = Math.floor(Date.now() / 30_000);
     await field.fill(totp(step));

@@ -7,6 +7,7 @@ import { PrismaService } from '../../database/prisma.service.js';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { AuditService } from '../audit/audit.service.js';
 import { passwordChangeRequired } from './password-policy.js';
+import { skipsTwoFactor } from './two-factor/demo-two-factor.js';
 import { twoFactorPolicy } from './two-factor/two-factor-policy.js';
 
 export interface TokenPair {
@@ -65,6 +66,7 @@ export class TokenService {
   private readonly refreshTtlDays: number;
   private readonly idleTimeoutMs: number;
   private readonly passwordMaxAgeDays: number;
+  private readonly demoSkipTwoFactor: boolean;
 
   constructor(
     private readonly jwt: JwtService,
@@ -76,6 +78,7 @@ export class TokenService {
     this.refreshTtlDays = config.get('REFRESH_TOKEN_TTL_DAYS', { infer: true });
     this.idleTimeoutMs = config.get('SESSION_IDLE_TIMEOUT_MINUTES', { infer: true }) * 60_000;
     this.passwordMaxAgeDays = config.get('PASSWORD_MAX_AGE_DAYS', { infer: true });
+    this.demoSkipTwoFactor = config.get('DEMO_SKIP_TWO_FACTOR', { infer: true });
   }
 
   /** Starts a new session (login). */
@@ -226,9 +229,9 @@ export class TokenService {
 
     const [policy, account] = await Promise.all([
       twoFactorPolicy(this.prisma, user.userId),
-      this.prisma.user.findUnique({ where: { id: user.userId }, select: { passwordChangedAt: true } }),
+      this.prisma.user.findUnique({ where: { id: user.userId }, select: { passwordChangedAt: true, email: true } }),
     ]);
-    const mustEnable2fa = policy.mandatory && !policy.enabled;
+    const mustEnable2fa = policy.mandatory && !policy.enabled && !skipsTwoFactor(this.demoSkipTwoFactor, account?.email ?? '');
     const mustChangePassword = passwordChangeRequired(account?.passwordChangedAt ?? null, this.passwordMaxAgeDays);
     const claims: AccessTokenClaims = {
       sub: user.userId,

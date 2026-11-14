@@ -61,6 +61,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-14 | Claude Code | S4-07 demo sign-in | DEMO_SKIP_TWO_FACTOR (S-024): demo admins sign in with just the password on the laptop; real accounts and production keep mandatory 2FA. Auth unit tests, typecheck, lint pass; checked live. |
 | 2026-11-14 | Claude Code | S4-06 palette | Owner chose deep sage, warm terracotta and soft cream (S-023). Tokens re-valued (web, phone app, emails, logo), slate warmed; lint, typecheck, email test and WCAG browser tests pass. |
 | 2026-11-13 | Claude Code | S4-04 | AI help (ai:use, admins/managers): drafting adverts, interview questions and supervision write-ups; Ask our policies with citations; structured outputs + refusal fallback on claude-opus-5-5; FAKE policy PDFs in demo. API unit 108/108, AI e2e 4/4, seed e2e OK, browser AI test passes. Live call not yet verified: laptop key returns 401. |
 | 2026-11-13 | Claude Code | S4-03 | Staff record split into a profile header + 5 tabs; credentials form behind a button; Care Certificate contradiction fixed; staff list shows readiness. Browser 27/27, API unit 104/104, shared 69/69, lint + design guard OK. |

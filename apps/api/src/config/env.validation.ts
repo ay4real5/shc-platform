@@ -183,6 +183,15 @@ export class EnvironmentVariables {
   @IsBoolean()
   RATE_LIMITS_DISABLED: boolean = false;
 
+  /**
+   * Demo sign-in without the authenticator code (S-024): the FAKE @demo.shc.test accounts only, for trying SHC on a
+   * laptop. Real accounts keep mandatory 2FA. Refused in production.
+   */
+  @Transform(({ value }) => (value === undefined || value === '' ? undefined : value === 'true' || value === true))
+  @IsOptional()
+  @IsBoolean()
+  DEMO_SKIP_TWO_FACTOR: boolean = false;
+
   // ── AI help for admins and managers (S-022). Off until ANTHROPIC_API_KEY is set; in production also needs
   // AI_DPA_CONFIRMED (UK GDPR paperwork naming Anthropic as a processor).
   /** Anthropic API key for the assistant (a secret — App Settings / .env only). */
@@ -315,6 +324,9 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
   }
   if (env.APP_ENV === AppEnv.Production && env.RATE_LIMITS_DISABLED) {
     problems.push('RATE_LIMITS_DISABLED: not allowed in production');
+  }
+  if (env.APP_ENV === AppEnv.Production && env.DEMO_SKIP_TWO_FACTOR) {
+    problems.push('DEMO_SKIP_TWO_FACTOR: not allowed in production');
   }
   if (env.APP_ENV === AppEnv.Production && !env.PHI_ENCRYPTION_KEY) {
     problems.push('PHI_ENCRYPTION_KEY: required in production');
