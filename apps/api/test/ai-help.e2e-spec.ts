@@ -5,6 +5,7 @@ import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { AiService } from '../src/modules/ai/ai.service.js';
 import { ClaudeService, type MessagesClient } from '../src/modules/ai/claude.service.js';
 import { purgeAuditLogs } from '../src/modules/audit/purge-audit-logs.js';
 import { PasswordService } from '../src/modules/auth/password.service.js';
@@ -36,6 +37,8 @@ describe.skipIf(!hasDb)('AI help (e2e)', () => {
     const claude = app.get(ClaudeService);
     Object.defineProperty(claude, 'enabled', { get: () => true });
     claude.client = { beta: { messages: { create } } } as unknown as MessagesClient;
+    // These tests use the Claude stand-in; the Azure OpenAI supplier has its own unit tests (S-033).
+    Object.defineProperty(app.get(AiService), 'provider', { get: () => 'anthropic' });
     agencyId = (await prisma.agency.create({ data: { name: `AI Test ${randomUUID()}`, timezone: 'Europe/London' } })).id;
     manager = await seedUser('registered_manager');
     coordinator = await seedUser('care_coordinator');

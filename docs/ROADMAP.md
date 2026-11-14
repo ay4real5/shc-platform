@@ -68,6 +68,9 @@ recruitment. These make SHC fit that business.
   link for their Join Us page.
 - Later, priced separately: booking agency shifts for NHS/client organisations, timesheets and invoicing.
 
+- [x] **S5-06** `agent` AI supplier switch: Azure OpenAI by default (UK data residency), Anthropic optional (S-033).
+- [ ] **S5-07** `agent` Policy questions on Azure OpenAI: PDF text extraction (needs the owner's OK to add `unpdf`).
+
 ## Ideas after go-live
 - [ ] Visa sponsorship tracker (only if Michael sponsors workers).
 - AI is **admins and managers only** (S-022). A person always confirms; AI never scores, ranks or rejects candidates

@@ -22,7 +22,7 @@ import { MessagingModule } from './modules/messaging/messaging.module.js';
 import { ComplianceModule } from './modules/compliance/compliance.module.js';
 import { RecruitmentModule } from './modules/recruitment/recruitment.module.js';
 import { TrainingModule } from './modules/training/training.module.js';
-import { AiModule } from './modules/ai/claude.service.js';
+import { AiModule } from './modules/ai/ai.module.js';
 import { AiHelpModule } from './modules/ai/ai-help.js';
 
 @Module({

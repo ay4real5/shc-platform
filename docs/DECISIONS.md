@@ -2576,3 +2576,21 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   (inline styles, so it works in any website builder), plus "copy link only".
 - **At go-live (S3-07):** set the careers address to e.g. `support-health-care` and upload their real logo; the demo
   keeps its FAKE company.
+
+### S-033 — AI supplier: Azure OpenAI by default, Anthropic kept as an option
+- **Why:** the owner chose Azure OpenAI (14 Nov 2026). It runs in the company's own Azure subscription, in the UK region
+  SHC will be hosted in (UK South), under the same Microsoft agreement and bill: prompts stay in the UK, which makes the
+  UK GDPR paperwork (S-022's blocker) much simpler. Running cost is pennies per use either way.
+- **How:** one setting, `AI_PROVIDER` = `azure_openai` (default) or `anthropic`. `AiService` (modules/ai/ai.service.ts)
+  is the only thing the rest of SHC calls; `AzureOpenAiService` calls the Azure OpenAI chat-completions REST API
+  (`AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_VERSION`, default
+  2024-10-21) with strict structured outputs; plain `fetch`, no new SDK. Refusals, content filters, cut-offs and errors
+  become the same friendly 503s as Claude's. Production still needs `AI_DPA_CONFIRMED`.
+- **Drafting works on Azure now** (job adverts, interview questions, supervision write-ups).
+- **Policy questions on Azure: not yet.** Azure OpenAI chat can't read PDF files, so the policies must be turned into text
+  first, which needs a PDF text library in the API. Installing one (`unpdf`, pinned to 2.1.0, two weeks old; 2.2.0 was
+  published the same day and was not used) was blocked pending the owner's go-ahead. Until then a policy question on
+  Azure answers "not ready yet"; with `AI_PROVIDER=anthropic` it works as before (PDFs read directly, with citations).
+- **To switch it on (go-live, S3-07):** create an Azure OpenAI resource in UK South in the `shc-prod` group, deploy a
+  model (data zone/region deployment, not "global", so data stays in the UK region), and put the endpoint, key and
+  deployment name in App Settings. Confirm costs with the owner before creating it.

@@ -216,6 +216,36 @@ export class EnvironmentVariables {
   @IsBoolean()
   AI_DPA_CONFIRMED: boolean = false;
 
+  // ── Which AI supplier (S-033). Azure OpenAI by default: it runs in the company's own Azure subscription, so prompts
+  // stay in the UK region (e.g. UK South) under the Microsoft agreement. "anthropic" uses ANTHROPIC_API_KEY instead.
+  @IsOptional()
+  @IsIn(['azure_openai', 'anthropic'])
+  AI_PROVIDER: 'azure_openai' | 'anthropic' = 'azure_openai';
+
+  /** The Azure OpenAI resource, e.g. https://shc-ai.openai.azure.com (S-033). */
+  @Transform(trimmed)
+  @IsOptional()
+  @IsUrl({ protocols: ['https'], require_protocol: true, require_tld: true }, { message: 'AZURE_OPENAI_ENDPOINT must be an https URL' })
+  AZURE_OPENAI_ENDPOINT?: string;
+
+  /** Azure OpenAI key (a secret — App Settings / .env only). */
+  @Transform(trimmed)
+  @IsOptional()
+  @IsString()
+  AZURE_OPENAI_API_KEY?: string;
+
+  /** The model deployment's name in the Azure resource (chosen when the model is deployed). */
+  @Transform(trimmed)
+  @IsOptional()
+  @Matches(/^[A-Za-z0-9._-]{1,64}$/, { message: 'AZURE_OPENAI_DEPLOYMENT is the deployment name: letters, numbers, dots, dashes, underscores' })
+  AZURE_OPENAI_DEPLOYMENT?: string;
+
+  /** Azure OpenAI REST API version (structured outputs need 2024-08-01-preview or later). */
+  @Transform(trimmed)
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}(-preview)?$/, { message: 'AZURE_OPENAI_API_VERSION looks like 2024-10-21' })
+  AZURE_OPENAI_API_VERSION: string = '2024-10-21';
+
   // ── Outside notification channels (D-071). Each stays off until its settings are present — and must only be
   // switched on once the provider has signed a BAA (P2-11, P3-19). Texts are PHI-free either way.
 

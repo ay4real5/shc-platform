@@ -10,7 +10,7 @@ import { trimmed } from '../../common/validators/fields.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { DocumentsModule } from '../documents/documents.module.js';
 import { DocumentsService } from '../documents/documents.service.js';
-import { ClaudeService } from './claude.service.js';
+import { AiService } from './ai.service.js';
 
 export const DRAFT_KINDS = ['job_advert', 'interview_questions', 'supervision_write_up'] as const;
 export type DraftKind = (typeof DRAFT_KINDS)[number];
@@ -78,7 +78,7 @@ const TEXT_SCHEMA = {
 @Injectable()
 export class AiHelpService {
   constructor(
-    private readonly claude: ClaudeService,
+    private readonly ai: AiService,
     private readonly prisma: PrismaService,
     private readonly documents: DocumentsService,
   ) {}
@@ -92,11 +92,11 @@ export class AiHelpService {
       dto.location && `Location: ${dto.location}`,
     ].filter(Boolean);
     const user = `${facts.join('\n')}\n\nManager's notes:\n${dto.notes}`;
-    return this.claude.structured<{ text: string }>(DRAFT_SYSTEM[dto.kind], user, TEXT_SCHEMA);
+    return this.ai.structured<{ text: string }>(DRAFT_SYSTEM[dto.kind], user, TEXT_SCHEMA);
   }
 
   async policyQuestion(caller: AuthUser, dto: PolicyQuestionDto): Promise<{ answer: string; sources: string[]; policiesRead: number; skipped: string[] }> {
-    if (!this.claude.enabled) throw new ServiceUnavailableException('AI help isn’t switched on for this company');
+    if (!this.ai.enabled) throw new ServiceUnavailableException('AI help isn’t switched on for this company');
     const { pdfs, skipped } = await this.documents.policiesForAi(caller.agencyId, POLICY_LIMITS);
     if (!pdfs.length) {
       throw new BadRequestException(
@@ -105,7 +105,7 @@ export class AiHelpService {
           : 'No policies yet. Upload your policies as PDFs in Documents with the type "Policy", then ask again.',
       );
     }
-    const answer = await this.claude.askDocuments(POLICY_SYSTEM, pdfs.map((p) => ({ title: p.title, pdf: p.pdf })), dto.question);
+    const answer = await this.ai.askDocuments(POLICY_SYSTEM, pdfs.map((p) => ({ title: p.title, pdf: p.pdf })), dto.question);
     return { answer: answer.text, sources: answer.sources, policiesRead: pdfs.length, skipped };
   }
 }
