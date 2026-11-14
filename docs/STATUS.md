@@ -61,6 +61,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-14 | Claude Code | S5-07 policy questions on Azure | unpdf 2.1.0 (owner approved) reads policy PDFs; Azure OpenAI answers from the text and names the policies. AI unit 10/10, AI e2e 4/4, API typecheck/lint/tests pass. |
 | 2026-11-14 | Claude Code | S5-06 Azure OpenAI | AI_PROVIDER switch, Azure OpenAI default (drafting works); policy questions on Azure wait for a PDF text library (install blocked, needs owner OK). AI unit 7/7, AI e2e 4/4. |
 | 2026-11-14 | Claude Code | S5-05 careers branding | Company logo upload (PNG/JPEG/WebP, no SVG) shown on the careers page; copyable "Apply online" button for their website (S-032). Unit and careers/accessibility browser tests pass. Stage 5 complete. |
 | 2026-11-14 | Claude Code | S5-04 visa tracker | Visa records, CoS, sponsor changes with 10-working-day deadlines, Sponsored workers page, dashboard line, visa expiry via credential alerts (S-031). Unit, seed e2e and sponsorship/dashboard/RTW/accessibility browser tests pass. |

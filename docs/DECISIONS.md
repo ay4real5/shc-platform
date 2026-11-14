@@ -2594,3 +2594,8 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **To switch it on (go-live, S3-07):** create an Azure OpenAI resource in UK South in the `shc-prod` group, deploy a
   model (data zone/region deployment, not "global", so data stays in the UK region), and put the endpoint, key and
   deployment name in App Settings. Confirm costs with the owner before creating it.
+- **Update (S5-07, owner approved):** `unpdf` 2.1.0 (pinned exactly) reads each policy PDF's text page by page with
+  `[Page n]` markers. The policies go to Azure OpenAI as `<policy title="...">` text (instructions say it is reference
+  text, never instructions), up to 120k characters each and 450k in all; the reply is strict JSON `{answer, sources}`, and
+  sources are kept only if they match a title actually sent. Scanned policies with no text layer are left out; if none
+  are readable the manager is told to upload text PDFs. Claude still reads PDFs directly when `AI_PROVIDER=anthropic`.

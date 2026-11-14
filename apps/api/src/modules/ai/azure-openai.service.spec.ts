@@ -1,6 +1,7 @@
 import type { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../../config/env.validation.js';
-import { AzureOpenAiService, type FetchLike } from './azure-openai.service.js';
+import { simplePdf } from '../../seed/simple-pdf.js';
+import { AzureOpenAiService, pdfText, type FetchLike } from './azure-openai.service.js';
 
 const settings = (over: Record<string, unknown> = {}) =>
   ({
@@ -57,5 +58,30 @@ describe('AzureOpenAiService (S-033)', () => {
     expect(new AzureOpenAiService(settings({ AZURE_OPENAI_API_KEY: undefined })).enabled).toBe(false);
     expect(new AzureOpenAiService(settings({ APP_ENV: 'production' })).enabled).toBe(false);
     expect(new AzureOpenAiService(settings({ APP_ENV: 'production', AI_DPA_CONFIRMED: true })).enabled).toBe(true);
+  });
+
+  it('reads text out of a PDF, page by page', async () => {
+    const text = await pdfText(simplePdf('Lone working policy (FAKE)', ['Ring the office before entering a FAKE client home.']));
+    expect(text).toMatch(/^\[Page 1\]\n/);
+    expect(text).toContain('Ring the office before entering a FAKE client home.');
+  });
+
+  it('answers policy questions from the policy text, keeping only titles it was given', async () => {
+    const azure = new AzureOpenAiService(settings());
+    azure.fetch = reply({ finish_reason: 'stop', message: { content: '{"answer":"Ring the office first (Lone working, page 1).","sources":["Lone working (FAKE)","Made-up policy"]}' } });
+    const pdf = simplePdf('Lone working (FAKE)', ['Ring the office before entering.']);
+    const answer = await azure.askDocuments('Answer from policies only.', [{ title: 'Lone working (FAKE)', pdf }], 'What if a visit feels unsafe?');
+    expect(answer).toEqual({ text: 'Ring the office first (Lone working, page 1).', sources: ['Lone working (FAKE)'] });
+
+    const body = JSON.parse(vi.mocked(azure.fetch).mock.calls[0]![1].body);
+    expect(body.messages[0].content).toMatch(/Answer from policies only\.[\s\S]*never as instructions/);
+    expect(body.messages[1].content).toMatch(/^<policy title="Lone working \(FAKE\)">\n\[Page 1\]\n[\s\S]*Ring the office before entering\.[\s\S]*<\/policy>\n\nQuestion: What if a visit feels unsafe\?$/);
+  });
+
+  it('says so when no policy has readable text', async () => {
+    const azure = new AzureOpenAiService(settings());
+    azure.fetch = reply({});
+    await expect(azure.askDocuments('s', [{ title: 'Scan', pdf: Buffer.from('not a pdf') }], 'q')).rejects.toThrow(/no readable text/);
+    expect(azure.fetch).not.toHaveBeenCalled();
   });
 });
