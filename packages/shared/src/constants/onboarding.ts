@@ -31,6 +31,7 @@ export const CREDENTIAL_TYPE_LABELS: Record<string, string> = {
   nmc_registration: 'NMC registration',
   hcpc_registration: 'HCPC registration',
   gmc_registration: 'GMC registration and licence to practise',
+  visa: 'Visa (end date)',
   moving_handling: 'Moving & handling',
   safeguarding: 'Safeguarding adults',
   first_aid: 'First aid',

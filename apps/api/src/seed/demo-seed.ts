@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { databaseKey } from '../modules/documents/document-storage.js';
 import { simplePdf } from './simple-pdf.js';
+import { sponsorReportDueBy } from '@alora/shared';
 import { CARE_CERTIFICATE_STANDARDS, MANDATORY_TWO_FACTOR_ROLES, TRAINING_MATRIX, needsCareCertificate, todayInTimeZone, type Discipline, type Role } from '@alora/shared';
 import { hash } from '@node-rs/argon2';
 import { addDays, toDate, toTime } from '../common/utils/dates.js';
@@ -343,7 +344,7 @@ export const DEMO_CAREERS_SLUG = 'demo-care';
 async function seedNurses(prisma: PrismaClient, coordinatorId: string, passwordHash: string, roleId: string, today: string, staffBefore: number): Promise<number> {
   const plan = [
     { first: 'Ada', last: 'Okafor', discipline: 'nurse', pin: '00Z0001D', renews: addDays(today, 300), checked: true },
-    { first: 'Ben', last: 'Hartley', discipline: 'nurse_rmn', pin: '00Z0002E', renews: addDays(today, 20), checked: false },
+    { first: 'Ben', last: 'Hartley', discipline: 'nurse_rmn', pin: '00Z0002E', renews: addDays(today, 20), checked: false, visaEnds: addDays(today, 60) },
   ];
   for (const [k, n] of plan.entries()) {
     const staffNo = staffBefore + k + 1;
@@ -396,9 +397,25 @@ async function seedNurses(prisma: PrismaClient, coordinatorId: string, passwordH
     await prisma.dbsCheck.create({
       data: { agencyId: DEMO_AGENCY_ID, staffProfileId: profile.id, certificateNumber: dbsNumber, issueDate: toDate(addDays(today, -200))!, level: 'enhanced_barred_adults', result: 'clear', updateService: true, nextDueOn: toDate(addDays(today, 500))!, recordedById: coordinatorId, notes: 'FAKE demo certificate' },
     });
+    const visaEnds = 'visaEnds' in n ? n.visaEnds : null;
     await prisma.rightToWorkCheck.create({
-      data: { agencyId: DEMO_AGENCY_ID, staffProfileId: profile.id, method: 'manual_document', documentType: 'british_irish_passport', seenHow: 'in_person', permission: 'unlimited', outcome: 'passed', checkedOn: toDate(hireDate)!, checkedById: coordinatorId, notes: 'FAKE demo check' },
+      data: visaEnds
+        ? { agencyId: DEMO_AGENCY_ID, staffProfileId: profile.id, method: 'share_code', shareCode: 'DEMO00000', permission: 'time_limited', permissionExpiresOn: toDate(visaEnds), followUpOn: toDate(visaEnds), outcome: 'passed', checkedOn: toDate(hireDate)!, checkedById: coordinatorId, notes: 'FAKE demo check' }
+        : { agencyId: DEMO_AGENCY_ID, staffProfileId: profile.id, method: 'manual_document', documentType: 'british_irish_passport', seenHow: 'in_person', permission: 'unlimited', outcome: 'passed', checkedOn: toDate(hireDate)!, checkedById: coordinatorId, notes: 'FAKE demo check' },
     });
+    // A FAKE sponsored worker (S5-04): visa ending within 90 days, and a change not yet reported to the Home Office.
+    if (visaEnds) {
+      await prisma.visaRecord.create({
+        data: { agencyId: DEMO_AGENCY_ID, staffProfileId: profile.id, route: 'health_and_care', sponsored: true, cosReference: 'C0FAKE0001', socCode: '2237', startedOn: toDate(hireDate), expiresOn: toDate(visaEnds)!, notes: 'FAKE demo visa', recordedById: coordinatorId },
+      });
+      await prisma.staffCredential.create({
+        data: { staffProfileId: profile.id, credentialType: 'visa', credentialName: 'Health and Care Worker visa', credentialNumber: 'C0FAKE0001', expiryDate: toDate(visaEnds), alertDaysBefore: 90, verifiedById: coordinatorId, verifiedAt: new Date() },
+      });
+      const happenedOn = addDays(today, -16);
+      await prisma.sponsorReport.create({
+        data: { agencyId: DEMO_AGENCY_ID, staffProfileId: profile.id, event: 'hours_change', happenedOn: toDate(happenedOn)!, dueBy: toDate(sponsorReportDueBy(happenedOn))!, notes: 'FAKE: moved from 37.5 to 30 hours a week', recordedById: coordinatorId },
+      });
+    }
   }
   return plan.length;
 }

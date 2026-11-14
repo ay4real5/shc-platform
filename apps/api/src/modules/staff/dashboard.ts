@@ -8,6 +8,7 @@ import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CareCertificateService } from './care-certificate.js';
 import { CredentialsService } from './credentials.service.js';
+import { SponsorshipService } from './sponsorship.js';
 import { RegionQueryDto } from './dto/staff.dto.js';
 import { OnboardingService } from './onboarding.service.js';
 import { SupervisionsService } from './supervisions.js';
@@ -43,6 +44,9 @@ export interface ManagerDashboard {
     healthToReview: number;
     trainingGaps: number;
     careCertificatesOverdue: number;
+    /** Sponsored-worker changes not yet reported to the Home Office, and how many are past 10 working days (S-031). */
+    sponsorChangesToReport: number;
+    sponsorChangesOverdue: number;
   };
 }
 
@@ -56,6 +60,7 @@ export class DashboardService {
     private readonly credentials: CredentialsService,
     private readonly careCertificate: CareCertificateService,
     private readonly supervisions: SupervisionsService,
+    private readonly sponsorship: SponsorshipService,
   ) {}
 
   /** `region` (S-028) narrows the staff figures (readiness, expiries, training); hiring and approvals stay company-wide. */
@@ -64,7 +69,7 @@ export class DashboardService {
     const today = await this.clock.todayString(agencyId);
     const weekAgo = new Date(`${addDays(today, -7)}T00:00:00Z`);
     const in7Days = new Date(`${addDays(today, 8)}T00:00:00Z`);
-    const [readiness, expiring, matrix, supervisions, openJobs, newApplications, stages, interviews, waiting, timeOff, health] = await Promise.all([
+    const [readiness, expiring, matrix, supervisions, openJobs, newApplications, stages, interviews, waiting, timeOff, health, sponsor] = await Promise.all([
       this.onboarding.overview(caller, region),
       this.credentials.expiring(caller, 30, region),
       this.careCertificate.matrix(caller, region),
@@ -76,6 +81,7 @@ export class DashboardService {
       this.prisma.application.count({ where: { agencyId, stage: { in: [...OPEN_APPLICATION_STAGES] }, stageChangedAt: { lt: weekAgo } } }),
       this.prisma.staffTimeOff.count({ where: { status: 'pending', staffProfile: { agencyId, isActive: true } } }),
       this.prisma.healthDeclaration.count({ where: { agencyId, outcome: null, staffProfile: { isActive: true } } }),
+      this.sponsorship.openReportCounts(agencyId, region),
     ]);
 
     const notReady = readiness.filter((r) => !r.ready);
@@ -115,6 +121,8 @@ export class DashboardService {
         healthToReview: health,
         trainingGaps: gaps,
         careCertificatesOverdue: matrix.rows.filter((r) => r.careCertificate?.overdue).length,
+        sponsorChangesToReport: sponsor.open,
+        sponsorChangesOverdue: sponsor.overdue,
       },
     };
   }

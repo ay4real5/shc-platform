@@ -2548,3 +2548,19 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - Companies can still change which checks each role needs (onboarding requirements).
 - **Demo:** the new courses are seeded without the random generator so the rest of the demo stays the same; every fourth
   person hasn't done Oliver McGowan yet.
+
+### S-031 — Sponsored worker (visa) tracker (S5-04)
+- **Why:** Support Health Care Ltd recruits internationally "with visa compliance support", so it holds a sponsor licence
+  and has Home Office duties per sponsored worker.
+- **Data:** `visa_records` (one per person: route, sponsored, CoS reference, SOC job code, start/end, weekly hours limit
+  for students) and `sponsor_reports` (a change to report: event, happened on, due by = 10 working days later with
+  weekends skipped and bank holidays not, so the date shown is never later than the real one; reported on/by).
+  Migration `20261114000200_sponsorship`. The visa end date is mirrored on a `visa` credential (alerts 90 days ahead),
+  so the expiry reminders, "Checks & expiries" and the dashboard include it with no new job.
+- **Screens:** "Visa & sponsorship" box on the Checks tab (only shown to viewers when there's a visa, or to editors);
+  "Sponsored workers" page (Compliance menu, region filter) listing visas, CoS and changes still to report, for sponsor
+  compliance visits; dashboard line for changes to report (with how many are late).
+- **Not advice:** SHC stores and reminds; screens say to check the current rules with an immigration adviser (2025
+  closed the overseas care worker route to new applicants; nurses remain eligible). Added to OPEN_QUESTIONS for Michael.
+- **Demo:** Ben Hartley (FAKE RMN) is sponsored on a Health and Care Worker visa ending within 60 days, with an hours
+  change past its 10 working days; his Right to Work check is a time-limited share code ending with the visa.

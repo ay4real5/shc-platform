@@ -34,6 +34,8 @@ export interface ManagerDashboardData {
     healthToReview: number;
     trainingGaps: number;
     careCertificatesOverdue: number;
+    sponsorChangesToReport: number;
+    sponsorChangesOverdue: number;
   };
 }
 
@@ -69,6 +71,11 @@ export function ManagerDashboard({ data, error }: { data: ManagerDashboardData |
   const todo = [
     { n: a.timeOffToApprove, text: plural(a.timeOffToApprove, 'holiday request') + ' to approve', href: '/staff/holiday' },
     { n: a.peopleOverdueSupervision, text: `${plural(a.peopleOverdueSupervision, 'person', 'people')} overdue a supervision, appraisal or spot check`, href: '/staff/supervisions' },
+    {
+      n: a.sponsorChangesToReport,
+      text: `${plural(a.sponsorChangesToReport, 'sponsored-worker change')} to report to the Home Office${a.sponsorChangesOverdue ? ` (${a.sponsorChangesOverdue} past 10 working days)` : ''}`,
+      href: '/compliance/sponsorship',
+    },
     { n: a.healthToReview, text: plural(a.healthToReview, 'health questionnaire') + ' to review', href: '/staff/onboarding' },
     { n: a.careCertificatesOverdue, text: plural(a.careCertificatesOverdue, 'Care Certificate') + ' past the 12 weeks', href: '/training/matrix' },
     { n: a.trainingGaps, text: plural(a.trainingGaps, 'training gap') + ' (missing or expired)', href: '/training/matrix' },

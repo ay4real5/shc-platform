@@ -17,32 +17,32 @@ datasource db {
 // ─────────────────────────────── Agency & auth (§5.1) ───────────────────────────────
 
 model Agency {
-  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                   String   @db.VarChar(255)
-  phone                  String?  @db.VarChar(20)
-  email                  String?  @db.VarChar(255)
-  addressLine1           String?  @map("address_line1") @db.VarChar(255)
-  addressLine2           String?  @map("address_line2") @db.VarChar(255)
-  town                   String?  @db.VarChar(100)
-  postcode               String?  @db.VarChar(10)
-  timezone               String   @default("Europe/London") @db.VarChar(50)
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String   @db.VarChar(255)
+  phone        String?  @db.VarChar(20)
+  email        String?  @db.VarChar(255)
+  addressLine1 String?  @map("address_line1") @db.VarChar(255)
+  addressLine2 String?  @map("address_line2") @db.VarChar(255)
+  town         String?  @db.VarChar(100)
+  postcode     String?  @db.VarChar(10)
+  timezone     String   @default("Europe/London") @db.VarChar(50)
   /// Public careers page address: /careers/<slug>. Unset = no careers page.
-  careersSlug            String?  @unique @map("careers_slug") @db.VarChar(60)
-  settings               Json     @default("{}")
-  isActive               Boolean  @default(true) @map("is_active")
-  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  careersSlug  String?  @unique @map("careers_slug") @db.VarChar(60)
+  settings     Json     @default("{}")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  jobPostings       JobPosting[]
-  applications      Application[]
-  users             User[]
-  roles             Role[]
-  staffProfiles     StaffProfile[]
-  documents         Document[]
-  notifications     Notification[]
-  conversations     Conversation[]
-  messages          Message[]
-  trainingCourses   TrainingCourse[]
+  jobPostings     JobPosting[]
+  applications    Application[]
+  users           User[]
+  roles           Role[]
+  staffProfiles   StaffProfile[]
+  documents       Document[]
+  notifications   Notification[]
+  conversations   Conversation[]
+  messages        Message[]
+  trainingCourses TrainingCourse[]
 
   @@map("agencies")
 }
@@ -87,14 +87,14 @@ model User {
 
   documentsDeleted Document[] @relation("DocumentDeletedBy")
 
-  conversationsStarted Conversation[]            @relation("ConversationCreatedBy")
-  conversations        ConversationParticipant[]
-  messagesSent         Message[]                 @relation("MessageSender")
+  conversationsStarted    Conversation[]            @relation("ConversationCreatedBy")
+  conversations           ConversationParticipant[]
+  messagesSent            Message[]                 @relation("MessageSender")
+  careCertificateSignOffs CareCertificateSignOff[]  @relation("CareCertificateSignedOffBy")
+  supervisionsLed         Supervision[]             @relation("SupervisionSupervisor")
 
   @@index([agencyId])
   @@map("users")
-  careCertificateSignOffs CareCertificateSignOff[] @relation("CareCertificateSignedOffBy")
-  supervisionsLed         Supervision[] @relation("SupervisionSupervisor")
 }
 
 /// One-time 2FA backup codes (DECISIONS D-026). Only a SHA-256 hash is stored; codes carry 80 random bits.
@@ -213,58 +213,60 @@ model AuditLog {
 // ─────────────────────────────── Staff (§5.3) ───────────────────────────────
 
 model StaffProfile {
-  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId              String    @unique @map("user_id") @db.Uuid
-  agencyId            String    @map("agency_id") @db.Uuid
-  employeeId          String?   @map("employee_id") @db.VarChar(50)
+  id                           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                       String    @unique @map("user_id") @db.Uuid
+  agencyId                     String    @map("agency_id") @db.Uuid
+  employeeId                   String?   @map("employee_id") @db.VarChar(50)
   /// Job role (care_worker, team_leader, …; @alora/shared DISCIPLINES).
-  discipline          String    @db.VarChar(20)
+  discipline                   String    @db.VarChar(20)
   /// One of the company's regions (agencies.settings.regions, S-028). Null = not set.
-  region              String?   @db.VarChar(60)
-  hireDate            DateTime? @map("hire_date") @db.Date
+  region                       String?   @db.VarChar(60)
+  hireDate                     DateTime? @map("hire_date") @db.Date
   /// Contracted working days a week (S3-03), for statutory holiday (5.6 weeks, max 28 days). Null = 5.
-  daysPerWeek         Decimal?  @map("days_per_week") @db.Decimal(3, 1)
+  daysPerWeek                  Decimal?  @map("days_per_week") @db.Decimal(3, 1)
   /// Holiday days a full leave year, set by the office: irregular hours, or a contract above statutory. Null = statutory.
-  holidayDaysOverride Decimal?  @map("holiday_days_override") @db.Decimal(4, 1)
-  terminationDate     DateTime? @map("termination_date") @db.Date
-  employmentType      String    @default("full_time") @map("employment_type") @db.VarChar(20)
-  hourlyRate          Decimal?  @map("hourly_rate") @db.Decimal(10, 2)
-  overtimeRate        Decimal?  @map("overtime_rate") @db.Decimal(10, 2)
+  holidayDaysOverride          Decimal?  @map("holiday_days_override") @db.Decimal(4, 1)
+  terminationDate              DateTime? @map("termination_date") @db.Date
+  employmentType               String    @default("full_time") @map("employment_type") @db.VarChar(20)
+  hourlyRate                   Decimal?  @map("hourly_rate") @db.Decimal(10, 2)
+  overtimeRate                 Decimal?  @map("overtime_rate") @db.Decimal(10, 2)
   /// Pounds per mile, e.g. 0.45.
-  mileageRate         Decimal?  @map("mileage_rate") @db.Decimal(6, 4)
+  mileageRate                  Decimal?  @map("mileage_rate") @db.Decimal(6, 4)
   /// National Insurance number, encrypted (PhiContext.StaffNiNumber); only the last characters are ever returned.
-  niNumberEncrypted   Bytes?    @map("ni_number_encrypted")
-  dateOfBirth         DateTime? @map("date_of_birth") @db.Date
-  addressLine1        String?   @map("address_line1") @db.VarChar(255)
-  addressLine2        String?   @map("address_line2") @db.VarChar(255)
-  town                String?   @db.VarChar(100)
-  postcode            String?   @db.VarChar(10)
-  emergencyContactName         String? @map("emergency_contact_name") @db.VarChar(200)
-  emergencyContactPhone        String? @map("emergency_contact_phone") @db.VarChar(20)
-  emergencyContactRelationship String? @map("emergency_contact_relationship") @db.VarChar(50)
+  niNumberEncrypted            Bytes?    @map("ni_number_encrypted")
+  dateOfBirth                  DateTime? @map("date_of_birth") @db.Date
+  addressLine1                 String?   @map("address_line1") @db.VarChar(255)
+  addressLine2                 String?   @map("address_line2") @db.VarChar(255)
+  town                         String?   @db.VarChar(100)
+  postcode                     String?   @db.VarChar(10)
+  emergencyContactName         String?   @map("emergency_contact_name") @db.VarChar(200)
+  emergencyContactPhone        String?   @map("emergency_contact_phone") @db.VarChar(20)
+  emergencyContactRelationship String?   @map("emergency_contact_relationship") @db.VarChar(50)
   /// Has a licence and car they can use for work (insurance is tracked as a check).
-  canDrive            Boolean   @default(false) @map("can_drive")
-  skills              String[]
-  languages           String[]
-  gender              String?   @db.VarChar(10)
-  notes               String?
-  isActive            Boolean   @default(true) @map("is_active")
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  canDrive                     Boolean   @default(false) @map("can_drive")
+  skills                       String[]
+  languages                    String[]
+  gender                       String?   @db.VarChar(10)
+  notes                        String?
+  isActive                     Boolean   @default(true) @map("is_active")
+  createdAt                    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user               User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  agency             Agency                       @relation(fields: [agencyId], references: [id])
-  credentials        StaffCredential[]
+  user                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agency              Agency                   @relation(fields: [agencyId], references: [id])
+  credentials         StaffCredential[]
   trainingCompletions TrainingCompletion[]
-  careCertificate    CareCertificateSignOff[]
-  supervisions       Supervision[]
-  availability       StaffAvailability[]
-  timeOff            StaffTimeOff[]
-  documents          Document[]
-  rightToWorkChecks  RightToWorkCheck[]
-  dbsChecks          DbsCheck[]
-  signatureRequests  SignatureRequest[]
-  healthDeclaration  HealthDeclaration?
+  careCertificate     CareCertificateSignOff[]
+  supervisions        Supervision[]
+  availability        StaffAvailability[]
+  timeOff             StaffTimeOff[]
+  documents           Document[]
+  rightToWorkChecks   RightToWorkCheck[]
+  dbsChecks           DbsCheck[]
+  visaRecord          VisaRecord?
+  sponsorReports      SponsorReport[]
+  signatureRequests   SignatureRequest[]
+  healthDeclaration   HealthDeclaration?
 
   @@unique([agencyId, employeeId])
   @@index([agencyId])
@@ -372,20 +374,20 @@ model Document {
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  agency          Agency            @relation(fields: [agencyId], references: [id])
-  staff           StaffProfile?     @relation(fields: [staffId], references: [id])
-  uploadedBy      User              @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
-  credentials     StaffCredential[]
-  blob            DocumentBlob?
-  previousVersion Document?         @relation("DocumentVersions", fields: [previousVersionId], references: [id])
-  nextVersion     Document?         @relation("DocumentVersions")
-  deletedBy       User?             @relation("DocumentDeletedBy", fields: [deletedById], references: [id])
-  messages        Message[]
+  agency            Agency             @relation(fields: [agencyId], references: [id])
+  staff             StaffProfile?      @relation(fields: [staffId], references: [id])
+  uploadedBy        User               @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+  credentials       StaffCredential[]
+  blob              DocumentBlob?
+  previousVersion   Document?          @relation("DocumentVersions", fields: [previousVersionId], references: [id])
+  nextVersion       Document?          @relation("DocumentVersions")
+  deletedBy         User?              @relation("DocumentDeletedBy", fields: [deletedById], references: [id])
+  messages          Message[]
+  signatureRequests SignatureRequest[]
 
   @@index([agencyId, documentType])
   @@index([staffId])
   @@map("documents")
-  signatureRequests SignatureRequest[]
 }
 
 /// A document's file, encrypted (AES-256-GCM, bound to the document id) — the database storage driver (D-056).
@@ -563,23 +565,23 @@ model PasswordResetToken {
 
 /// Academy (D-102): a short training module with a quiz. Passing can record a credential.
 model TrainingCourse {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  agencyId        String   @map("agency_id") @db.Uuid
-  title           String   @db.VarChar(200)
-  summary         String?  @db.VarChar(500)
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String   @map("agency_id") @db.Uuid
+  title          String   @db.VarChar(200)
+  summary        String?  @db.VarChar(500)
   /// The lesson, as plain text with blank lines between paragraphs.
-  content         String
+  content        String
   /// Disciplines it is for (e.g. HHA, CNA); empty = everyone.
-  disciplines     String[]
+  disciplines    String[]
   /// Pass mark, percent of questions right.
-  passPercent     Int      @default(80) @map("pass_percent")
+  passPercent    Int      @default(80) @map("pass_percent")
   /// When set, passing records a credential of this type (e.g. infection_control).
-  credentialType  String?  @map("credential_type") @db.VarChar(100)
+  credentialType String?  @map("credential_type") @db.VarChar(100)
   /// How long that credential lasts; null = no expiry.
-  validityMonths  Int?     @map("validity_months")
-  isActive        Boolean  @default(true) @map("is_active")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  validityMonths Int?     @map("validity_months")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   agency      Agency               @relation(fields: [agencyId], references: [id])
   questions   TrainingQuestion[]
@@ -689,12 +691,12 @@ model Application {
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  agency     Agency                  @relation(fields: [agencyId], references: [id])
-  jobPosting JobPosting?             @relation(fields: [jobPostingId], references: [id])
-  history    ApplicationHistory[]
-  referees   ApplicationReferee[]
-  events     ApplicationEvent[]
-  interviews Interview[]
+  agency            Agency               @relation(fields: [agencyId], references: [id])
+  jobPosting        JobPosting?          @relation(fields: [jobPostingId], references: [id])
+  history           ApplicationHistory[]
+  referees          ApplicationReferee[]
+  events            ApplicationEvent[]
+  interviews        Interview[]
   referenceRequests ReferenceRequest[]
 
   @@index([agencyId, stage])
@@ -729,15 +731,15 @@ model ApplicationHistory {
 
 /// Referees given on the application; requests go out in S2-03.
 model ApplicationReferee {
-  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  applicationId String  @map("application_id") @db.Uuid
-  position      Int
-  name          String  @db.VarChar(200)
-  organisation  String? @db.VarChar(200)
+  id                 String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  applicationId      String  @map("application_id") @db.Uuid
+  position           Int
+  name               String  @db.VarChar(200)
+  organisation       String? @db.VarChar(200)
   /// e.g. "Line manager at Sunrise Care".
-  relationship  String  @db.VarChar(150)
-  email         String  @db.VarChar(255)
-  phone         String? @db.VarChar(20)
+  relationship       String  @db.VarChar(150)
+  email              String  @db.VarChar(255)
+  phone              String? @db.VarChar(20)
   /// May we contact them before an offer?
   contactBeforeOffer Boolean @default(false) @map("contact_before_offer")
 
@@ -885,26 +887,26 @@ model DbsStatusCheck {
 
 /// A reference request to one referee (S2-03): a one-time link to a short form; the answers land here.
 model ReferenceRequest {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  agencyId        String    @map("agency_id") @db.Uuid
-  applicationId   String    @map("application_id") @db.Uuid
-  refereeId       String    @map("referee_id") @db.Uuid
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId         String    @map("agency_id") @db.Uuid
+  applicationId    String    @map("application_id") @db.Uuid
+  refereeId        String    @map("referee_id") @db.Uuid
   /// SHA-256 of the link token; the token itself is only ever in the email / link.
-  tokenHash       String    @unique @map("token_hash") @db.VarChar(64)
+  tokenHash        String    @unique @map("token_hash") @db.VarChar(64)
   /// sent | received | declined | cancelled
-  status          String    @default("sent") @db.VarChar(10)
-  sentAt          DateTime  @default(now()) @map("sent_at") @db.Timestamptz(6)
-  expiresAt       DateTime  @map("expires_at") @db.Timestamptz(6)
-  sentById        String    @map("sent_by_id") @db.Uuid
-  emailSent       Boolean   @default(false) @map("email_sent")
-  respondedAt     DateTime? @map("responded_at") @db.Timestamptz(6)
+  status           String    @default("sent") @db.VarChar(10)
+  sentAt           DateTime  @default(now()) @map("sent_at") @db.Timestamptz(6)
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(6)
+  sentById         String    @map("sent_by_id") @db.Uuid
+  emailSent        Boolean   @default(false) @map("email_sent")
+  respondedAt      DateTime? @map("responded_at") @db.Timestamptz(6)
   /// The referee's answers (see ReferenceAnswers in the API).
-  answers         Json?
-  verifiedById    String?   @map("verified_by_id") @db.Uuid
-  verifiedAt      DateTime? @map("verified_at") @db.Timestamptz(6)
+  answers          Json?
+  verifiedById     String?   @map("verified_by_id") @db.Uuid
+  verifiedAt       DateTime? @map("verified_at") @db.Timestamptz(6)
   /// How it was verified, e.g. "Phoned the care home switchboard and spoke to the referee".
-  verificationNote String?  @map("verification_note") @db.VarChar(500)
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  verificationNote String?   @map("verification_note") @db.VarChar(500)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   application Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   referee     ApplicationReferee @relation(fields: [refereeId], references: [id], onDelete: Cascade)
@@ -1038,4 +1040,55 @@ model SupervisionOverdueAlert {
 
   @@id([staffProfileId, type, dueOn])
   @@map("supervision_overdue_alerts")
+}
+
+/// A worker's visa and, when the company sponsors them, their Certificate of Sponsorship (S5-04, DECISIONS S-031).
+/// One per person, kept up to date; the visa end date also lives on a `visa` credential so expiry alerts work.
+model VisaRecord {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId         String    @map("agency_id") @db.Uuid
+  staffProfileId   String    @unique @map("staff_profile_id") @db.Uuid
+  /// @alora/shared VISA_ROUTES
+  route            String    @db.VarChar(30)
+  /// True when this company is their sponsor (sponsor duties apply).
+  sponsored        Boolean   @default(false)
+  /// Certificate of Sponsorship reference (10 letters/digits).
+  cosReference     String?   @map("cos_reference") @db.VarChar(10)
+  /// Job code on the CoS (SOC 2020), e.g. 6135.
+  socCode          String?   @map("soc_code") @db.VarChar(4)
+  startedOn        DateTime? @map("started_on") @db.Date
+  expiresOn        DateTime  @map("expires_on") @db.Date
+  /// Weekly hours limit (student visas), if any.
+  weeklyHoursLimit Int?      @map("weekly_hours_limit")
+  notes            String?
+  recordedById     String    @map("recorded_by_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([agencyId, expiresOn])
+  @@map("visa_records")
+}
+
+/// A change a sponsor must report to the Home Office within 10 working days (S-031), and when it was reported.
+model SponsorReport {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agencyId       String    @map("agency_id") @db.Uuid
+  staffProfileId String    @map("staff_profile_id") @db.Uuid
+  /// @alora/shared SPONSOR_EVENTS
+  event          String    @db.VarChar(30)
+  happenedOn     DateTime  @map("happened_on") @db.Date
+  dueBy          DateTime  @map("due_by") @db.Date
+  reportedOn     DateTime? @map("reported_on") @db.Date
+  reportedById   String?   @map("reported_by_id") @db.Uuid
+  notes          String?
+  recordedById   String    @map("recorded_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  staffProfile StaffProfile @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+
+  @@index([agencyId, reportedOn, dueBy])
+  @@index([staffProfileId])
+  @@map("sponsor_reports")
 }

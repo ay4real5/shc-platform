@@ -62,7 +62,7 @@ recruitment. These make SHC fit that business.
 - [x] **S5-02** `agent` Regions: company list of regions, region on each staff member, region filters everywhere.
 - [x] **S5-03** `agent` Complex-care training: Oliver McGowan, MCA/DoLS, mental health, PBS/restrictive practice,
   epilepsy, clinical skills (optional).
-- [ ] **S5-04** `agent` Sponsored worker (visa) tracker: visa route/expiry, CoS, sponsor-duty reminders, list for
+- [x] **S5-04** `agent` Sponsored worker (visa) tracker: visa route/expiry, CoS, sponsor-duty reminders, list for
   Home Office visits. Store and remind only; no immigration advice.
 - [ ] **S5-05** `agent` Online applications on their website: company logo on the careers page, an "Apply online"
   link for their Join Us page.

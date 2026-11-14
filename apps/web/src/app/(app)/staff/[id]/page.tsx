@@ -12,6 +12,7 @@ import { CareCertificatePanel } from '@/components/staff/care-certificate-panel'
 import { SupervisionsPanel } from '@/components/staff/supervisions-panel';
 import { DbsPanel } from '@/components/staff/dbs-panel';
 import { RegistrationPanel } from '@/components/staff/registration-panel';
+import { VisaPanel } from '@/components/staff/visa-panel';
 import { HealthPanel } from '@/components/staff/health';
 import { OnboardingCard } from '@/components/staff/onboarding-card';
 import { RightToWorkPanel } from '@/components/staff/right-to-work-panel';
@@ -205,6 +206,7 @@ export default function StaffMemberPage() {
         {tab === 'checks' && (
           <>
             <RightToWorkPanel staffId={id} canEdit={canEdit} />
+            <VisaPanel staffId={id} canEdit={canEdit} />
             <DbsPanel staffId={id} canEdit={canEdit} isSelf={isSelf} />
             <RegistrationPanel staffId={id} discipline={s.discipline} canEdit={canEdit} />
             <HealthPanel staffId={id} isSelf={isSelf} />

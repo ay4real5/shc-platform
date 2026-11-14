@@ -13,6 +13,7 @@ import { DbsController, DbsService } from './dbs.js';
 import { HealthController, HealthService } from './health.js';
 import { OnboardingService } from './onboarding.service.js';
 import { RightToWorkController, RightToWorkService } from './right-to-work.js';
+import { SponsorshipController, SponsorshipService } from './sponsorship.js';
 import { StaffController } from './staff.controller.js';
 import { StaffService } from './staff.service.js';
 import { TimeOffController } from './time-off.controller.js';
@@ -20,8 +21,8 @@ import { TimeOffService } from './time-off.service.js';
 
 @Module({
   imports: [AuthModule],
-  controllers: [InspectionController, StaffImportController, DashboardController, SupervisionsController, CareCertificateController, HolidayController, RightToWorkController, DbsController, HealthController, StaffController, TimeOffController],
-  providers: [InspectionService, StaffImportService, DashboardService, SupervisionsService, SupervisionRemindersJob, CareCertificateService, HolidayService, StaffService, CredentialsService, TimeOffService, OnboardingService, RightToWorkService, DbsService, HealthService],
+  controllers: [SponsorshipController, InspectionController, StaffImportController, DashboardController, SupervisionsController, CareCertificateController, HolidayController, RightToWorkController, DbsController, HealthController, StaffController, TimeOffController],
+  providers: [SponsorshipService, InspectionService, StaffImportService, DashboardService, SupervisionsService, SupervisionRemindersJob, CareCertificateService, HolidayService, StaffService, CredentialsService, TimeOffService, OnboardingService, RightToWorkService, DbsService, HealthService],
   exports: [StaffService, TimeOffService, OnboardingService],
 })
 export class StaffModule {}
