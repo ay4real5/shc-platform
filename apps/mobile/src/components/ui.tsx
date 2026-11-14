@@ -14,15 +14,15 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-/** SHC palette (S-018): navy and gold on warm cream, the same tokens as the website. Nothing shared with Primordial. */
+/** SHC palette (S-023): sage and terracotta on soft cream, the same tokens as the website. Nothing shared with Primordial. */
 export const colors = {
-  brand: '#263c63',
-  brandDark: '#1b2a4a',
-  brandSoft: '#e1e8f3',
-  ink: '#1b2a4a',
-  navyDeep: '#111b31',
-  text: '#1e293b',
-  muted: '#5b6477',
+  brand: '#4a6b5d',
+  brandDark: '#2f453c',
+  brandSoft: '#e3ebe6',
+  ink: '#2c2a29',
+  navyDeep: '#1e2c26',
+  text: '#2c2a29',
+  muted: '#6b625b',
   border: '#e2ddd0',
   danger: '#be123c',
   dangerBg: '#fff1f2',
@@ -30,16 +30,16 @@ export const colors = {
   successBg: '#ecfdf5',
   warning: '#92400e',
   warningBg: '#fffbeb',
-  bg: '#faf7f0',
+  bg: '#faf8f5',
   white: '#ffffff',
-  /** Gold: highlights, badges, the header rule. Navy text on it, never white. */
-  accent: '#c9a227',
-  accentSoft: '#fbf7ea',
-  onAccent: '#111b31',
-  /** Gold text on the navy header band. */
-  headerSubtle: '#e3c55e',
-  /** Secondary text on the navy header band. */
-  headerMuted: '#c3d0e6',
+  /** Terracotta (deep shade): highlights, badges, the header rule. White text on it. */
+  accent: '#b9532c',
+  accentSoft: '#fdf4ef',
+  onAccent: '#ffffff',
+  /** Light terracotta text on the sage header band. */
+  headerSubtle: '#eba17f',
+  /** Secondary text on the sage header band. */
+  headerMuted: '#c7d6cd',
 };
 
 /** Serif headings (S-018), from the phone's own fonts. */
@@ -49,7 +49,7 @@ export type IconName = ComponentProps<typeof Ionicons>['name'];
 
 /** Soft card shadow on both platforms. */
 export const shadow: ViewStyle = Platform.select({
-  ios: { shadowColor: '#1b2a4a', shadowOpacity: 0.05, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } },
+  ios: { shadowColor: '#2c2a29', shadowOpacity: 0.05, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } },
   default: { elevation: 1 },
 }) as ViewStyle;
 
@@ -97,7 +97,7 @@ export function Input({ label, ...props }: TextInputProps & { label: string }) {
   return (
     <View style={{ gap: 6 }}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput accessibilityLabel={label} placeholderTextColor="#8a93a6" style={styles.input} {...props} />
+      <TextInput accessibilityLabel={label} placeholderTextColor="#8f877e" style={styles.input} {...props} />
     </View>
   );
 }
@@ -116,7 +116,7 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
 }
 
 const PILL: Record<string, [string, string]> = {
-  scheduled: ['#e1e8f3', '#1b2a4a'],
+  scheduled: ['#e3ebe6', '#2f453c'],
   in_progress: ['#e0f2fe', '#075985'],
   completed: ['#ecfdf5', '#047857'],
   missed: ['#fff1f2', '#be123c'],
@@ -177,7 +177,7 @@ export function ListRow({
         </Text>
       ) : null}
       {right}
-      {onPress && <Ionicons name="chevron-forward" size={18} color="#94a3b8" />}
+      {onPress && <Ionicons name="chevron-forward" size={18} color="#a59d93" />}
     </View>
   );
   return onPress ? (
@@ -214,7 +214,7 @@ export const styles = StyleSheet.create({
   },
   button: { borderRadius: 6, paddingVertical: 15, alignItems: 'center', minHeight: 54, justifyContent: 'center', paddingHorizontal: 16 },
   primary: { backgroundColor: colors.brand },
-  secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#c3d0e6' },
+  secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#c7d6cd' },
   dangerButton: { backgroundColor: colors.dangerBg, borderWidth: 1, borderColor: '#fecdd3' },
   buttonText: { fontSize: 17, fontWeight: '700' },
   error: { color: colors.danger, backgroundColor: colors.dangerBg, padding: 12, borderRadius: 12, fontSize: 15 },

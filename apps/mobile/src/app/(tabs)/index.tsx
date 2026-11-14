@@ -171,7 +171,7 @@ export default function HomeScreen() {
                     <Ionicons name={t.icon} size={18} color={colors.accent} />
                   </View>
                   <Text style={{ flex: 1, color: colors.text, fontSize: 16, fontWeight: '600' }}>{t.text}</Text>
-                  <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+                  <Ionicons name="chevron-forward" size={18} color="#a59d93" />
                 </Pressable>
               ))}
             </Card>
@@ -216,7 +216,7 @@ export default function HomeScreen() {
                 <Pressable key={c.id} accessibilityRole="button" onPress={() => router.push(`/training/${c.id}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <Ionicons name="school-outline" size={20} color={colors.brand} />
                   <Text style={{ flex: 1, color: colors.text, fontSize: 15 }}>{c.title}</Text>
-                  <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+                  <Ionicons name="chevron-forward" size={18} color="#a59d93" />
                 </Pressable>
               ))}
             </Card>
@@ -231,7 +231,7 @@ export default function HomeScreen() {
                 <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>Care Certificate</Text>
                 <Text style={{ color: careCertificate?.overdue ? colors.danger : colors.muted, fontSize: 14 }}>{ccText}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+              <Ionicons name="chevron-forward" size={18} color="#a59d93" />
             </Card>
           </Pressable>
         )}

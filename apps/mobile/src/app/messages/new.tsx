@@ -89,7 +89,7 @@ export default function NewMessageScreen() {
         <TextInput
           accessibilityLabel="Search people"
           placeholder="Search by name"
-          placeholderTextColor="#8a93a6"
+          placeholderTextColor="#8f877e"
           value={search}
           onChangeText={setSearch}
           autoFocus

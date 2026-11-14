@@ -105,7 +105,7 @@ export default function SupervisionsScreen() {
                 {s.supervisor && <Text style={{ color: colors.muted, fontSize: 13 }}>with {s.supervisor.name}</Text>}
               </View>
               {s.acknowledgedAt ? <Pill status="completed" label="Signed" /> : <Pill status="in_progress" label="To sign" />}
-              <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={18} color="#94a3b8" />
+              <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={18} color="#a59d93" />
             </Pressable>
             {isOpen && (
               <>
@@ -116,7 +116,7 @@ export default function SupervisionsScreen() {
                     <TextInput
                       accessibilityLabel="Your comment (optional)"
                       placeholder="Your comment (optional)"
-                      placeholderTextColor="#8a93a6"
+                      placeholderTextColor="#8f877e"
                       multiline
                       maxLength={3000}
                       value={comment}

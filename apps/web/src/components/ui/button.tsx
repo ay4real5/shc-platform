@@ -4,10 +4,10 @@ import type { ButtonHTMLAttributes, ComponentProps } from 'react';
 type Variant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
 
 const VARIANTS: Record<Variant, string> = {
-  // Solid navy (S-018): flat, no gradients or glows.
+  // Solid sage (S-023): flat, no gradients or glows.
   primary: 'bg-brand-800 text-white hover:bg-brand-900 disabled:opacity-60',
-  // Gold, for the one action on a page you most want people to notice. Navy text keeps it readable.
-  accent: 'bg-accent-500 font-semibold text-brand-950 hover:bg-accent-400 disabled:opacity-60',
+  // Terracotta, for the one action on a page you most want people to notice (the deeper 600 shade keeps white text readable).
+  accent: 'bg-accent-600 font-semibold text-white hover:bg-accent-700 disabled:opacity-60',
   secondary: 'border border-brand-200 bg-white text-brand-900 hover:border-brand-400 hover:bg-brand-50 disabled:opacity-50',
   ghost: 'text-slate-700 hover:bg-slate-100 disabled:opacity-50',
   danger: 'bg-rose-600 text-white shadow-sm hover:bg-rose-700 disabled:bg-rose-600/60',

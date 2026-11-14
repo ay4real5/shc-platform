@@ -195,9 +195,9 @@ export default function ConversationScreen() {
             accessibilityState={{ disabled: offline || uploading, busy: uploading }}
             disabled={offline || uploading}
             onPress={() => void sendPhoto()}
-            style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: offline || uploading ? '#e2e8f0' : colors.bg }}
+            style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: offline || uploading ? '#e5e0d7' : colors.bg }}
           >
-            <Ionicons name="camera-outline" size={24} color={offline || uploading ? '#94a3b8' : colors.brand} />
+            <Ionicons name="camera-outline" size={24} color={offline || uploading ? '#a59d93' : colors.brand} />
           </Pressable>
           <Pressable
             accessibilityRole="switch"
@@ -211,7 +211,7 @@ export default function ConversationScreen() {
           <TextInput
             accessibilityLabel="Message"
             placeholder={urgent ? 'Urgent message…' : 'Message'}
-            placeholderTextColor="#8a93a6"
+            placeholderTextColor="#8f877e"
             value={draft}
             onChangeText={setDraft}
             multiline
@@ -236,7 +236,7 @@ export default function ConversationScreen() {
             accessibilityState={{ disabled: !canSend }}
             disabled={!canSend}
             onPress={() => void send()}
-            style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: canSend ? colors.brand : '#cbd5e1' }}
+            style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: canSend ? colors.brand : '#d4cdc2' }}
           >
             <Ionicons name="send" size={19} color={colors.white} />
           </Pressable>

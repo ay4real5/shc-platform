@@ -36,7 +36,7 @@ export default function TabsLayout() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.brand,
-        tabBarInactiveTintColor: '#7c8497',
+        tabBarInactiveTintColor: '#7c746c',
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
         tabBarStyle: { borderTopColor: colors.border, backgroundColor: colors.white, height: 64, paddingTop: 6, paddingBottom: 8 },
         tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.onAccent, fontSize: 11, fontWeight: '700' },

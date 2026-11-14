@@ -2440,3 +2440,17 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
 - **Demo:** four FAKE policies (lone working, missed visits, sickness, medication) are seeded as real PDFs
   (`seed/simple-pdf.ts`, stored encrypted like uploads). Tests use a stand-in for Claude, so they cost nothing.
 
+
+### S-023 — Palette: deep sage, warm terracotta, soft cream (replaces S-018's navy and gold)
+- **Why:** the owner chose it. Job hunting and care work are stressful; warm earthy colours feel more human and
+  supportive than corporate navy, and stand out from the blue job boards.
+- **Tokens (same names, new values, so no page code changed):** `brand-*` = deep sage (700 `#4A6B5D`; top bar 900
+  `#2F453C`); `accent-*` = terracotta (500 `#D96B43` for rules, bars and highlights; filled buttons and badges use 600
+  `#B9532C` with **white** text, 4.8:1, because 500 fails contrast with both white and dark text); `canvas` `#FAF8F5`;
+  new `sand` `#F0ECE4`; `ink` `#2C2A29`. Tailwind's `slate-*` is overridden in `globals.css` with warm greys so neutrals
+  sit with the cream. Rough 60/30/10: cream backgrounds, sage and sand for structure, terracotta for the key action.
+- **Status colours unchanged:** emerald (good), amber (attention), rose (problem), sky (info).
+- **Not Primordial (S-018 still holds):** Primordial is bright teal with coral, Inter/Plus Jakarta and mesh
+  backgrounds. SHC is a muted, grey-green sage with an earthy terracotta, serif headings, flat cards and square corners.
+  The design guard still bans every Primordial teal and coral value. Mobile (`colors` in `apps/mobile/src/components/ui.tsx`),
+  emails and the logo (sage shield, terracotta S) use the same palette.
