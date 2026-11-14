@@ -61,6 +61,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-14 | Claude Code | S4-08 AI chat | Ask AI moved from the top bar to a floating bottom-right chat that opens over the current page (S-026); AI, accessibility tests pass. |
 | 2026-11-14 | Claude Code | S4-08 Ask AI button | Top-bar "Ask AI" button (sparkle, gradient) for admins and managers, opens Ask our policies; browser test checks who sees it. |
 | 2026-11-14 | Claude Code | S4-08 new look | Owner rejected sage/terracotta; new design S-025: crisp white, royal blue + violet, Manrope/Figtree, wordmark logo, no side lines. |
 | 2026-11-14 | Claude Code | S4-07 demo sign-in | DEMO_SKIP_TWO_FACTOR (S-024): demo admins sign in with just the password on the laptop; real accounts and production keep mandatory 2FA. Auth unit tests, typecheck, lint pass; checked live. |

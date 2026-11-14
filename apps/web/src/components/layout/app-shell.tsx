@@ -1,10 +1,11 @@
 'use client';
 
-import { ChevronDown, LogOut, Menu, Sparkles, X } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { AiChat } from '@/components/ai/ai-chat';
 import { Logo, LogoMark } from '@/components/brand/logo';
 import { roleLabel } from '@/lib/labels';
 import { MessagesBadge } from './messages-badge';
@@ -137,18 +138,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            {can('ai:use') && (
-              <Link
-                href="/compliance/ask"
-                aria-current={pathname === '/compliance/ask' ? 'page' : undefined}
-                title="Ask AI about your policies (admins and managers only)"
-                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-600 to-accent-600 px-3.5 py-2 text-sm font-semibold text-white shadow-[var(--shadow-glow)] transition hover:from-brand-700 hover:to-accent-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-              >
-                <Sparkles aria-hidden className="h-4 w-4" />
-                <span className="hidden sm:inline">Ask AI</span>
-                <span className="sr-only sm:hidden">Ask AI</span>
-              </Link>
-            )}
             <NotificationBell />
             <div className="hidden items-center gap-3 border-l border-slate-200 pl-4 md:flex">
               <span aria-hidden className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-accent-600 font-display text-sm font-bold text-white">
@@ -225,11 +214,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       <footer className="print:hidden border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-slate-500 md:px-8">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 py-4 pl-4 pr-24 text-xs text-slate-500 md:pl-8 sm:pr-40 2xl:pr-8">
           <span>SHC · UK hosted · UK GDPR</span>
           <span>Staff records are confidential. Access is logged.</span>
         </div>
       </footer>
+      <AiChat />
     </div>
   );
 }

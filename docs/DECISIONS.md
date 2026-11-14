@@ -2477,3 +2477,10 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   pattern in banners, the navy top bar (now white with a soft blue pill for the current page), serif headings.
 - **Still not Primordial:** Primordial is teal with coral, Inter/Plus Jakarta and mesh backgrounds; the guard still
   bans those. Phone app (`colors`) and emails follow the same palette. The phone app's icon image is unchanged.
+
+### S-026 — Ask AI is a floating chat in the bottom-right corner
+- The owner wants AI one press away without leaving the page. `components/ai/ai-chat.tsx`: a round "Ask AI" button fixed
+  bottom-right on every signed-in page (only with `ai:use`: admins and registered managers) opens a chat panel over the
+  current page. It answers policy questions (same `/ai/policy-question` endpoint) as chat bubbles with the policy names;
+  Escape or the button closes it. The conversation is kept only until the page reloads; nothing is saved. The full
+  "Ask our policies" page stays in the Compliance menu.
