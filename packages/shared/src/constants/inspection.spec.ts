@@ -22,7 +22,7 @@ const full = (over: Partial<InspectionFacts> = {}): InspectionFacts => ({
   credentials: [
     cred('dbs_enhanced', { expiryDate: '2026-12-31' }),
     cred('care_certificate', { expiryDate: null }),
-    ...['safeguarding', 'moving_handling', 'infection_control', 'first_aid', 'health_safety', 'fire_safety'].map((t) => cred(t)),
+    ...['safeguarding', 'moving_handling', 'infection_control', 'first_aid', 'health_safety', 'fire_safety', 'oliver_mcgowan', 'mca_dols', 'mental_health'].map((t) => cred(t)),
   ],
   verifiedReferences: 2,
   fromApplication: true,
@@ -47,7 +47,7 @@ describe('inspectionItems', () => {
   it('an empty file shows every gap', () => {
     const items = byKey(full({ rightToWork: null, dbs: null, credentials: [], verifiedReferences: 0, fromApplication: false, health: 'none', hireDate: '2020-01-01' }));
     for (const key of ['identity', 'right_to_work', 'dbs', 'conduct', 'qualifications', 'history', 'health'] as const) expect(items[key].status).toBe('missing');
-    expect(items.qualifications.summary).toBe('7 of 7 missing or expired.');
+    expect(items.qualifications.summary).toBe('10 of 10 missing or expired.');
   });
 
   it('imported records count as held on the paper file', () => {
@@ -87,7 +87,7 @@ describe('inspectionItems', () => {
   it('flags expired training and overdue supervision', () => {
     const f = full({ credentials: full().credentials.map((c) => (c.type === 'first_aid' ? { ...c, expiryDate: '2026-10-01' } : c)), lastSupervision: '2026-01-01' });
     const items = byKey(f);
-    expect(items.qualifications).toMatchObject({ status: 'missing', summary: '1 of 7 missing or expired.' });
+    expect(items.qualifications).toMatchObject({ status: 'missing', summary: '1 of 10 missing or expired.' });
     expect(items.supervision).toMatchObject({ status: 'attention', summary: 'Overdue: supervision.' });
   });
 

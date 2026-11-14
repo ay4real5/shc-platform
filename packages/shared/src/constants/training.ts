@@ -37,6 +37,8 @@ export function needsCareCertificate(discipline: string): boolean {
 const NURSES: Discipline[] = ['nurse', 'nurse_rmn', 'nurse_rnld'];
 const CARE_ROLES: Discipline[] = ['care_worker', 'senior_care_worker', 'support_worker', 'team_leader', 'hca', ...NURSES];
 const EVERYONE: Discipline[] = [...CARE_ROLES, 'ahp', 'doctor', 'care_coordinator', 'manager', 'office'];
+/** Supported living roles (S-030): people who may support someone whose behaviour can challenge. */
+const SUPPORTED_LIVING: Discipline[] = ['support_worker', 'senior_care_worker', 'team_leader', 'nurse_rmn', 'nurse_rnld'];
 export const TRAINING_MATRIX: readonly { type: string; label: string; neededBy: readonly Discipline[] }[] = [
   { type: 'care_certificate', label: 'Care Certificate', neededBy: ['care_worker', 'senior_care_worker', 'support_worker', 'team_leader', 'hca'] },
   { type: 'safeguarding', label: 'Safeguarding', neededBy: EVERYONE },
@@ -46,6 +48,18 @@ export const TRAINING_MATRIX: readonly { type: string; label: string; neededBy: 
   { type: 'health_safety', label: 'Health & safety', neededBy: EVERYONE },
   { type: 'fire_safety', label: 'Fire safety', neededBy: EVERYONE },
   { type: 'medication_training', label: 'Medication', neededBy: ['senior_care_worker', 'team_leader', ...NURSES] },
+  // Complex care (S5-03, S-030): Support Health Care Ltd's supported living covers learning disability, autism, mental
+  // health, DoLS and the Mental Health Act.
+  // The Health and Care Act 2022 requires CQC-registered providers to train staff in learning disability and autism
+  // appropriate to their role; the Oliver McGowan Mandatory Training is the government's recommended package.
+  { type: 'oliver_mcgowan', label: 'Oliver McGowan (learning disability & autism)', neededBy: EVERYONE },
+  { type: 'mca_dols', label: 'Mental Capacity Act & DoLS', neededBy: [...CARE_ROLES, 'ahp', 'doctor', 'manager'] },
+  { type: 'mental_health', label: 'Mental health awareness', neededBy: CARE_ROLES },
+  // Restrictive practice training should be certified against the Restraint Reduction Network (RRN) standards.
+  { type: 'pbs_restrictive', label: 'Positive behaviour support & restrictive practice (RRN)', neededBy: SUPPORTED_LIVING },
+  { type: 'epilepsy', label: 'Epilepsy & rescue medication', neededBy: ['support_worker', 'senior_care_worker', 'team_leader', 'nurse_rnld'] },
+  // Only for people whose care plan needs it, so nobody needs it by default: it shows when recorded.
+  { type: 'clinical_skills', label: 'Clinical skills (PEG, catheter, tracheostomy)', neededBy: [] },
 ];
 
 export type TrainingCellState = 'valid' | 'expiring_soon' | 'expired' | 'missing' | 'not_needed';

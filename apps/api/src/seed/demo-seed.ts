@@ -78,6 +78,8 @@ const STAFF_PLAN: { discipline: Discipline; count: number; role: string }[] = [
 ];
 /** Demo regions (S-028): staff are spread across them in turn. */
 export const DEMO_REGIONS = ['Greater Manchester', 'Bristol', 'Teesside'] as const;
+/** Training in the matrix before S5-03; newer courses are seeded without the random generator (see below). */
+const ORIGINAL_TRAINING = new Set(['care_certificate', 'safeguarding', 'moving_handling', 'infection_control', 'first_aid', 'health_safety', 'fire_safety', 'medication_training']);
 const OFFICE_ROLES = ['super_admin', 'agency_admin', 'registered_manager', 'care_coordinator', 'recruiter'];
 
 export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): Promise<SeedSummary> {
@@ -183,6 +185,13 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
       // Training for the matrix (S3-02): most on file and in date, a few expiring, expired or missing.
       for (const t of TRAINING_MATRIX) {
         if (t.type === 'care_certificate' || t.type === 'moving_handling' || !(t.neededBy as readonly string[]).includes(plan.discipline)) continue;
+        if (!ORIGINAL_TRAINING.has(t.type)) {
+          // Complex-care courses (S5-03) without the random generator, so the rest of the demo stays as it was:
+          // every fourth person hasn't done Oliver McGowan yet.
+          if (t.type === 'oliver_mcgowan' && staffNo % 4 === 0) continue;
+          rows.push({ staffProfileId: profile.id, credentialType: t.type, credentialName: t.label, expiryDate: toDate(addDays(today, 120 + staffNo * 23)) } as (typeof rows)[number]);
+          continue;
+        }
         if (rand.next() < 0.1) continue; // missing
         rows.push({ staffProfileId: profile.id, credentialType: t.type, credentialName: t.label, expiryDate: toDate(addDays(today, rand.int(-20, 700))) } as (typeof rows)[number]);
       }

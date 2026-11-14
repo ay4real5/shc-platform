@@ -2531,3 +2531,20 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   with dark green text. The floating Ask AI button: green with a lime ring.
 - **Phone app and emails** follow (emails: green header with a lime stripe). Lime is too pale for icons on white, so
   phone icons use green, and "pending" uses amber.
+
+### S-030 — Complex-care training (S5-03)
+- **Why:** Support Health Care Ltd's supported living covers learning disability, autism, mental health, DoLS and the
+  Mental Health Act. New `TRAINING_MATRIX` columns (so the matrix, expiry alerts, inspection pack, dashboard gaps and the
+  spreadsheet import all pick them up):
+  - **Oliver McGowan (learning disability & autism):** everyone. The Health and Care Act 2022 requires CQC-registered
+    providers to train staff in this, appropriate to role; Oliver McGowan is the recommended package.
+  - **Mental Capacity Act & DoLS:** care roles, nurses, AHPs, doctors, managers.
+  - **Mental health awareness:** care roles and nurses.
+  - **Positive behaviour support & restrictive practice (RRN-certified):** supported-living roles (support worker, senior,
+    team leader, RMN, RNLD).
+  - **Epilepsy & rescue medication:** support worker, senior, team leader, RNLD.
+  - **Clinical skills (PEG, catheter, tracheostomy):** nobody by default (only where a care plan needs it); shows when
+    recorded.
+- Companies can still change which checks each role needs (onboarding requirements).
+- **Demo:** the new courses are seeded without the random generator so the rest of the demo stays the same; every fourth
+  person hasn't done Oliver McGowan yet.
