@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader, Pager, StatusBadge } from '@/components/ui/data-display';
 import { SelectField } from '@/components/ui/form-controls';
 import { Field } from '@/components/ui/field';
-import { RegionFilter, regionParam, useRegion } from '@/lib/region';
+import { RegionFilter, useRegion } from '@/lib/region';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { disciplineLabel, humanize } from '@/lib/labels';
 import type { StaffSummary } from '@/lib/types/people';

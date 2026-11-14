@@ -24,7 +24,7 @@ export interface Job {
 export type PublicJob = Omit<Job, 'status' | 'publishedAt' | 'applicationCount' | 'createdAt' | 'updatedAt'>;
 
 export interface CareersPage {
-  company: { name: string; town: string | null };
+  company: { name: string; town: string | null; logo?: string | null };
   jobs: PublicJob[];
 }
 

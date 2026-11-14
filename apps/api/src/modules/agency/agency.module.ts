@@ -1,4 +1,5 @@
-import { BadRequestException, Body, Controller, Get, Injectable, Module, Patch } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Injectable, Module, Patch, Put, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { DEFAULT_LEAVE_YEAR_START_MONTH, DEFAULT_SUPERVISION_INTERVALS, MAX_REGIONS, SUPERVISION_TYPES, agencyRegions, cleanRegions, type SupervisionType } from '@alora/shared';
@@ -92,6 +93,24 @@ export interface AgencyView {
   leaveYearStartMonth: number;
   supervisionEveryMonths: Record<SupervisionType, number>;
   regions: string[];
+  /** The careers-page logo as a data: URL (S-032), or null. */
+  logo: string | null;
+}
+
+/** Largest logo accepted (S-032): enough for a sharp header logo, small enough to send inside the careers page. */
+export const MAX_LOGO_BYTES = 200_000;
+
+/** The image type from its first bytes: PNG, JPEG or WebP only (never SVG, which can carry script). */
+export function logoType(bytes: Uint8Array): 'image/png' | 'image/jpeg' | 'image/webp' | null {
+  const b = (i: number) => bytes[i];
+  if (b(0) === 0x89 && b(1) === 0x50 && b(2) === 0x4e && b(3) === 0x47) return 'image/png';
+  if (b(0) === 0xff && b(1) === 0xd8 && b(2) === 0xff) return 'image/jpeg';
+  if (b(0) === 0x52 && b(1) === 0x49 && b(2) === 0x46 && b(3) === 0x46 && b(8) === 0x57 && b(9) === 0x45 && b(10) === 0x42 && b(11) === 0x50) return 'image/webp';
+  return null;
+}
+
+export function logoDataUrl(logo: Uint8Array | null, type: string | null): string | null {
+  return logo && type ? `data:${type};base64,${Buffer.from(logo).toString('base64')}` : null;
 }
 
 const SELECT = {
@@ -105,6 +124,8 @@ const SELECT = {
   timezone: true,
   careersSlug: true,
   settings: true,
+  logo: true,
+  logoType: true,
 } as const;
 
 /** Agency setting (off by default): show staff recognition badges in the app. */
@@ -114,7 +135,7 @@ function recognitionEnabled(settings: unknown): boolean {
 
 const isObject = (v: unknown): v is Prisma.JsonObject => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-function view({ settings, ...agency }: Prisma.AgencyGetPayload<{ select: typeof SELECT }>): AgencyView {
+function view({ settings, logo, logoType: type, ...agency }: Prisma.AgencyGetPayload<{ select: typeof SELECT }>): AgencyView {
   const month = isObject(settings) ? settings.leaveYearStartMonth : undefined;
   const custom = isObject(settings) && isObject(settings.supervisionEveryMonths) ? settings.supervisionEveryMonths : {};
   const supervisionEveryMonths = Object.fromEntries(
@@ -126,6 +147,7 @@ function view({ settings, ...agency }: Prisma.AgencyGetPayload<{ select: typeof 
     leaveYearStartMonth: typeof month === 'number' ? month : DEFAULT_LEAVE_YEAR_START_MONTH,
     supervisionEveryMonths,
     regions: agencyRegions(settings),
+    logo: logoDataUrl(logo, type),
   };
 }
 
@@ -139,6 +161,19 @@ export class AgencyService {
 
   async get(caller: AuthUser): Promise<AgencyView> {
     return view(await this.prisma.agency.findUniqueOrThrow({ where: { id: caller.agencyId }, select: SELECT }));
+  }
+
+  /** Sets the careers-page logo (S-032). */
+  async setLogo(caller: AuthUser, file: { buffer: Buffer; size: number } | undefined): Promise<AgencyView> {
+    if (!file?.size) throw new BadRequestException('Choose an image file');
+    if (file.size > MAX_LOGO_BYTES) throw new BadRequestException('The logo must be 200 KB or smaller');
+    const type = logoType(file.buffer);
+    if (!type) throw new BadRequestException('The logo must be a PNG, JPEG or WebP image');
+    return view(await this.prisma.agency.update({ where: { id: caller.agencyId }, data: { logo: new Uint8Array(file.buffer), logoType: type }, select: SELECT }));
+  }
+
+  async removeLogo(caller: AuthUser): Promise<void> {
+    await this.prisma.agency.update({ where: { id: caller.agencyId }, data: { logo: null, logoType: null } });
   }
 
   /** Just the region names (S-028), for anyone who works with staff lists. */
@@ -188,6 +223,22 @@ export class AgencyController {
   @Get()
   get(@CurrentUser() caller: AuthUser) {
     return this.agency.get(caller);
+  }
+
+  @Permissions('settings:update')
+  @Audit({ action: 'UPDATE_AGENCY_LOGO', resourceType: 'agency' })
+  @Put('logo')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_LOGO_BYTES + 1, files: 1 } }))
+  setLogo(@CurrentUser() caller: AuthUser, @UploadedFile() file: { buffer: Buffer; size: number } | undefined) {
+    return this.agency.setLogo(caller, file);
+  }
+
+  @Permissions('settings:update')
+  @Audit({ action: 'REMOVE_AGENCY_LOGO', resourceType: 'agency' })
+  @Delete('logo')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeLogo(@CurrentUser() caller: AuthUser) {
+    return this.agency.removeLogo(caller);
   }
 
   /** The company's regions, for region filters and pickers (S-028). */

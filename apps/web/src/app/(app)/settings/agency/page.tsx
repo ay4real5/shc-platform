@@ -8,6 +8,7 @@ import { ErrorAlert, PageHeader } from '@/components/ui/data-display';
 import { Field } from '@/components/ui/field';
 import { SelectField } from '@/components/ui/form-controls';
 import { SUPERVISION_TYPE_LABELS, SUPERVISION_TYPES } from '@alora/shared';
+import { CareersBranding } from '@/components/settings/careers-branding';
 import { useAuth } from '@/lib/auth/auth-provider';
 
 interface Agency {
@@ -23,6 +24,7 @@ interface Agency {
   leaveYearStartMonth: number;
   supervisionEveryMonths: Record<string, number>;
   regions: string[];
+  logo: string | null;
 }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -145,6 +147,7 @@ export default function AgencySettingsPage() {
           </form>
         </Card>
       )}
+      {a && <CareersBranding logo={a.logo} careersSlug={a.careersSlug} companyName={a.name} editable={editable} />}
     </div>
   );
 }

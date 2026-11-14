@@ -64,7 +64,7 @@ recruitment. These make SHC fit that business.
   epilepsy, clinical skills (optional).
 - [x] **S5-04** `agent` Sponsored worker (visa) tracker: visa route/expiry, CoS, sponsor-duty reminders, list for
   Home Office visits. Store and remind only; no immigration advice.
-- [ ] **S5-05** `agent` Online applications on their website: company logo on the careers page, an "Apply online"
+- [x] **S5-05** `agent` Online applications on their website: company logo on the careers page, an "Apply online"
   link for their Join Us page.
 - Later, priced separately: booking agency shifts for NHS/client organisations, timesheets and invoicing.
 

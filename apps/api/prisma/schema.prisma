@@ -28,6 +28,9 @@ model Agency {
   timezone     String   @default("Europe/London") @db.VarChar(50)
   /// Public careers page address: /careers/<slug>. Unset = no careers page.
   careersSlug  String?  @unique @map("careers_slug") @db.VarChar(60)
+  /// Company logo for the careers page (S5-05, DECISIONS S-032): PNG, JPEG or WebP, up to 200 KB. Never SVG.
+  logo         Bytes?
+  logoType     String?  @map("logo_type") @db.VarChar(20)
   settings     Json     @default("{}")
   isActive     Boolean  @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)

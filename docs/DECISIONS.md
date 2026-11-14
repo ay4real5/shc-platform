@@ -2564,3 +2564,15 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   closed the overseas care worker route to new applicants; nurses remain eligible). Added to OPEN_QUESTIONS for Michael.
 - **Demo:** Ben Hartley (FAKE RMN) is sponsored on a Health and Care Worker visa ending within 60 days, with an hours
   change past its 10 working days; his Right to Work check is a time-limited share code ending with the visa.
+
+### S-032 — Company logo on the careers page and an "Apply online" button (S5-05)
+- **Why:** Support Health Care Ltd's website has no online applications ("register via Contact Us"). Their careers page
+  in SHC should carry their own logo, and their web developer needs one link to add.
+- **Logo:** `agencies.logo` (bytea) + `logo_type` (migration `20261114000300_agency_logo`). Admin → Company → "Careers
+  page": PNG, JPEG or WebP up to 200 KB, checked by its first bytes; **never SVG** (it can carry script). It travels inside
+  the careers page data as a `data:` URL, so the Content-Security-Policy needs no change and there's no public file
+  endpoint. Shown on a white chip in the careers header so the company's own colours show true.
+- **Apply online:** the same card shows the careers page address and copyable HTML for a green "Apply online" button
+  (inline styles, so it works in any website builder), plus "copy link only".
+- **At go-live (S3-07):** set the careers address to e.g. `support-health-care` and upload their real logo; the demo
+  keeps its FAKE company.

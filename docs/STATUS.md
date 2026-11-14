@@ -43,7 +43,7 @@ How to run the browser suite locally:
 4. Run the tests: `npm run test:e2e -w @alora/web`. This re-seeds the demo company.
 
 ## Next up
-**Stage 5 (fit to Support Health Care Ltd)**, in order: S5-05 careers logo and "Apply online" link.
+**Stage 5 is done.** Next: show Michael; at go-live (S3-07, on hold) set the careers address and upload his real logo. S4-05 (AI reads certificates) waits for the DPA.
 - S3-07 go-live (Azure UK South, domain, email sender; manager training) is on hold until Ayo says go.
 
 Open items:
@@ -61,6 +61,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-14 | Claude Code | S5-05 careers branding | Company logo upload (PNG/JPEG/WebP, no SVG) shown on the careers page; copyable "Apply online" button for their website (S-032). Unit and careers/accessibility browser tests pass. Stage 5 complete. |
 | 2026-11-14 | Claude Code | S5-04 visa tracker | Visa records, CoS, sponsor changes with 10-working-day deadlines, Sponsored workers page, dashboard line, visa expiry via credential alerts (S-031). Unit, seed e2e and sponsorship/dashboard/RTW/accessibility browser tests pass. |
 | 2026-11-14 | Claude Code | S5-03 complex-care training | Oliver McGowan, MCA/DoLS, mental health, PBS/restrictive practice, epilepsy, clinical skills in the training matrix (S-030). Unit, training/inspection/import browser tests pass. |
 | 2026-11-14 | Claude Code | S-029 their colours | SHC now uses Support Health Care's green and lime (from their website) and a logo mark after theirs; web, phone app, emails. Lint, typecheck, accessibility tests pass. |

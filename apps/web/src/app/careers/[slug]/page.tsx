@@ -18,7 +18,7 @@ export default function CareersListPage() {
   const page = useQuery({ queryKey: ['careers', slug], queryFn: async () => (await apiRequest<CareersPage>(`/careers/${encodeURIComponent(slug)}`)).data, retry: false });
 
   return (
-    <CareersShell company={page.data?.company.name}>
+    <CareersShell company={page.data?.company.name} logo={page.data?.company.logo}>
       <div>
         <h1 className="font-display text-[28px] font-bold tracking-tight text-ink">Work with us</h1>
         <p className="mt-1 text-slate-600">

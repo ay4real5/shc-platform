@@ -7,6 +7,7 @@ import { fromDate, toDate } from '../../common/utils/dates.js';
 import { AgencyClockService } from '../../database/agency-clock.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
+import { logoDataUrl } from '../agency/agency.module.js';
 import { ComplianceService } from '../compliance/compliance.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import type {
@@ -231,7 +232,7 @@ export class RecruitmentService {
 
   // ---------- public careers page ----------
 
-  async careersPage(slug: string): Promise<{ company: { name: string; town: string | null }; jobs: PublicJobView[] }> {
+  async careersPage(slug: string): Promise<{ company: { name: string; town: string | null; logo: string | null }; jobs: PublicJobView[] }> {
     const agency = await this.findCareersAgency(slug);
     const today = await this.clock.today(agency.id);
     const rows = await this.prisma.jobPosting.findMany({
@@ -240,7 +241,8 @@ export class RecruitmentService {
       orderBy: { publishedAt: 'desc' },
       take: 200,
     });
-    return { company: { name: agency.name, town: agency.town }, jobs: rows.map(toPublicJob) };
+    const logo = await this.prisma.agency.findUnique({ where: { id: agency.id }, select: { logo: true, logoType: true } });
+    return { company: { name: agency.name, town: agency.town, logo: logoDataUrl(logo?.logo ?? null, logo?.logoType ?? null) }, jobs: rows.map(toPublicJob) };
   }
 
   async publicJob(slug: string, jobId: string): Promise<{ company: { name: string }; job: PublicJobView }> {
