@@ -14,7 +14,7 @@ export function MessagesBadge() {
   if (!unread.data) return null;
   return (
     <span
-      className="ml-auto bg-accent-600 px-1.5 py-0.5 text-[11px] font-bold text-white"
+      className="ml-auto rounded-full bg-brand-600 px-1.5 py-0.5 text-[11px] font-bold text-white"
       aria-label={`${unread.data} unread`}
     >
       {unread.data > 99 ? '99+' : unread.data}

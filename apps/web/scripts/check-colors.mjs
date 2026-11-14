@@ -1,4 +1,4 @@
-// Design guard (S-018). SHC has its own look (sage and terracotta, S-023) and must never drift back to Primordial's:
+// Design guard (S-018). SHC has its own look (royal blue and violet, S-025) and must never drift back to Primordial's:
 // - website colours come from the brand-/accent- tokens in src/app/globals.css, never violet/indigo/fuchsia/purple/pink;
 // - Primordial's teal and coral colours, fonts (Inter, Plus Jakarta Sans) and mesh backgrounds may not appear in the
 //   website or the phone app.
@@ -26,7 +26,7 @@ function walk(dir, checkFamilies) {
         .split('\n')
         .forEach((line, i) => {
           if (checkFamilies) for (const m of line.matchAll(OTHER_FAMILIES)) problems.push(`${path}:${i + 1}  ${m[0]}  → use brand-/accent- tokens`);
-          for (const m of line.matchAll(OLD_LOOK)) problems.push(`${path}:${i + 1}  ${m[0]}  → Primordial's look; SHC uses sage/terracotta (S-023)`);
+          for (const m of line.matchAll(OLD_LOOK)) problems.push(`${path}:${i + 1}  ${m[0]}  → Primordial's look; SHC uses blue/violet (S-025)`);
         });
     }
   }
@@ -44,4 +44,4 @@ if (problems.length) {
   console.error(`Design guard failed (S-018):\n${problems.join('\n')}`);
   process.exit(1);
 }
-console.log('Design guard OK: SHC sage/terracotta only');
+console.log('Design guard OK: SHC blue/violet only');

@@ -59,9 +59,9 @@ export default function InspectionPage() {
 
       {overview.data && (
         <div className="grid gap-4 sm:grid-cols-3">
-          <Tile label="Files in order" value={`${ready} of ${rows.length}`} tone={ready === rows.length ? 'border-l-emerald-500' : 'border-l-brand-700'} />
-          <Tile label="Gaps to fix" value={String(gaps)} tone={gaps ? 'border-l-rose-600' : 'border-l-emerald-500'} />
-          <Tile label="Need attention soon" value={String(attention)} tone={attention ? 'border-l-amber-500' : 'border-l-emerald-500'} />
+          <Tile label="Files in order" value={`${ready} of ${rows.length}`} tone={ready === rows.length ? 'bg-emerald-500' : 'bg-brand-700'} />
+          <Tile label="Gaps to fix" value={String(gaps)} tone={gaps ? 'bg-rose-600' : 'bg-emerald-500'} />
+          <Tile label="Need attention soon" value={String(attention)} tone={attention ? 'bg-amber-500' : 'bg-emerald-500'} />
         </div>
       )}
       {rows.length > 100 && <Alert tone="info">A pack holds up to 100 people at a time; tick the people you need.</Alert>}
@@ -168,9 +168,12 @@ export default function InspectionPage() {
 
 function Tile({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
-    <Card className={`border-l-4 p-4 ${tone}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}</p>
-      <p className="mt-1 font-display text-3xl font-semibold text-ink">{value}</p>
+    <Card className="p-5">
+      <p className="flex items-center gap-2 text-sm font-medium text-slate-600">
+        <span aria-hidden className={`h-2.5 w-2.5 rounded-full ${tone}`} />
+        {label}
+      </p>
+      <p className="mt-2 font-display text-3xl font-bold text-ink">{value}</p>
     </Card>
   );
 }

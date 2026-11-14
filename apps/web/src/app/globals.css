@@ -1,76 +1,52 @@
 @import "tailwindcss";
 
 /*
- * SHC design system (DECISIONS S-018, palette S-023): deep sage and warm terracotta on soft cream, serif headings,
- * square-ish corners, flat cards. Its own look, nothing shared with Primordial. Colours come ONLY from these tokens:
- * `brand-*` (sage), `accent-*` (terracotta), `canvas`, `sand`, `ink`, plus Tailwind's slate (re-tuned warm below)
- * and emerald/amber/rose/sky for status. `npm run lint` (scripts/check-colors.mjs) fails on other colour families and on
- * the old Primordial colours and fonts.
+ * SHC design system (DECISIONS S-025, replaces S-018/S-023): crisp white cards on a cool light-grey page, one vivid
+ * royal blue (`brand-*`) with violet (`accent-*`) used sparingly for highlights and the welcome banner, Manrope headings
+ * and Figtree text, rounded corners and soft shadows. Nothing shared with Primordial (its teal/coral, its fonts,
+ * mesh backgrounds). Colours come ONLY from these tokens plus Tailwind's slate (neutrals) and emerald/amber/rose/sky
+ * (status). `npm run lint` (scripts/check-colors.mjs) fails on other colour families and on Primordial's look.
  */
 @theme inline {
-  --font-sans: var(--font-source-sans);
-  --font-display: var(--font-source-serif);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-heading);
   --font-mono: var(--font-geist-mono);
 }
 
 @theme {
-  /* Deep sage: primary actions, links, active states, the top bar. 700 (#4A6B5D) is the brand colour (5.9:1 on white). */
-  --color-brand-50: #f3f6f4;
-  --color-brand-100: #e3ebe6;
-  --color-brand-200: #c7d6cd;
-  --color-brand-300: #a0b8aa;
-  --color-brand-400: #7a9a88;
-  --color-brand-500: #5a7a69;
-  --color-brand-600: #527263;
-  --color-brand-700: #4a6b5d;
-  --color-brand-800: #3b564b;
-  --color-brand-900: #2f453c;
-  --color-brand-950: #1e2c26;
+  /* Royal blue: primary buttons, links, active states. 600 (#2F52E8) is the brand colour (5.9:1 on white). */
+  --color-brand-50: #eef3ff;
+  --color-brand-100: #dfe8ff;
+  --color-brand-200: #c4d4ff;
+  --color-brand-300: #9db6ff;
+  --color-brand-400: #6f8fff;
+  --color-brand-500: #4a6cf7;
+  --color-brand-600: #2f52e8;
+  --color-brand-700: #2442c9;
+  --color-brand-800: #1f37a3;
+  --color-brand-900: #1d3281;
+  --color-brand-950: #141f4d;
 
-  /*
-   * Warm terracotta: about 10% of the screen. 500 (#D96B43) for rules, bars and highlights; filled buttons and badges
-   * use 600 with white text (4.8:1). Small text on white uses 600 or darker.
-   */
-  --color-accent-50: #fdf4ef;
-  --color-accent-100: #fae4d8;
-  --color-accent-200: #f4c6af;
-  --color-accent-300: #eba17f;
-  --color-accent-400: #e2825b;
-  --color-accent-500: #d96b43;
-  --color-accent-600: #b9532c;
-  --color-accent-700: #974325;
-  --color-accent-800: #7a3820;
-  --color-accent-900: #64301d;
+  /* Violet: the second colour, for highlights, icon badges and the banner gradient. Small text uses 600 or darker. */
+  --color-accent-50: #f5f2ff;
+  --color-accent-100: #ece6ff;
+  --color-accent-200: #dacfff;
+  --color-accent-300: #bfa9ff;
+  --color-accent-400: #9f7bff;
+  --color-accent-500: #8257ff;
+  --color-accent-600: #6a35f0;
+  --color-accent-700: #5a28d2;
+  --color-accent-800: #4a22a8;
+  --color-accent-900: #3d1f86;
 
-  /* Soft alabaster page, warm sand surfaces, warm charcoal text. */
-  --color-canvas: #faf8f5;
-  --color-sand: #f0ece4;
-  --color-ink: #2c2a29;
+  /* Cool light-grey page so white cards look sharp; near-black text. */
+  --color-canvas: #f5f7fb;
+  --color-ink: #0f172a;
 
-  /* Warm neutrals: the slate scale re-tuned to stone so greys sit with the cream instead of looking blue. */
-  --color-slate-50: #f7f5f1;
-  --color-slate-100: #f0ece4;
-  --color-slate-200: #e5e0d7;
-  --color-slate-300: #d4cdc2;
-  --color-slate-400: #a59d93;
-  --color-slate-500: #776f67;
-  --color-slate-600: #5d5650;
-  --color-slate-700: #46403b;
-  --color-slate-800: #2c2a29;
-  --color-slate-900: #1f1d1c;
-  --color-slate-950: #0f0e0d;
-
-  /* Square-ish corners everywhere (Tailwind's rounded-* scale). */
-  --radius-md: 0.25rem;
-  --radius-lg: 0.3125rem;
-  --radius-xl: 0.375rem;
-  --radius-2xl: 0.5rem;
-  --radius-3xl: 0.625rem;
-
-  /* Flat: a hairline and a soft drop, no glows. */
-  --shadow-card: 0 1px 0 rgb(44 42 41 / 0.06);
-  --shadow-lift: 0 2px 10px rgb(44 42 41 / 0.10);
-  --shadow-glow: none;
+  /* Soft, layered shadows: cards float a little off the page. */
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
+  --shadow-lift: 0 4px 6px -1px rgb(15 23 42 / 0.06), 0 12px 24px -6px rgb(15 23 42 / 0.12);
+  --shadow-glow: 0 8px 24px -8px rgb(47 82 232 / 0.45);
 
   --animate-fade-in: fade-in 0.35s ease-out both;
   --animate-shimmer: shimmer 1.4s linear infinite;
@@ -104,7 +80,7 @@ h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  letter-spacing: 0;
+  letter-spacing: -0.015em;
 }
 
 /* Numbers line up in tables and stat cards. */
@@ -112,18 +88,18 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
-/* The deep sage band behind page heroes (dashboard greeting, sign-in, careers) with a terracotta rule at the foot. */
+/* The welcome banner (dashboard greeting, sign-in, careers): royal blue into violet, with a soft light in one corner. */
 .bg-hero {
-  background-color: var(--color-brand-900);
-  background-image: linear-gradient(135deg, rgb(255 255 255 / 0.04) 25%, transparent 25%, transparent 50%, rgb(255 255 255 / 0.04) 50%, rgb(255 255 255 / 0.04) 75%, transparent 75%);
-  background-size: 28px 28px;
-  border-bottom: 4px solid var(--color-accent-500);
+  background-color: var(--color-brand-700);
+  background-image:
+    radial-gradient(circle at 85% 0%, rgb(255 255 255 / 0.18), transparent 45%),
+    linear-gradient(120deg, var(--color-brand-800) 0%, var(--color-brand-600) 50%, var(--color-accent-600) 100%);
 }
 
 /* Loading placeholders. */
 .skeleton {
-  border-radius: 0.25rem;
-  background: linear-gradient(90deg, #ebe6dc 0, #f4f1ea 40%, #ebe6dc 80%) 0 0 / 800px 100%;
+  border-radius: 0.375rem;
+  background: linear-gradient(90deg, #e9edf3 0, #f3f5f9 40%, #e9edf3 80%) 0 0 / 800px 100%;
   animation: var(--animate-shimmer);
 }
 

@@ -63,11 +63,11 @@ export function NotificationBell() {
         aria-haspopup="true"
         aria-label={count ? `Notifications, ${count} unread` : 'Notifications'}
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 p-2 text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-accent-400"
+        className="inline-flex items-center gap-1.5 rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-500"
       >
-        <Bell aria-hidden className="h-5 w-5 text-accent-200" />
+        <Bell aria-hidden className="h-5 w-5" />
         {count > 0 && (
-          <span className="bg-accent-600 px-1.5 text-xs font-bold text-white" aria-hidden>
+          <span className="rounded-full bg-rose-600 px-1.5 text-xs font-bold text-white" aria-hidden>
             {count > 99 ? '99+' : count}
           </span>
         )}
@@ -76,7 +76,7 @@ export function NotificationBell() {
         <div
           role="region"
           aria-label="Notifications"
-          className="absolute right-0 z-[1000] mt-2 w-80 rounded-lg border border-slate-200 bg-white p-3 shadow-lg"
+          className="absolute right-0 z-[1000] mt-2 w-80 rounded-xl border border-slate-200 bg-white p-3 shadow-[var(--shadow-lift)]"
         >
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm font-semibold text-slate-900">Notifications</span>

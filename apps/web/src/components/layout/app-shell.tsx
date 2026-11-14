@@ -16,15 +16,16 @@ export function BrandMark({ className = 'h-9 w-9' }: { className?: string }) {
   return <LogoMark className={className.replaceAll(/text-\S+/g, '')} />;
 }
 
-const LINK = 'relative flex items-center gap-2 px-3 py-2 text-[15px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-accent-400';
+const LINK = 'relative flex items-center gap-2 rounded-lg px-3 py-2 text-[15px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-brand-500';
+const ON = 'bg-brand-50 font-semibold text-brand-700';
+const OFF = 'text-slate-600 hover:bg-slate-100 hover:text-ink';
 
-/** A top-bar link; the current page gets a gold rule underneath. */
+/** A top-bar link; the current page is a soft blue pill (S-025). */
 function TopLink({ item, active }: { item: NavItem; active: boolean }) {
   return (
-    <Link href={item.href} aria-current={active ? 'page' : undefined} className={`${LINK} ${active ? 'text-white' : 'text-brand-100 hover:text-white'}`}>
+    <Link href={item.href} aria-current={active ? 'page' : undefined} className={`${LINK} ${active ? ON : OFF}`}>
       {item.label}
       {item.href === '/messages' && <MessagesBadge />}
-      {active && <span aria-hidden className="absolute inset-x-3 -bottom-[13px] h-[3px] bg-accent-500" />}
     </Link>
   );
 }
@@ -53,13 +54,12 @@ function Menu_({ label, items, activeHref }: { label: string; items: NavItem[]; 
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen((v) => !v)}
-        className={`${LINK} ${holdsActive || open ? 'text-white' : 'text-brand-100 hover:text-white'}`}
+        className={`${LINK} ${holdsActive || open ? ON : OFF}`}
       >
         {label}
         <ChevronDown aria-hidden className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
-        {holdsActive && <span aria-hidden className="absolute inset-x-3 -bottom-[13px] h-[3px] bg-accent-500" />}
       </button>
-      <ul id={id} hidden={!open} className="absolute left-0 top-full z-40 mt-3 min-w-56 border border-slate-200 border-t-[3px] border-t-accent-500 bg-white py-1 shadow-[var(--shadow-lift)]">
+      <ul id={id} hidden={!open} className="absolute left-0 top-full z-40 mt-2 min-w-60 rounded-xl border border-slate-200 bg-white p-1.5 shadow-[var(--shadow-lift)]">
         {items.map((item) => {
           const active = item.href === activeHref;
           const Icon = item.icon;
@@ -69,9 +69,9 @@ function Menu_({ label, items, activeHref }: { label: string; items: NavItem[]; 
                 href={item.href}
                 onClick={() => setOpen(false)}
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-3 px-4 py-2.5 text-sm ${active ? 'bg-brand-50 font-semibold text-brand-900' : 'text-slate-800 hover:bg-canvas hover:text-brand-900'}`}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm ${active ? 'bg-brand-50 font-semibold text-brand-800' : 'text-slate-700 hover:bg-slate-50 hover:text-ink'}`}
               >
-                <Icon aria-hidden className="h-4 w-4 text-brand-500" />
+                <Icon aria-hidden className="h-4 w-4 text-brand-600" />
                 {item.label}
               </Link>
             </li>
@@ -82,7 +82,7 @@ function Menu_({ label, items, activeHref }: { label: string; items: NavItem[]; 
   );
 }
 
-/** Signed-in frame (S-018): navy top bar with menus, the page on cream underneath. Guards the route and shows the idle warning. */
+/** Signed-in frame (S-025): crisp white top bar with menus, the page on light grey underneath. Guards the route and shows the idle warning. */
 export function AppShell({ children }: { children: ReactNode }) {
   const { status, user, can, logout, idleWarning } = useAuth();
   const router = useRouter();
@@ -121,10 +121,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-30 print:hidden bg-brand-900 text-white shadow-[0_1px_0_rgb(0_0_0_/_0.2)]">
+      <header className="sticky top-0 z-30 print:hidden border-b border-slate-200 bg-white/90 text-ink backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 md:px-8">
-          <Link href="/" className="shrink-0 focus-visible:outline-2 focus-visible:outline-accent-400" aria-label="SHC home">
-            <Logo tone="dark" tagline={false} />
+          <Link href="/" className="shrink-0 rounded-lg focus-visible:outline-2 focus-visible:outline-brand-500" aria-label="SHC home">
+            <Logo tagline={false} />
           </Link>
 
           <nav aria-label="Main" className="ml-4 hidden items-center gap-1 xl:flex">
@@ -138,29 +138,29 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <div className="ml-auto flex items-center gap-2">
             <NotificationBell />
-            <div className="hidden items-center gap-3 border-l border-white/15 pl-4 md:flex">
-              <span aria-hidden className="inline-flex h-9 w-9 items-center justify-center bg-accent-600 font-display text-sm font-bold text-white">
+            <div className="hidden items-center gap-3 border-l border-slate-200 pl-4 md:flex">
+              <span aria-hidden className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-accent-600 font-display text-sm font-bold text-white">
                 {initials}
               </span>
               <span className="leading-tight">
                 <span className="block text-sm font-semibold">
                   {user.firstName} {user.lastName}
                 </span>
-                <span className="block text-xs text-brand-200">{role}</span>
+                <span className="block text-xs text-slate-500">{role}</span>
               </span>
               <button
                 type="button"
                 onClick={() => void logout()}
                 aria-label="Sign out"
                 title="Sign out"
-                className="p-2 text-brand-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-accent-400"
+                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-500"
               >
                 <LogOut aria-hidden className="h-4 w-4" />
               </button>
             </div>
             <button
               type="button"
-              className="p-2 text-white hover:bg-white/10 xl:hidden"
+              className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 xl:hidden"
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((v) => !v)}
@@ -171,10 +171,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         {menuOpen && (
-          <nav aria-label="Main (mobile)" className="max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-white/10 bg-brand-950 px-4 pb-4 xl:hidden">
+          <nav aria-label="Main (mobile)" className="max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-slate-200 bg-white px-4 pb-4 xl:hidden">
             {[{ label: 'Menu', items: top }, ...menus].map((group) => (
               <div key={group.label} className="pt-4">
-                <p className="pb-1 text-xs font-semibold uppercase tracking-[0.14em] text-accent-300">{group.label}</p>
+                <p className="pb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">{group.label}</p>
                 <ul>
                   {group.items.map((item) => {
                     const active = item.href === activeHref;
@@ -184,7 +184,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                           href={item.href}
                           onClick={() => setMenuOpen(false)}
                           aria-current={active ? 'page' : undefined}
-                          className={`flex items-center gap-2 border-l-[3px] px-3 py-2.5 text-[15px] ${active ? 'border-accent-500 font-semibold text-white' : 'border-transparent text-brand-100'}`}
+                          className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-[15px] ${active ? ON : 'text-slate-700'}`}
                         >
                           {item.label}
                           {item.href === '/messages' && <MessagesBadge />}
@@ -195,7 +195,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </ul>
               </div>
             ))}
-            <button type="button" onClick={() => void logout()} className="mt-4 flex items-center gap-2 px-3 py-2 text-brand-100 md:hidden">
+            <button type="button" onClick={() => void logout()} className="mt-4 flex items-center gap-2 px-3 py-2 text-slate-700 md:hidden">
               <LogOut aria-hidden className="h-4 w-4" /> Sign out
             </button>
           </nav>

@@ -127,13 +127,15 @@ task with a good handoff note is worth more than a finished one nobody can find.
 - Call the API with `useAuth().request(path)` (adds the token, renews once on 401). Never store tokens anywhere.
 - Gate UI with `useAuth().can('patients:read')` — cosmetic only; the API enforces permissions.
 - Pages under `src/app/(app)/` are signed-in only (AppShell guard).
-- **SHC has its own look, never Primordial's (DECISIONS S-018).** Colours come only from the design tokens in
-  `src/app/globals.css`: `brand-*` (deep sage), `accent-*` (warm terracotta), `canvas` (soft cream), `sand`, `ink` (warm charcoal), plus
-  slate (re-tuned to warm greys) and emerald/amber/rose/sky for neutrals and status (palette: DECISIONS S-023). Headings use `font-display` (Source Serif 4), text Source Sans 3.
-  Square-ish corners, flat cards, no gradients or glows. Navigation is the sage top bar with drop-downs
-  (`components/layout/navigation.ts`). The logo is the shield in `components/brand/logo.tsx`. Mobile colours live in
-  `colors` in `apps/mobile/src/components/ui.tsx`. `npm run lint -w @alora/web` fails on other colour families and on
-  any Primordial colour, font or mesh background in the website, phone app or emails.
+- **SHC has its own look, never Primordial's (DECISIONS S-018, current design S-025).** Colours come only from the design
+  tokens in `src/app/globals.css`: `brand-*` (royal blue), `accent-*` (violet, used sparingly), `canvas` (light grey
+  page), `ink`, plus slate for neutrals and emerald/amber/rose/sky for status. Headings use `font-display` (Manrope),
+  text Figtree. Crisp white cards (`rounded-xl`, soft shadow) on the grey page; no coloured side lines. The only
+  gradient is blue into violet (`.bg-hero`, avatars, the accent button). Navigation is the white top bar with
+  drop-downs (`components/layout/navigation.ts`); the current page is a soft blue pill. The logo is the "SHC" wordmark
+  in `components/brand/logo.tsx`. Mobile colours live in `colors` in `apps/mobile/src/components/ui.tsx`.
+  `npm run lint -w @alora/web` fails on other colour families and on any Primordial colour, font or mesh background in
+  the website, phone app or emails.
 
 ### File naming
 - NestJS: `kebab-case` (`care-plans.service.ts`); DTOs: `*.dto.ts`

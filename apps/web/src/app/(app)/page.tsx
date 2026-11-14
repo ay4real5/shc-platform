@@ -13,12 +13,13 @@ import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { useAgencyToday } from '@/lib/use-agency-today';
 
-/** Stat card accents (S-018): a coloured rule on the left and a plain icon. */
+/** Stat card colours (S-025): the icon sits in a soft tinted badge. */
 const TONES = {
-  brand: { icon: 'text-brand-600', bar: 'border-l-brand-700' },
-  accent: { icon: 'text-accent-700', bar: 'border-l-accent-500' },
-  amber: { icon: 'text-amber-700', bar: 'border-l-amber-500' },
-  sky: { icon: 'text-sky-700', bar: 'border-l-sky-600' },
+  brand: 'bg-brand-50 text-brand-600',
+  accent: 'bg-accent-50 text-accent-600',
+  amber: 'bg-amber-50 text-amber-600',
+  emerald: 'bg-emerald-50 text-emerald-600',
+  rose: 'bg-rose-50 text-rose-600',
 } as const;
 
 const noSubscribe = () => () => {};
@@ -47,22 +48,24 @@ function StatCard({
   tone: keyof typeof TONES;
 }) {
   const content = (
-    <Card className={`flex h-full items-start justify-between gap-4 border-l-4 p-5 transition-shadow hover:shadow-[var(--shadow-lift)] ${TONES[tone].bar}`}>
+    <Card className="flex h-full flex-col gap-4 p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]">
+      <span aria-hidden className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${TONES[tone]}`}>
+        <Icon className="h-5 w-5" />
+      </span>
       <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">{label}</p>
         {loading ? (
-          <span aria-hidden className="skeleton mt-3 block h-8 w-16" />
+          <span aria-hidden className="skeleton block h-9 w-16" />
         ) : (
-          <p className="tabular mt-2 font-display text-4xl font-semibold text-ink" aria-live="polite">
+          <p className="tabular font-display text-4xl font-extrabold tracking-tight text-ink" aria-live="polite">
             {value ?? '—'}
           </p>
         )}
+        <p className="mt-1 text-sm font-medium text-slate-600">{label}</p>
       </div>
-      <Icon aria-hidden className={`h-6 w-6 shrink-0 ${TONES[tone].icon}`} />
     </Card>
   );
   return href ? (
-    <Link href={href} className="block h-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500">
+    <Link href={href} className="block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">
       {content}
     </Link>
   ) : (
@@ -75,7 +78,7 @@ export default function DashboardPage() {
   const today = useAgencyToday();
   const greeting = useGreeting();
   const chip =
-    'inline-flex items-center gap-2 border border-white/30 px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-accent-400 hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-accent-400';
+    'inline-flex items-center gap-2 rounded-lg bg-white/15 px-4 py-2 text-sm font-semibold text-white ring-1 ring-white/25 backdrop-blur transition hover:bg-white hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-white';
 
   const manager = useManagerDashboard(can('staff:read'));
   const m = manager.data;
@@ -86,14 +89,14 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="bg-hero rounded-md p-6 text-white md:p-9">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-300">
+      <div className="bg-hero rounded-2xl p-6 text-white shadow-[var(--shadow-glow)] md:p-10">
+        <p className="text-sm font-medium text-brand-100">
           {new Date(`${today}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })}
         </p>
-        <h1 className="mt-3 font-display text-3xl font-semibold md:text-[40px] md:leading-tight">
+        <h1 className="mt-2 font-display text-3xl font-extrabold md:text-[42px] md:leading-tight">
           {greeting}, {user?.firstName}
         </h1>
-        <p className="mt-2 max-w-xl text-brand-100">Who is ready to work, what is expiring, and what needs your attention first.</p>
+        <p className="mt-2 max-w-xl text-lg text-white/90">Who is ready to work, what is expiring, and what needs your attention first.</p>
         <div className="mt-6 flex flex-wrap gap-2">
           {can('staff:create') && (
             <Link href="/staff/new" className={chip}>
@@ -120,7 +123,7 @@ export default function DashboardPage() {
         {can('staff:read') && (
           <>
             <StatCard label="Active staff" value={m?.staff.active} loading={manager.isLoading} href="/staff" icon={Users} tone="brand" />
-            <StatCard label="Ready to work" value={m?.staff.ready} loading={manager.isLoading} href="/staff/onboarding" icon={CheckCircle2} tone="sky" />
+            <StatCard label="Ready to work" value={m?.staff.ready} loading={manager.isLoading} href="/staff/onboarding" icon={CheckCircle2} tone="emerald" />
             <StatCard label="Can't work yet" value={m?.notReady.total} loading={manager.isLoading} href="/staff/onboarding" icon={ClipboardCheck} tone="accent" />
             <StatCard
               label="Checks expired or expiring (30 days)"
@@ -132,7 +135,7 @@ export default function DashboardPage() {
             />
           </>
         )}
-        {!can('staff:read') && <StatCard label="Unread notifications" value={unread.data} loading={unread.isLoading} icon={Bell} tone="sky" />}
+        {!can('staff:read') && <StatCard label="Unread notifications" value={unread.data} loading={unread.isLoading} icon={Bell} tone="brand" />}
       </div>
       {can('staff:read') && <ManagerDashboard data={m} error={manager.error} />}
     </div>

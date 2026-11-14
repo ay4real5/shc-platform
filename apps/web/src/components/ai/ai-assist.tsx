@@ -80,7 +80,7 @@ export function AiAssist({ kind, field, label, context }: { kind: DraftKind; fie
       {hint && <p className="text-xs text-amber-800">{hint}</p>}
       <ErrorAlert error={draft.error} />
       {draft.data && (
-        <div className="flex flex-col gap-2 rounded-md border border-accent-300 bg-accent-50/50 p-3">
+        <div className="flex flex-col gap-2 rounded-xl border border-accent-200 bg-accent-50/60 p-3">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-900">
             <Sparkles aria-hidden className="h-3.5 w-3.5 text-accent-600" /> AI draft
           </p>
@@ -131,7 +131,7 @@ export function InterviewQuestions({ context }: { context: DraftContext }) {
       </div>
       <ErrorAlert error={draft.error} />
       {draft.data && (
-        <div className="flex flex-col gap-2 rounded-md border border-accent-300 bg-accent-50/50 p-3">
+        <div className="flex flex-col gap-2 rounded-xl border border-accent-200 bg-accent-50/60 p-3">
           <div className="whitespace-pre-wrap text-sm text-ink">{draft.data}</div>
           <Alert tone="info" className="text-xs">
             Suggestions only. Ask every candidate the same core questions, and score answers yourselves: the AI never scores or ranks people.

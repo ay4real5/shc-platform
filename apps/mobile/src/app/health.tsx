@@ -123,7 +123,7 @@ export default function HealthScreen() {
                   <TextInput
                     accessibilityLabel={`Tell us a little more: ${q.text}`}
                     placeholder="Tell us a little more"
-                    placeholderTextColor="#8f877e"
+                    placeholderTextColor="#8a93a6"
                     multiline
                     maxLength={2000}
                     value={a.details ?? ''}

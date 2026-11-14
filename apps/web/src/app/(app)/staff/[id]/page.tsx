@@ -82,7 +82,7 @@ export default function StaffMemberPage() {
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-4">
-            <span aria-hidden className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-brand-900 font-display text-2xl font-semibold text-accent-300">
+            <span aria-hidden className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-accent-600 font-display text-2xl font-bold text-white shadow-[var(--shadow-glow)]">
               {s.firstName[0]}
               {s.lastName[0]}
             </span>

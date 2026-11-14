@@ -9,25 +9,24 @@ const POINTS = [
   'UK hosted, UK GDPR compliant, encrypted and audited',
 ];
 
-/** Signed-out pages (sign in, password reset, 2FA setup), S-018: the form on cream, a navy panel on the right. */
+/** Signed-out pages (sign in, password reset, 2FA setup), S-025: the form on white, a blue-violet panel on the right. */
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <main className="grid min-h-screen bg-canvas lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+    <main className="grid min-h-screen bg-white lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
       <div className="flex flex-col px-4 py-8 sm:px-10">
         <Logo />
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full max-w-md animate-fade-in">{children}</div>
         </div>
-        <p className="text-xs text-slate-600">SHC · Staff records are confidential.</p>
+        <p className="text-xs text-slate-500">SHC · Staff records are confidential.</p>
       </div>
-      <section aria-label="About SHC" className="bg-hero hidden flex-col justify-center border-b-0 border-l-4 border-l-accent-500 p-14 text-white lg:flex">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-300">Care workforce platform</p>
-        <p className="mt-4 max-w-md font-display text-[42px] font-semibold leading-[1.12]">Every carer ready. Every file in order.</p>
-        <span aria-hidden className="mt-6 block h-[3px] w-16 bg-accent-500" />
+      <section aria-label="About SHC" className="bg-hero m-3 hidden flex-col justify-center rounded-3xl p-14 text-white lg:flex">
+        <p className="inline-flex w-fit rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/25">Care workforce platform</p>
+        <p className="mt-5 max-w-md font-display text-[44px] font-extrabold leading-[1.1] tracking-tight">Every carer ready. Every file in order.</p>
         <ul className="mt-8 flex max-w-md flex-col gap-4">
           {POINTS.map((text) => (
-            <li key={text} className="flex items-start gap-3 text-[15px] text-brand-50">
-              <Check aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-accent-400" />
+            <li key={text} className="flex items-start gap-3 text-[15px] text-white/90">
+              <span aria-hidden className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20"><Check className="h-3.5 w-3.5" /></span>
               {text}
             </li>
           ))}

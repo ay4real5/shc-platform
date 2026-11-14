@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
-import { Geist_Mono, Source_Sans_3, Source_Serif_4 } from 'next/font/google';
+import { Figtree, Geist_Mono, Manrope } from 'next/font/google';
 import { connection } from 'next/server';
 import './globals.css';
 import { Providers } from './providers';
 
-// SHC type (S-018): Source Serif headings, Source Sans text.
+// SHC type (S-025): Manrope headings, Figtree text.
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
-const sans = Source_Sans_3({ variable: '--font-source-sans', subsets: ['latin'], display: 'swap' });
-const serif = Source_Serif_4({ variable: '--font-source-serif', subsets: ['latin'], display: 'swap', weight: ['500', '600', '700'] });
+const sans = Figtree({ variable: '--font-body', subsets: ['latin'], display: 'swap' });
+const heading = Manrope({ variable: '--font-heading', subsets: ['latin'], display: 'swap', weight: ['600', '700', '800'] });
 
 export const metadata: Metadata = {
   title: 'SHC',
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<'/'>) {
   await connection();
   return (
-    <html lang="en" className={`${sans.variable} ${serif.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${sans.variable} ${heading.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full font-sans">
         <Providers>{children}</Providers>
       </body>

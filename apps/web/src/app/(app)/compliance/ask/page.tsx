@@ -77,7 +77,7 @@ export default function AskPoliciesPage() {
           <ErrorAlert error={ask.error} />
 
           {ask.data && (
-            <Card className="flex flex-col gap-4 border-l-4 border-l-accent-500 p-5">
+            <Card className="flex flex-col gap-4 border-brand-200 p-5 ring-4 ring-brand-50">
               <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-ink">{ask.data.answer}</div>
               {ask.data.sources.length > 0 && (
                 <div>

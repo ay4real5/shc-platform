@@ -4,17 +4,17 @@ import type { ButtonHTMLAttributes, ComponentProps } from 'react';
 type Variant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
 
 const VARIANTS: Record<Variant, string> = {
-  // Solid sage (S-023): flat, no gradients or glows.
-  primary: 'bg-brand-800 text-white hover:bg-brand-900 disabled:opacity-60',
-  // Terracotta, for the one action on a page you most want people to notice (the deeper 600 shade keeps white text readable).
-  accent: 'bg-accent-600 font-semibold text-white hover:bg-accent-700 disabled:opacity-60',
-  secondary: 'border border-brand-200 bg-white text-brand-900 hover:border-brand-400 hover:bg-brand-50 disabled:opacity-50',
+  // Solid royal blue (S-025).
+  primary: 'bg-brand-600 text-white shadow-sm hover:bg-brand-700 disabled:opacity-60',
+  // Blue into violet, for the one action on a page you most want people to notice.
+  accent: 'bg-gradient-to-r from-brand-600 to-accent-600 font-semibold text-white shadow-[var(--shadow-glow)] hover:from-brand-700 hover:to-accent-700 disabled:opacity-60',
+  secondary: 'border border-slate-300 bg-white text-slate-800 shadow-sm hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800 disabled:opacity-50',
   ghost: 'text-slate-700 hover:bg-slate-100 disabled:opacity-50',
   danger: 'bg-rose-600 text-white shadow-sm hover:bg-rose-700 disabled:bg-rose-600/60',
 };
 
 const BASE =
-  'inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500 disabled:cursor-not-allowed';
+  'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500 disabled:cursor-not-allowed';
 
 export function Button({
   variant = 'primary',

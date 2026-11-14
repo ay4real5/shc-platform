@@ -2462,3 +2462,18 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   keeps mandatory 2FA (D-045). The API refuses to start with it in production. Helper:
   `modules/auth/two-factor/demo-two-factor.ts` (with a spec). The browser-test helper `answerTwoFactor` now also
   accepts going straight in.
+
+### S-025 — New look: crisp white, royal blue and violet, modern sans (replaces S-018's look and S-023's palette)
+- **Why:** the owner found the sage/terracotta look dull ("not alive"), the cream not sharp enough, the coloured side
+  lines and the shield logo meaningless. They asked for a fresh direction, decided by us. What people praise in current
+  dashboards (Linear, Stripe, Vercel): crisp white, one confident colour used with purpose, clean modern type, no
+  decoration for its own sake.
+- **Look:** white cards (`rounded-xl`, soft layered shadow) on a cool light-grey page (`canvas` `#F5F7FB`); royal blue
+  `brand-600` `#2F52E8` (6:1 on white) for buttons, links and the current page; violet `accent-*` (`600` `#6A35F0`)
+  only in highlights and the blue-to-violet gradient (welcome banner, sign-in panel, avatars, the accent button).
+  Headings Manrope (bold/extra-bold), text Figtree. Default cool slate neutrals.
+- **Removed:** the shield logo (now an "SHC." wordmark, and a rounded gradient tile with "SHC" for the browser tab and
+  small spaces), coloured left-hand rules on cards and alerts (stat cards now use tinted icon badges), the stripe
+  pattern in banners, the navy top bar (now white with a soft blue pill for the current page), serif headings.
+- **Still not Primordial:** Primordial is teal with coral, Inter/Plus Jakarta and mesh backgrounds; the guard still
+  bans those. Phone app (`colors`) and emails follow the same palette. The phone app's icon image is unchanged.

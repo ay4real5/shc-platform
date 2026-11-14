@@ -14,42 +14,42 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-/** SHC palette (S-023): sage and terracotta on soft cream, the same tokens as the website. Nothing shared with Primordial. */
+/** SHC palette (S-025): royal blue and violet, white cards on light grey, the same tokens as the website. Nothing shared with Primordial. */
 export const colors = {
-  brand: '#4a6b5d',
-  brandDark: '#2f453c',
-  brandSoft: '#e3ebe6',
-  ink: '#2c2a29',
-  navyDeep: '#1e2c26',
-  text: '#2c2a29',
-  muted: '#6b625b',
-  border: '#e2ddd0',
+  brand: '#2f52e8',
+  brandDark: '#2442c9',
+  brandSoft: '#eef3ff',
+  ink: '#0f172a',
+  navyDeep: '#141f4d',
+  text: '#1e293b',
+  muted: '#64748b',
+  border: '#e2e8f0',
   danger: '#be123c',
   dangerBg: '#fff1f2',
   success: '#047857',
   successBg: '#ecfdf5',
   warning: '#92400e',
   warningBg: '#fffbeb',
-  bg: '#faf8f5',
+  bg: '#f5f7fb',
   white: '#ffffff',
-  /** Terracotta (deep shade): highlights, badges, the header rule. White text on it. */
-  accent: '#b9532c',
-  accentSoft: '#fdf4ef',
+  /** Violet: highlights and badges. White text on it. */
+  accent: '#6a35f0',
+  accentSoft: '#f5f2ff',
   onAccent: '#ffffff',
-  /** Light terracotta text on the sage header band. */
-  headerSubtle: '#eba17f',
-  /** Secondary text on the sage header band. */
-  headerMuted: '#c7d6cd',
+  /** Light text on the blue header band. */
+  headerSubtle: '#dfe8ff',
+  /** Secondary text on the blue header band. */
+  headerMuted: '#c4d4ff',
 };
 
-/** Serif headings (S-018), from the phone's own fonts. */
-export const serif = Platform.select({ ios: 'Georgia', default: 'serif' });
+/** Headings (S-025): the phone's own modern sans-serif, bold. (Name kept so existing styles don't change.) */
+export const serif = Platform.select({ ios: 'System', default: 'sans-serif' });
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
 /** Soft card shadow on both platforms. */
 export const shadow: ViewStyle = Platform.select({
-  ios: { shadowColor: '#2c2a29', shadowOpacity: 0.05, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } },
+  ios: { shadowColor: '#0f172a', shadowOpacity: 0.05, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } },
   default: { elevation: 1 },
 }) as ViewStyle;
 
@@ -97,7 +97,7 @@ export function Input({ label, ...props }: TextInputProps & { label: string }) {
   return (
     <View style={{ gap: 6 }}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput accessibilityLabel={label} placeholderTextColor="#8f877e" style={styles.input} {...props} />
+      <TextInput accessibilityLabel={label} placeholderTextColor="#8a93a6" style={styles.input} {...props} />
     </View>
   );
 }
@@ -116,7 +116,7 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
 }
 
 const PILL: Record<string, [string, string]> = {
-  scheduled: ['#e3ebe6', '#2f453c'],
+  scheduled: ['#eef3ff', '#1d3281'],
   in_progress: ['#e0f2fe', '#075985'],
   completed: ['#ecfdf5', '#047857'],
   missed: ['#fff1f2', '#be123c'],
@@ -136,7 +136,7 @@ export function Pill({ status, label }: { status: string; label?: string }) {
 /** Initials badge: a gold square with navy letters. */
 export function Avatar({ first, last, size = 44 }: { first: string; last: string; size?: number }) {
   return (
-    <View style={{ width: size, height: size, borderRadius: 6, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.brand, alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: size * 0.38, fontFamily: serif }}>{`${first.charAt(0)}${last.charAt(0)}`.toUpperCase()}</Text>
     </View>
   );
@@ -177,7 +177,7 @@ export function ListRow({
         </Text>
       ) : null}
       {right}
-      {onPress && <Ionicons name="chevron-forward" size={18} color="#a59d93" />}
+      {onPress && <Ionicons name="chevron-forward" size={18} color="#94a3b8" />}
     </View>
   );
   return onPress ? (
@@ -214,7 +214,7 @@ export const styles = StyleSheet.create({
   },
   button: { borderRadius: 6, paddingVertical: 15, alignItems: 'center', minHeight: 54, justifyContent: 'center', paddingHorizontal: 16 },
   primary: { backgroundColor: colors.brand },
-  secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#c7d6cd' },
+  secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#c4d4ff' },
   dangerButton: { backgroundColor: colors.dangerBg, borderWidth: 1, borderColor: '#fecdd3' },
   buttonText: { fontSize: 17, fontWeight: '700' },
   error: { color: colors.danger, backgroundColor: colors.dangerBg, padding: 12, borderRadius: 12, fontSize: 15 },
@@ -225,7 +225,7 @@ export const styles = StyleSheet.create({
   rowIcon: { width: 34, height: 34, borderRadius: 6, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' },
   rowLabel: { flex: 1, fontSize: 16, fontWeight: '500' },
   rowValue: { fontSize: 15, color: colors.muted, maxWidth: '45%' },
-  header: { paddingHorizontal: 20, paddingBottom: 24, backgroundColor: colors.brandDark, borderBottomWidth: 4, borderBottomColor: colors.accent },
+  header: { paddingHorizontal: 20, paddingBottom: 24, backgroundColor: colors.brandDark, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
 });
 
 /** The SHC mark, the same drawing as the app icon. */

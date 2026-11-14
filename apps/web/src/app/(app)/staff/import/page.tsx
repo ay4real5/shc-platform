@@ -252,7 +252,7 @@ function Step({ number, title, children }: { number: number; title: string; chil
   return (
     <Card className="p-5 text-sm text-slate-700">
       <p className="flex items-center gap-2.5 font-display text-lg font-semibold text-ink">
-        <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-brand-800 font-sans text-sm text-accent-300">{number}</span>
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 font-sans text-sm font-bold text-white">{number}</span>
         {title}
       </p>
       <div className="mt-2">{children}</div>

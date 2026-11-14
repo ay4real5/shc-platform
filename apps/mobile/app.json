@@ -32,7 +32,7 @@
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FAF8F5"
+        "backgroundColor": "#F5F7FB"
       }
     },
     "plugins": [
@@ -47,7 +47,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FAF8F5",
+          "backgroundColor": "#F5F7FB",
           "image": "./assets/splash-icon.png",
           "imageWidth": 96
         }
