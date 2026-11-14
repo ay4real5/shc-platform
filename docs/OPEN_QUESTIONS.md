@@ -9,3 +9,7 @@
 ## AI on Azure OpenAI (S-033, 14 Nov 2026)
 - ~~May the API add `unpdf`?~~ Approved 14 Nov 2026 and added (2.1.0, pinned).
 - At go-live: create the Azure OpenAI resource in UK South and deploy a model (cost to confirm first).
+
+## Domain (14 Nov 2026)
+- Ayo intends to buy **shc-hub.com** for SHC (not bought yet). At go-live (S3-07) the app and careers pages go on it
+  (e.g. `app.shc-hub.com`, careers at `/careers/support-health-care`); Michael's website "Apply online" button links there.
