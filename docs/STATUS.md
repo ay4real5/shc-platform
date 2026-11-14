@@ -43,8 +43,8 @@ How to run the browser suite locally:
 4. Run the tests: `npm run test:e2e -w @alora/web`. This re-seeds the demo company.
 
 ## Next up
-**Stage 3 (weeks 5–6)**, in order:
-- S3-07: go-live (Azure UK South, domain, email sender; manager training).
+**Stage 5 (fit to Support Health Care Ltd)**, in order: S5-02 regions, S5-03 complex-care training, S5-04 visa tracker, S5-05 careers logo and "Apply online" link.
+- S3-07 go-live (Azure UK South, domain, email sender; manager training) is on hold until Ayo says go.
 
 Open items:
 - Retention for unsuccessful applicants (six months).
