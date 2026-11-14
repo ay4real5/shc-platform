@@ -18,6 +18,7 @@ async function signIn(page: Page, email: string) {
 test('an admin has "Ask our policies" and AI drafting; a coordinator has neither', async ({ page }) => {
   test.setTimeout(120_000);
   await signIn(page, 'agency.admin@demo.shc.test');
+  await expect(page.getByRole('link', { name: 'Ask AI' })).toBeVisible(); // the top-bar button
   await goTo(page, 'Ask our policies');
   await expect(page.getByRole('heading', { name: 'Ask our policies' })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByLabel('Your question')).toBeVisible();
@@ -35,6 +36,7 @@ test('an admin has "Ask our policies" and AI drafting; a coordinator has neither
   await signIn(page, 'care.coordinator@demo.shc.test');
   await mainNav(page).getByRole('button', { name: 'Compliance' }).click();
   await expect(mainNav(page).getByRole('link', { name: 'Ask our policies' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Ask AI' })).toHaveCount(0);
   await page.goto('/recruitment/jobs/new');
   await expect(page.getByLabel('Full description')).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole('button', { name: /with AI/ })).toHaveCount(0);
