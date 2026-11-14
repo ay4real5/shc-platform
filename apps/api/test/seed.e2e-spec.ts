@@ -61,10 +61,10 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
 
   it('creates exactly one demo company with the expected data', async () => {
     expect(await prisma.agency.count({ where: { id: DEMO_AGENCY_ID } })).toBe(1);
-    expect(await prisma.staffProfile.count({ where: { agencyId: DEMO_AGENCY_ID } })).toBe(12);
+    expect(await prisma.staffProfile.count({ where: { agencyId: DEMO_AGENCY_ID } })).toBe(14);
     // Every member of staff has Right to Work, DBS and moving & handling; most have other training (S3-02).
     for (const type of ['right_to_work', 'dbs_enhanced', 'moving_handling']) {
-      expect(await prisma.staffCredential.count({ where: { credentialType: type, staffProfile: { agencyId: DEMO_AGENCY_ID } } })).toBe(12);
+      expect(await prisma.staffCredential.count({ where: { credentialType: type, staffProfile: { agencyId: DEMO_AGENCY_ID } } })).toBe(14);
     }
     expect(await prisma.staffCredential.count({ where: { staffProfile: { agencyId: DEMO_AGENCY_ID } } })).toBeGreaterThan(48);
     expect(await prisma.careCertificateSignOff.count({ where: { agencyId: DEMO_AGENCY_ID } })).toBeGreaterThan(0); // new starters part-way through
@@ -73,7 +73,7 @@ describe.skipIf(!hasDb)('Demo seed (e2e)', () => {
   it('lets each demo login in, with the right view of the data', async () => {
     const admin = await login('agency.admin@demo.shc.test');
     const staff = await http().get('/api/v1/staff?limit=100').set(admin).expect(200);
-    expect(staff.body.meta.total).toBe(12);
+    expect(staff.body.meta.total).toBe(14);
 
     const expiring = await http().get('/api/v1/staff/expiring-credentials').set(admin).expect(200);
     expect(expiring.body.data.some((c: { state: string }) => c.state === 'expired')).toBe(true);

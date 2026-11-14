@@ -34,17 +34,18 @@ export function needsCareCertificate(discipline: string): boolean {
 }
 
 /** Columns of the training matrix: training types (credential types) and who needs each (S3-02). */
-const CARE_ROLES: Discipline[] = ['care_worker', 'senior_care_worker', 'support_worker', 'team_leader', 'nurse'];
-const EVERYONE: Discipline[] = [...CARE_ROLES, 'care_coordinator', 'manager', 'office'];
+const NURSES: Discipline[] = ['nurse', 'nurse_rmn', 'nurse_rnld'];
+const CARE_ROLES: Discipline[] = ['care_worker', 'senior_care_worker', 'support_worker', 'team_leader', 'hca', ...NURSES];
+const EVERYONE: Discipline[] = [...CARE_ROLES, 'ahp', 'doctor', 'care_coordinator', 'manager', 'office'];
 export const TRAINING_MATRIX: readonly { type: string; label: string; neededBy: readonly Discipline[] }[] = [
-  { type: 'care_certificate', label: 'Care Certificate', neededBy: ['care_worker', 'senior_care_worker', 'support_worker', 'team_leader'] },
+  { type: 'care_certificate', label: 'Care Certificate', neededBy: ['care_worker', 'senior_care_worker', 'support_worker', 'team_leader', 'hca'] },
   { type: 'safeguarding', label: 'Safeguarding', neededBy: EVERYONE },
   { type: 'moving_handling', label: 'Moving & handling', neededBy: CARE_ROLES },
   { type: 'infection_control', label: 'Infection control', neededBy: CARE_ROLES },
   { type: 'first_aid', label: 'First aid / basic life support', neededBy: CARE_ROLES },
   { type: 'health_safety', label: 'Health & safety', neededBy: EVERYONE },
   { type: 'fire_safety', label: 'Fire safety', neededBy: EVERYONE },
-  { type: 'medication_training', label: 'Medication', neededBy: ['senior_care_worker', 'team_leader'] },
+  { type: 'medication_training', label: 'Medication', neededBy: ['senior_care_worker', 'team_leader', ...NURSES] },
 ];
 
 export type TrainingCellState = 'valid' | 'expiring_soon' | 'expired' | 'missing' | 'not_needed';

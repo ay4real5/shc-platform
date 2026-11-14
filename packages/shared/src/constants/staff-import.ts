@@ -3,6 +3,7 @@
  * record, Right to Work, DBS, training and paper-file checks. The office fills in a CSV template (Excel: "Save as CSV
  * UTF-8"); the API checks every row and shows a preview before anything is saved.
  */
+import { PROFESSIONAL_REGISTERS } from './registration.js';
 import { TRAINING_MATRIX } from './training.js';
 
 export interface ImportColumn {
@@ -20,7 +21,7 @@ export interface ImportColumn {
 /** Credentials imported as "<label> date" / "<label> expires" pairs. */
 export const IMPORT_CREDENTIALS: readonly { type: string; label: string }[] = [
   ...TRAINING_MATRIX.map((t) => ({ type: t.type, label: t.label })),
-  { type: 'nmc_registration', label: 'NMC registration' },
+  ...PROFESSIONAL_REGISTERS.map((r) => ({ type: r.type, label: `${r.body} registration` })),
   { type: 'driving_licence', label: 'Driving licence' },
   { type: 'car_insurance', label: 'Car insurance' },
 ];
@@ -30,7 +31,7 @@ export const IMPORT_COLUMNS: readonly ImportColumn[] = [
   { key: 'lastName', header: 'Last name', help: 'Required.', required: true, example: 'Person' },
   { key: 'email', header: 'Email', help: 'Required. Their login; must be unique.', required: true, example: 'sample.person@example.com' },
   { key: 'phone', header: 'Phone', help: 'Mobile number.', example: '07700 900000' },
-  { key: 'jobRole', header: 'Job role', help: 'Care worker, Senior care worker, Support worker, Team leader, Nurse, Care coordinator, Manager or Office.', required: true, example: 'Care worker' },
+  { key: 'jobRole', header: 'Job role', help: 'Care worker, Senior care worker, Support worker, Team leader, Healthcare assistant, Nurse (RGN), RMN, RNLD, AHP, Doctor, Care coordinator, Manager or Office.', required: true, example: 'Care worker' },
   { key: 'contract', header: 'Contract', help: 'Full time, Part time, Zero hours, Bank or Contractor. Blank = Full time.', example: 'Part time' },
   { key: 'startDate', header: 'Start date', help: 'Date they started, e.g. 14/03/2022.', example: '14/03/2022' },
   { key: 'employeeId', header: 'Employee ID', help: 'Payroll number, if you use one.', example: 'E1001' },
@@ -42,6 +43,7 @@ export const IMPORT_COLUMNS: readonly ImportColumn[] = [
   { key: 'rtwCheckedOn', header: 'Right to Work checked on', help: 'Date of their last Right to Work check.', example: '10/03/2022' },
   { key: 'rtwPermission', header: 'Right to Work type', help: '"No time limit" or "Time-limited".', example: 'No time limit' },
   { key: 'rtwFollowUpOn', header: 'Right to Work follow-up date', help: 'Time-limited only: when their permission ends.', example: '' },
+  { key: 'registrationNumber', header: 'Registration number', help: 'Nurses: NMC PIN (e.g. 12A3456E). AHPs: HCPC number. Doctors: GMC number. Check it on the register in SHC afterwards.', example: '' },
   { key: 'dbsNumber', header: 'DBS certificate number', help: '12 digits.', example: '001234567890' },
   { key: 'dbsIssueDate', header: 'DBS issue date', help: 'Date on the certificate.', example: '01/03/2022' },
   { key: 'dbsLevel', header: 'DBS level', help: '"Enhanced with adults barred list", "Enhanced with both barred lists", "Enhanced", "Standard" or "Basic".', example: 'Enhanced with adults barred list' },

@@ -233,7 +233,7 @@ export class StaffImportService {
 
       if (row.referencesChecked) await credential('references', CREDENTIAL_TYPE_LABELS.references, {});
       if (row.historyChecked) await credential('employment_history', CREDENTIAL_TYPE_LABELS.employment_history, {});
-      for (const c of row.credentials) await credential(c.type, c.label, { issueDate: c.issueDate, expiryDate: c.expiryDate });
+      for (const c of row.credentials) await credential(c.type, c.label, { issueDate: c.issueDate, expiryDate: c.expiryDate, number: c.number ?? null });
       return staffProfileId;
     });
   }

@@ -53,6 +53,21 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 - [ ] **S4-05** `agent` AI reads uploaded certificates (fills dates/type for a manager to confirm). Only after Michael's
   data processing agreement names Anthropic.
 
+## Stage 5 — Fit to Support Health Care Ltd (agreed 14 Nov 2026, from Michael's website)
+Michael's company is Support Health Care Ltd: supported living (complex care, DoLS/MHA), outreach, home care, and a
+healthcare staffing service (RGN/RMN/RNLD nurses, HCAs, AHPs, doctors) across nine English regions, with international
+recruitment. These make SHC fit that business.
+- [x] **S5-01** `agent` Clinical and staffing roles (RGN, RMN, RNLD, HCA, AHP, doctor) with NMC/HCPC/GMC register
+  checks: panel on the Checks tab, number formats, renewal reminders, inspection pack line, import column (S-027).
+- [ ] **S5-02** `agent` Regions: company list of regions, region on each staff member, region filters everywhere.
+- [ ] **S5-03** `agent` Complex-care training: Oliver McGowan, MCA/DoLS, mental health, PBS/restrictive practice,
+  epilepsy, clinical skills (optional).
+- [ ] **S5-04** `agent` Sponsored worker (visa) tracker: visa route/expiry, CoS, sponsor-duty reminders, list for
+  Home Office visits. Store and remind only; no immigration advice.
+- [ ] **S5-05** `agent` Online applications on their website: company logo on the careers page, an "Apply online"
+  link for their Join Us page.
+- Later, priced separately: booking agency shifts for NHS/client organisations, timesheets and invoicing.
+
 ## Ideas after go-live
 - [ ] Visa sponsorship tracker (only if Michael sponsors workers).
 - AI is **admins and managers only** (S-022). A person always confirms; AI never scores, ranks or rejects candidates

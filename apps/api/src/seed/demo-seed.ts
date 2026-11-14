@@ -310,11 +310,12 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
   const messages = options.encryptMessage ? await seedMessages(prisma, options.encryptMessage) : 0;
   if (options.encryptDocument) await seedPolicies(prisma, coordinatorId, options.encryptDocument);
   const applications = await seedRecruitment(prisma, today);
+  const nurses = await seedNurses(prisma, coordinatorId, passwordHash, roles.get('care_worker')!, today, staffNo);
   return {
     agencyId: DEMO_AGENCY_ID,
     logins,
     password,
-    counts: { users: logins.length + staffNo - STAFF_PLAN.length, staff: staffNo, credentials, messages, applications },
+    counts: { users: logins.length + staffNo - STAFF_PLAN.length + nurses, staff: staffNo + nurses, credentials, messages, applications },
   };
 }
 
@@ -322,6 +323,72 @@ export async function runDemoSeed(prisma: PrismaClient, options: SeedOptions): P
 export const DEMO_CAREERS_SLUG = 'demo-care';
 
 /** Three adverts (two open, one draft) and a handful of FAKE applications at different stages. */
+/**
+ * Two FAKE nurses (S5-01, S-027), added last so the rest of the demo stays the same: an RGN with a checked NMC
+ * registration and a full file, and an RMN whose PIN was recorded but not yet checked and renews within the month.
+ */
+async function seedNurses(prisma: PrismaClient, coordinatorId: string, passwordHash: string, roleId: string, today: string, staffBefore: number): Promise<number> {
+  const plan = [
+    { first: 'Ada', last: 'Okafor', discipline: 'nurse', pin: '00Z0001D', renews: addDays(today, 300), checked: true },
+    { first: 'Ben', last: 'Hartley', discipline: 'nurse_rmn', pin: '00Z0002E', renews: addDays(today, 20), checked: false },
+  ];
+  for (const [k, n] of plan.entries()) {
+    const staffNo = staffBefore + k + 1;
+    const user = await prisma.user.create({
+      data: {
+        agencyId: DEMO_AGENCY_ID,
+        email: `${n.first}.${n.last}.${staffNo}@${DEMO_EMAIL_DOMAIN}`.toLowerCase(),
+        passwordHash,
+        passwordChangedAt: new Date(),
+        firstName: n.first,
+        lastName: n.last,
+        userRoles: { create: { roleId } },
+      },
+    });
+    const hireDate = addDays(today, -400);
+    const profile = await prisma.staffProfile.create({
+      data: {
+        userId: user.id,
+        agencyId: DEMO_AGENCY_ID,
+        employeeId: `D${String(staffNo).padStart(4, '0')}`,
+        discipline: n.discipline,
+        employmentType: 'bank',
+        hireDate: toDate(hireDate),
+        daysPerWeek: 3,
+        hourlyRate: 24,
+        addressLine1: `${staffNo} Demo Street (FAKE)`,
+        town: 'Manchester',
+        postcode: 'M1 2AB',
+        languages: ['English'],
+      },
+    });
+    const verified = { verifiedById: coordinatorId, verifiedAt: new Date() };
+    const dbsNumber = `00${String(9000000000 + staffNo)}`;
+    await prisma.staffCredential.createMany({
+      data: [
+        { staffProfileId: profile.id, credentialType: 'nmc_registration', credentialName: 'NMC registration', credentialNumber: n.pin, issuingAuthority: 'Nursing and Midwifery Council', expiryDate: toDate(n.renews), alertDaysBefore: 60, notes: 'FAKE demo PIN', ...(n.checked ? verified : {}) },
+        { staffProfileId: profile.id, credentialType: 'dbs_enhanced', credentialName: 'Enhanced DBS with adult barred list (FAKE)', credentialNumber: dbsNumber, expiryDate: toDate(addDays(today, 500)), ...verified },
+        { staffProfileId: profile.id, credentialType: 'right_to_work', credentialName: 'Right to Work check' },
+        ...TRAINING_MATRIX.filter((t) => (t.neededBy as readonly string[]).includes(n.discipline)).map((t) => ({
+          staffProfileId: profile.id,
+          credentialType: t.type,
+          credentialName: t.label,
+          expiryDate: toDate(addDays(today, 200)),
+        })),
+        { staffProfileId: profile.id, credentialType: 'employment_history', credentialName: 'Employment history checked (paper file)', ...verified },
+        { staffProfileId: profile.id, credentialType: 'references', credentialName: 'Two references checked (paper file)', ...verified },
+      ],
+    });
+    await prisma.dbsCheck.create({
+      data: { agencyId: DEMO_AGENCY_ID, staffProfileId: profile.id, certificateNumber: dbsNumber, issueDate: toDate(addDays(today, -200))!, level: 'enhanced_barred_adults', result: 'clear', updateService: true, nextDueOn: toDate(addDays(today, 500))!, recordedById: coordinatorId, notes: 'FAKE demo certificate' },
+    });
+    await prisma.rightToWorkCheck.create({
+      data: { agencyId: DEMO_AGENCY_ID, staffProfileId: profile.id, method: 'manual_document', documentType: 'british_irish_passport', seenHow: 'in_person', permission: 'unlimited', outcome: 'passed', checkedOn: toDate(hireDate)!, checkedById: coordinatorId, notes: 'FAKE demo check' },
+    });
+  }
+  return plan.length;
+}
+
 /** FAKE company policies as real PDFs, so "Ask our policies" (S-022) has something to answer from. */
 const DEMO_POLICIES: { title: string; paragraphs: string[] }[] = [
   {

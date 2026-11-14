@@ -61,6 +61,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-14 | Claude Code | S5-01 clinical roles | RGN/RMN/RNLD/HCA/AHP/doctor roles; NMC/HCPC/GMC register panel, checks, inspection line, import column, 2 FAKE nurses (S-027). Full unit/type/lint pass; seed/import/inspection e2e and registration/DBS/import/inspection browser tests pass. Also fixed 17 old type errors in shared specs. |
 | 2026-11-14 | Claude Code | S4-08 AI chat | Ask AI moved from the top bar to a floating bottom-right chat that opens over the current page (S-026); AI, accessibility tests pass. |
 | 2026-11-14 | Claude Code | S4-08 Ask AI button | Top-bar "Ask AI" button (sparkle, gradient) for admins and managers, opens Ask our policies; browser test checks who sees it. |
 | 2026-11-14 | Claude Code | S4-08 new look | Owner rejected sage/terracotta; new design S-025: crisp white, royal blue + violet, Manrope/Figtree, wordmark logo, no side lines. |

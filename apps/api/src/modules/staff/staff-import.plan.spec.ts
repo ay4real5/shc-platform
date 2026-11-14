@@ -105,4 +105,24 @@ describe('parseDbsLevel', () => {
     ['enhanced_barred_adults', 'enhanced_barred_adults'],
     ['Gold', null],
   ])('%s → %s', (text, level) => expect(parseDbsLevel(text)).toBe(level));
+
+  it('puts a nurse’s NMC PIN on their registration, and checks the format (S-027)', () => {
+    const head = 'First name,Last name,Email,Job role,Registration number,NMC registration expires';
+    const plan = planImport(
+      [
+        head,
+        'Nia,Nurse,nia.nurse@example.test,RMN,12a 3456e,31/01/2027',
+        'Bad,Pin,bad.pin@example.test,Nurse,123,',
+        'No,Pin,no.pin@example.test,Registered nurse (RGN),,',
+        'Care,Worker,care.worker@example.test,Care worker,12A3456E,',
+      ].join('\n'),
+      ctx(),
+    );
+    const [nia, bad, none, carer] = plan.rows;
+    expect(nia.discipline).toBe('nurse_rmn');
+    expect(nia.credentials).toContainEqual({ type: 'nmc_registration', label: 'NMC registration', issueDate: null, expiryDate: '2027-01-31', number: '12A3456E' });
+    expect(bad.errors.join(' ')).toMatch(/NMC PIN should look like/);
+    expect(none.warnings.join(' ')).toMatch(/No NMC PIN/);
+    expect(carer.warnings.join(' ')).toMatch(/has no professional register/);
+  });
 });

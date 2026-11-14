@@ -1,10 +1,19 @@
-/** Job roles in a UK care provider (staff_profiles.discipline; DECISIONS S-002). */
+/**
+ * Job roles in a UK care provider and healthcare staffing agency (staff_profiles.discipline, max 20 characters;
+ * DECISIONS S-002, S-027). Nurses, allied health professionals and doctors must be on a professional register
+ * (registration.ts).
+ */
 export const DISCIPLINES = [
   'care_worker',
   'senior_care_worker',
   'support_worker',
   'team_leader',
+  'hca',
   'nurse',
+  'nurse_rmn',
+  'nurse_rnld',
+  'ahp',
+  'doctor',
   'care_coordinator',
   'manager',
   'office',
@@ -16,7 +25,12 @@ export const DISCIPLINE_LABELS: Record<Discipline, string> = {
   senior_care_worker: 'Senior care worker',
   support_worker: 'Support worker',
   team_leader: 'Team leader',
-  nurse: 'Nurse',
+  hca: 'Healthcare assistant',
+  nurse: 'Registered nurse (RGN)',
+  nurse_rmn: 'Mental health nurse (RMN)',
+  nurse_rnld: 'Learning disability nurse (RNLD)',
+  ahp: 'Allied health professional (HCPC)',
+  doctor: 'Doctor (GMC)',
   care_coordinator: 'Care coordinator',
   manager: 'Manager',
   office: 'Office',

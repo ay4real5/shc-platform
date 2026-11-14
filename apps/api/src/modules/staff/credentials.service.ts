@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { credentialState, type CredentialState } from '@alora/shared';
+import { credentialState, normaliseRegistrationNumber, registerByType, registrationNumberProblem, type CredentialState } from '@alora/shared';
 import type { AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { addDays, fromDate, toDate } from '../../common/utils/dates.js';
 import { AgencyClockService } from '../../database/agency-clock.service.js';
@@ -72,17 +72,20 @@ export class CredentialsService {
   async add(caller: AuthUser, staffId: string, dto: CreateCredentialDto): Promise<CredentialView> {
     await this.staff.find(caller, staffId);
     assertDates(dto.issueDate, dto.expiryDate);
+    const credentialNumber = registrationNumber(dto.credentialType, dto.credentialNumber);
     const row = await this.prisma.staffCredential.create({
       data: {
         staffProfileId: staffId,
         credentialType: dto.credentialType,
         credentialName: dto.credentialName,
-        credentialNumber: dto.credentialNumber ?? null,
+        credentialNumber: credentialNumber ?? null,
         issuingAuthority: dto.issuingAuthority ?? null,
         issueDate: toDate(dto.issueDate) ?? null,
         expiryDate: toDate(dto.expiryDate) ?? null,
         alertDaysBefore: dto.alertDaysBefore ?? 30,
         notes: dto.notes ?? null,
+        // Recorded as checked straight away (e.g. a professional register looked up while adding it, S-027).
+        ...(dto.verified ? { verifiedById: caller.userId, verifiedAt: new Date() } : {}),
       },
     });
     await supersedeOlderCredentials(this.prisma, staffId, row.credentialType, row.id);
@@ -95,6 +98,7 @@ export class CredentialsService {
     assertDates(dto.issueDate ?? fromDate(existing.issueDate) ?? undefined, dto.expiryDate ?? fromDate(existing.expiryDate) ?? undefined);
 
     const data: Prisma.StaffCredentialUncheckedUpdateInput = {};
+    if (dto.credentialNumber !== undefined) dto.credentialNumber = registrationNumber(dto.credentialType ?? existing.credentialType, dto.credentialNumber);
     for (const key of ['credentialType', 'credentialName', 'credentialNumber', 'issuingAuthority', 'alertDaysBefore', 'notes'] as const) {
       if (dto[key] !== undefined) (data as Record<string, unknown>)[key] = dto[key];
     }
@@ -150,6 +154,14 @@ export class CredentialsService {
     if (!credential) throw new NotFoundException('Credential not found');
     return credential;
   }
+}
+
+/** Professional register numbers (NMC/HCPC/GMC, S-027) are tidied and must be well formed; others pass through. */
+function registrationNumber(type: string, value: string | undefined): string | undefined {
+  if (!value || !registerByType(type)) return value;
+  const problem = registrationNumberProblem(type, value);
+  if (problem) throw new BadRequestException(problem);
+  return normaliseRegistrationNumber(value);
 }
 
 function assertDates(issueDate: string | undefined, expiryDate: string | undefined): void {

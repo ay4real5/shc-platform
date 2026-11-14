@@ -207,14 +207,14 @@ export class CreateCredentialDto {
   @IsString()
   @MaxLength(2000)
   notes?: string;
-}
 
-export class UpdateCredentialDto extends PartialType(CreateCredentialDto) {
-  /** true records the caller as having verified the credential against the original. */
+  /** true records the caller as having verified the credential against the original (or the online register). */
   @IsOptional()
   @IsBoolean()
   verified?: boolean;
 }
+
+export class UpdateCredentialDto extends PartialType(CreateCredentialDto) {}
 
 export class ExpiringCredentialsQueryDto {
   /** Include credentials expiring within this many days (and already expired ones). Default 30. */

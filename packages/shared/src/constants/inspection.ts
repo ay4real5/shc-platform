@@ -6,6 +6,7 @@
 import { DEFAULT_REQUIRED_CREDENTIALS, credentialTypeLabel } from './onboarding.js';
 import type { HealthStatus } from './health.js';
 import { credentialState, type Discipline } from './staff.js';
+import { registerFor } from './registration.js';
 import { DEFAULT_SUPERVISION_INTERVALS, supervisionDueOn } from './supervisions.js';
 import { CARE_CERTIFICATE_WEEKS, TRAINING_MATRIX } from './training.js';
 
@@ -13,7 +14,7 @@ import { CARE_CERTIFICATE_WEEKS, TRAINING_MATRIX } from './training.js';
 export type InspectionStatus = 'ok' | 'paper' | 'attention' | 'missing';
 
 export interface InspectionItem {
-  key: 'identity' | 'right_to_work' | 'dbs' | 'conduct' | 'history' | 'qualifications' | 'health' | 'supervision';
+  key: 'identity' | 'right_to_work' | 'dbs' | 'conduct' | 'history' | 'registration' | 'qualifications' | 'health' | 'supervision';
   title: string;
   /** Schedule 3 paragraph, or null when it isn't a Schedule 3 item. */
   schedule3: number | null;
@@ -193,12 +194,41 @@ export function inspectionItems(f: InspectionFacts, today: string): InspectionIt
     details: [],
   });
 
+  // 5. Professional registration (S-027): nurses, allied health professionals and doctors must be on their register.
+  {
+    const register = registerFor(f.discipline);
+    if (register) {
+      const c = cred(register.type);
+      const state = c ? credentialState(c.expiryDate, 30, today) : null;
+      const status: InspectionStatus = !c || state === 'expired' ? 'missing' : !c.verified || state === 'expiring_soon' || !c.expiryDate ? 'attention' : 'ok';
+      const summary = !c
+        ? `No ${register.label} on record.`
+        : state === 'expired'
+          ? `${register.body} registration lapsed on ${fmt(c.expiryDate!)}: they must not work as a registered professional until it is renewed.`
+          : !c.verified
+            ? `${register.numberLabel} ${c.number ?? '(no number)'} recorded but not checked against the ${register.body} register: check it now.`
+            : !c.expiryDate
+              ? `Checked on the ${register.body} register; add the renewal date so SHC can remind you.`
+              : state === 'expiring_soon'
+                ? `Checked on the ${register.body} register; renews by ${fmt(c.expiryDate)}: check it again after renewal.`
+                : `Checked on the ${register.body} register; valid to ${fmt(c.expiryDate)}.`;
+      items.push({
+        key: 'registration',
+        title: `Professional registration (${register.body})`,
+        schedule3: 5,
+        status,
+        summary,
+        details: c ? [`${register.numberLabel}: ${c.number ?? 'not recorded'}.`] : [],
+      });
+    }
+  }
+
   // 5. Qualifications and training for the role.
   {
     const needed = [
       ...TRAINING_MATRIX.filter((t) => (t.neededBy as readonly string[]).includes(f.discipline)).map((t) => ({ type: t.type, label: t.label })),
       ...(DEFAULT_REQUIRED_CREDENTIALS[f.discipline as Discipline] ?? [])
-        .filter((t) => !['right_to_work', 'dbs_enhanced'].includes(t) && !TRAINING_MATRIX.some((m) => m.type === t))
+        .filter((t) => !['right_to_work', 'dbs_enhanced'].includes(t) && t !== registerFor(f.discipline)?.type && !TRAINING_MATRIX.some((m) => m.type === t))
         .map((t) => ({ type: t, label: credentialTypeLabel(t) })),
     ];
     const details: string[] = [];
@@ -268,7 +298,7 @@ export function inspectionItems(f: InspectionFacts, today: string): InspectionIt
       ],
     });
   }
-  const ORDER: InspectionItem['key'][] = ['identity', 'right_to_work', 'dbs', 'conduct', 'qualifications', 'history', 'health', 'supervision'];
+  const ORDER: InspectionItem['key'][] = ['identity', 'right_to_work', 'dbs', 'conduct', 'registration', 'qualifications', 'history', 'health', 'supervision'];
   return items.sort((a, b) => ORDER.indexOf(a.key) - ORDER.indexOf(b.key));
 }
 

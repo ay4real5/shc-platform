@@ -1,4 +1,4 @@
-import { inspectionItems, inspectionSummary, type InspectionCredential, type InspectionFacts } from './inspection.js';
+import { inspectionItems, inspectionSummary, type InspectionCredential, type InspectionFacts, type InspectionItem } from './inspection.js';
 
 const today = '2026-11-13';
 const cred = (type: string, over: Partial<InspectionCredential> = {}): InspectionCredential => ({
@@ -33,7 +33,7 @@ const full = (over: Partial<InspectionFacts> = {}): InspectionFacts => ({
   ...over,
 });
 
-const byKey = (f: InspectionFacts) => Object.fromEntries(inspectionItems(f, today).map((i) => [i.key, i]));
+const byKey = (f: InspectionFacts) => Object.fromEntries(inspectionItems(f, today).map((i) => [i.key, i])) as Record<InspectionItem['key'], InspectionItem>;
 
 describe('inspectionItems', () => {
   it('a complete file is in order, in Schedule 3 order', () => {
@@ -46,7 +46,7 @@ describe('inspectionItems', () => {
 
   it('an empty file shows every gap', () => {
     const items = byKey(full({ rightToWork: null, dbs: null, credentials: [], verifiedReferences: 0, fromApplication: false, health: 'none', hireDate: '2020-01-01' }));
-    for (const key of ['identity', 'right_to_work', 'dbs', 'conduct', 'qualifications', 'history', 'health']) expect(items[key].status).toBe('missing');
+    for (const key of ['identity', 'right_to_work', 'dbs', 'conduct', 'qualifications', 'history', 'health'] as const) expect(items[key].status).toBe('missing');
     expect(items.qualifications.summary).toBe('7 of 7 missing or expired.');
   });
 
@@ -89,5 +89,21 @@ describe('inspectionItems', () => {
     const items = byKey(f);
     expect(items.qualifications).toMatchObject({ status: 'missing', summary: '1 of 7 missing or expired.' });
     expect(items.supervision).toMatchObject({ status: 'attention', summary: 'Overdue: supervision.' });
+  });
+
+  it('checks a nurse is on the NMC register (S-027), and keeps it out of the training list', () => {
+    const nurseCreds = (reg: Partial<InspectionCredential> | null) => [
+      ...full().credentials.filter((c) => c.type !== 'care_certificate'),
+      cred('medication_training'),
+      ...(reg ? [cred('nmc_registration', { number: '12A3456E', ...reg })] : []),
+    ];
+    const nurse = (reg: Partial<InspectionCredential> | null) => byKey(full({ discipline: 'nurse', credentials: nurseCreds(reg) }));
+    expect(nurse({}).registration).toMatchObject({ status: 'ok', title: 'Professional registration (NMC)' });
+    expect(nurse({}).qualifications.details.join(' ')).not.toMatch(/NMC/);
+    expect(nurse(null).registration.status).toBe('missing');
+    expect(nurse({ verified: false }).registration.summary).toMatch(/not checked against the NMC register/);
+    expect(nurse({ expiryDate: '2026-11-20' }).registration.status).toBe('attention');
+    expect(nurse({ expiryDate: '2026-11-01' }).registration).toMatchObject({ status: 'missing', summary: expect.stringMatching(/lapsed on 01\/11\/2026/) });
+    expect(byKey(full()).registration).toBeUndefined(); // care workers have no register
   });
 });

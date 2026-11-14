@@ -45,7 +45,7 @@ describe('the template', () => {
     const keys = IMPORT_COLUMNS.map((c) => importHeaderKey(c.header));
     expect(new Set(keys).size).toBe(keys.length);
     const [headers, sample] = parseCsv(importTemplateCsv());
-    expect(headers.map(importHeaderKey)).toEqual(keys);
+    expect(headers!.map(importHeaderKey)).toEqual(keys);
     expect(sample).toHaveLength(IMPORT_COLUMNS.length);
   });
   it('uses an obviously fake sample person', () => {

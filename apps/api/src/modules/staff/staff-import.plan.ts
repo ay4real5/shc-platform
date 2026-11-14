@@ -7,6 +7,9 @@ import {
   IMPORT_COLUMNS,
   IMPORT_CREDENTIALS,
   IMPORT_MAX_ROWS,
+  normaliseRegistrationNumber,
+  registerFor,
+  registrationNumberProblem,
   importHeaderKey,
   parseCsv,
   parseUkDate,
@@ -42,7 +45,7 @@ export interface ImportPlanRow {
   dbs: { certificateNumber: string; issueDate: string; level: DbsLevel; result: 'clear' | 'information'; updateService: boolean } | null;
   referencesChecked: boolean;
   historyChecked: boolean;
-  credentials: { type: string; label: string; issueDate: string | null; expiryDate: string | null }[];
+  credentials: { type: string; label: string; issueDate: string | null; expiryDate: string | null; number?: string | null }[];
   /** Any error means this row is not imported. */
   errors: string[];
   /** Imported, but worth a look. */
@@ -81,6 +84,13 @@ DISCIPLINE_BY_TEXT.set('carer', 'care_worker');
 DISCIPLINE_BY_TEXT.set('seniorcarer', 'senior_care_worker');
 DISCIPLINE_BY_TEXT.set('registeredmanager', 'manager');
 DISCIPLINE_BY_TEXT.set('coordinator', 'care_coordinator');
+DISCIPLINE_BY_TEXT.set('nurse', 'nurse');
+DISCIPLINE_BY_TEXT.set('rgn', 'nurse');
+DISCIPLINE_BY_TEXT.set('rmn', 'nurse_rmn');
+DISCIPLINE_BY_TEXT.set('rnld', 'nurse_rnld');
+DISCIPLINE_BY_TEXT.set('healthcareassistant', 'hca');
+DISCIPLINE_BY_TEXT.set('alliedhealthprofessional', 'ahp');
+DISCIPLINE_BY_TEXT.set('doctor', 'doctor');
 
 const CONTRACT_BY_TEXT = new Map<string, EmploymentType>(EMPLOYMENT_TYPES.map((t) => [norm(t), t]));
 CONTRACT_BY_TEXT.set('fulltime', 'full_time');
@@ -263,6 +273,23 @@ export function planImport(csv: string, ctx: ImportContext): ImportPlan {
         credentials.push({ type: c.type, label: c.label, issueDate, expiryDate });
         if (expiryDate && expiryDate < ctx.today) warnings.push(`${c.label} has expired`);
       }
+    }
+
+    // Professional registration number (S-027): goes on the role's register credential; checked on the register in SHC later.
+    const regText = get('registrationNumber');
+    const register = discipline ? registerFor(discipline) : null;
+    if (regText && discipline && !register) warnings.push(`Registration number ignored: ${DISCIPLINE_LABELS[discipline]} has no professional register`);
+    else if (regText && register) {
+      const problem = registrationNumberProblem(register.type, regText);
+      if (problem) errors.push(problem);
+      else {
+        const number = normaliseRegistrationNumber(regText);
+        const existing = credentials.find((c) => c.type === register.type);
+        if (existing) existing.number = number;
+        else credentials.push({ type: register.type, label: `${register.body} registration`, issueDate: null, expiryDate: null, number });
+      }
+    } else if (register && !credentials.some((c) => c.type === register.type)) {
+      warnings.push(`No ${register.numberLabel}: add it and check the ${register.body} register before they work`);
     }
 
     plan.rows.push({

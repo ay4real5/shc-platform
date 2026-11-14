@@ -2484,3 +2484,20 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   current page. It answers policy questions (same `/ai/policy-question` endpoint) as chat bubbles with the policy names;
   Escape or the button closes it. The conversation is kept only until the page reloads; nothing is saved. The full
   "Ask our policies" page stays in the Compliance menu.
+
+### S-027 — Clinical roles and professional registration (S5-01)
+- **Why:** Michael's company (Support Health Care Ltd) supplies RGN, RMN and RNLD nurses, healthcare assistants,
+  allied health professionals and doctors. They may only work while on their professional register.
+- **Roles** (`DISCIPLINES`, max 20 characters so no migration): `hca`, `nurse` (now "Registered nurse (RGN)"),
+  `nurse_rmn`, `nurse_rnld`, `ahp` (HCPC), `doctor` (GMC). Nurses need medication training; HCAs do the Care
+  Certificate.
+- **Registration is a credential**, not a new table: type `nmc_registration` / `hcpc_registration` /
+  `gmc_registration`; number = PIN/registration number (format-checked and tidied by the API, `registration.ts`);
+  expiry = renewal or revalidation date (alerts 60 days ahead); verified = the register was checked (the panel's
+  checkbox; `CreateCredentialDto.verified` now records it at creation). The panel on the Checks tab links to the
+  public register and says what to look for (name, no conditions or suspension).
+- **Inspection pack:** a "Professional registration" line for registered roles: missing (none, or lapsed), attention
+  (not checked on the register, no renewal date, or renewing within 30 days), ok. It's no longer listed under training.
+- **Import:** "Registration number" column, put on the role's register credential (not verified: check in SHC).
+- **Demo:** two FAKE nurses (Ada Okafor RGN, checked; Ben Hartley RMN, unchecked and renewing soon), seeded last so the
+  rest of the demo doesn't change. FAKE PINs start `00Z`.
