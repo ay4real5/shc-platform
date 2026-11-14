@@ -7,6 +7,5 @@
   current salary thresholds. SHC gives no immigration advice.
 
 ## AI on Azure OpenAI (S-033, 14 Nov 2026)
-- **Owner:** may the API add the `unpdf` library (pinned to 2.1.0) to read text from PDF policies? Needed for "Ask our
-  policies" on Azure OpenAI. Drafting works without it.
+- ~~May the API add `unpdf`?~~ Approved 14 Nov 2026 and added (2.1.0, pinned).
 - At go-live: create the Azure OpenAI resource in UK South and deploy a model (cost to confirm first).

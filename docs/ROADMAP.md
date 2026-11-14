@@ -53,7 +53,7 @@ Owner tags: `agent` = any coding agent; `human` = needs Ayo (accounts, legal, cl
 - [ ] **S4-05** `agent` AI reads uploaded certificates (fills dates/type for a manager to confirm). Only after Michael's
   data processing agreement names Anthropic.
 
-## Stage 5 — Fit to Support Health Care Ltd (agreed 14 Nov 2026, from Michael's website)
+## Stage 5 â€” Fit to Support Health Care Ltd (agreed 14 Nov 2026, from Michael's website)
 Michael's company is Support Health Care Ltd: supported living (complex care, DoLS/MHA), outreach, home care, and a
 healthcare staffing service (RGN/RMN/RNLD nurses, HCAs, AHPs, doctors) across nine English regions, with international
 recruitment. These make SHC fit that business.
@@ -69,7 +69,7 @@ recruitment. These make SHC fit that business.
 - Later, priced separately: booking agency shifts for NHS/client organisations, timesheets and invoicing.
 
 - [x] **S5-06** `agent` AI supplier switch: Azure OpenAI by default (UK data residency), Anthropic optional (S-033).
-- [ ] **S5-07** `agent` Policy questions on Azure OpenAI: PDF text extraction (needs the owner's OK to add `unpdf`).
+- [x] **S5-07** `agent` Policy questions on Azure OpenAI: PDF text read with `unpdf` 2.1.0 (owner approved 14 Nov 2026).
 
 ## Ideas after go-live
 - [ ] Visa sponsorship tracker (only if Michael sponsors workers).
