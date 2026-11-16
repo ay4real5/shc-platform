@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { BookOpen, SendHorizontal, Sparkles, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { AI_NAME } from '@/lib/brand';
 import { useAiHelp } from './ai-assist';
 
 interface PolicyAnswer {
@@ -22,7 +23,7 @@ function errorText(error: unknown): string {
 }
 
 /**
- * "Ask AI" (S-022, S-026): a round button fixed in the bottom-right corner of every signed-in page, for admins and
+ * "Ask Tee" (S-022, S-026, S-034: the assistant is called Tee, always shown as AI): a round button fixed in the bottom-right corner of every signed-in page, for admins and
  * managers only. It opens a chat panel over the current page (no page change); answers come only from the company's
  * own policies and name the policy used. The conversation lasts until the page is reloaded; nothing is saved.
  */
@@ -78,7 +79,7 @@ export function AiChat() {
       {open && (
         <section
           role="dialog"
-          aria-label="Ask AI"
+          aria-label={`Ask ${AI_NAME}`}
           className="fixed bottom-24 right-4 z-50 flex h-[min(600px,calc(100vh-8rem))] w-[calc(100vw-2rem)] max-w-[400px] animate-fade-in flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[var(--shadow-lift)] sm:right-6"
         >
           <header className="bg-hero flex items-center justify-between gap-3 px-4 py-3 text-white">
@@ -87,21 +88,24 @@ export function AiChat() {
                 <Sparkles className="h-4 w-4" />
               </span>
               <div className="leading-tight">
-                <p className="font-display text-[15px] font-bold">Ask AI</p>
-                <p className="text-xs text-white/85">Answers from your own policies</p>
+                <p className="font-display text-[15px] font-bold">Ask {AI_NAME}</p>
+                <p className="text-xs text-white/85">AI assistant · answers from your policies</p>
               </div>
             </div>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close Ask AI" className="rounded-lg p-1.5 hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-white">
+            <button type="button" onClick={() => setOpen(false)} aria-label={`Close Ask ${AI_NAME}`} className="rounded-lg p-1.5 hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-white">
               <X aria-hidden className="h-5 w-5" />
             </button>
           </header>
 
           <div className="flex-1 overflow-y-auto bg-canvas px-4 py-4" aria-live="polite">
             {!enabled ? (
-              <p className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">AI help isn&apos;t switched on yet.</p>
+              <p className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">{AI_NAME} (AI help) isn&apos;t switched on yet.</p>
             ) : turns.length === 0 ? (
               <div className="flex flex-col gap-3">
-                <p className="text-sm text-slate-700">Ask a question in plain words. I&apos;ll answer only from your company&apos;s policies and tell you which one I used.</p>
+                <p className="text-sm text-slate-700">
+                  Hi, I&apos;m {AI_NAME}, SHC&apos;s AI assistant. Ask a question in plain words: I&apos;ll answer only from your company&apos;s policies and tell you
+                  which one I used.
+                </p>
                 <div className="flex flex-col gap-2">
                   {EXAMPLES.map((e) => (
                     <button
@@ -175,7 +179,7 @@ export function AiChat() {
                   <SendHorizontal aria-hidden className="h-4 w-4" />
                 </button>
               </div>
-              <p className="mt-2 text-[11px] text-slate-500">AI can make mistakes. Check the policy itself before acting on anything important.</p>
+              <p className="mt-2 text-[11px] text-slate-500">{AI_NAME} is AI and can make mistakes. Check the policy itself before acting on anything important.</p>
             </form>
           )}
         </section>
@@ -185,12 +189,12 @@ export function AiChat() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        aria-label={open ? 'Close Ask AI' : 'Ask AI'}
-        title="Ask AI about your policies"
+        aria-label={open ? `Close Ask ${AI_NAME}` : `Ask ${AI_NAME}`}
+        title={`Ask ${AI_NAME}, your AI assistant, about your policies`}
         className="fixed bottom-6 right-4 z-50 inline-flex h-14 items-center gap-2 rounded-full bg-brand-600 px-5 font-semibold text-white shadow-[var(--shadow-glow)] ring-4 ring-accent-400/60 transition hover:-translate-y-0.5 hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:right-6"
       >
         {open ? <X aria-hidden className="h-5 w-5" /> : <Sparkles aria-hidden className="h-5 w-5" />}
-        <span className="hidden sm:inline">{open ? 'Close' : 'Ask AI'}</span>
+        <span className="hidden sm:inline">{open ? 'Close' : `Ask ${AI_NAME}`}</span>
       </button>
     </div>
   );

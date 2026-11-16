@@ -122,6 +122,11 @@ jobs:
       NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
       # The suite signs in dozens of times a minute from one IP — more than the sign-in limit allows.
       RATE_LIMITS_DISABLED: 'true'
+      # Switches Tee (AI help) "on" so the tests see its buttons. Placeholders only: the tests never send anything to the
+      # AI, and the .invalid address can't be reached (S-033, S-034).
+      AZURE_OPENAI_ENDPOINT: https://ci-placeholder.invalid
+      AZURE_OPENAI_API_KEY: ci-placeholder-not-a-key
+      AZURE_OPENAI_DEPLOYMENT: ci-placeholder
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

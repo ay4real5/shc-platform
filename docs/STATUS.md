@@ -61,6 +61,7 @@ See ROADMAP "Needs Ayo": company name/logo, agreement + DPA, ICO, Azure and doma
 
 | Date | Agent | Task | Outcome |
 |---|---|---|---|
+| 2026-11-16 | Claude Code | S-034 Tee | AI assistant named Tee ("Ask Tee"), always labelled as AI; AI test works with AI on or off, CI turns it on with placeholders. AI and accessibility browser tests pass (both modes). |
 | 2026-11-14 | Claude Code | S5-07 policy questions on Azure | unpdf 2.1.0 (owner approved) reads policy PDFs; Azure OpenAI answers from the text and names the policies. AI unit 10/10, AI e2e 4/4, API typecheck/lint/tests pass. |
 | 2026-11-14 | Claude Code | S5-06 Azure OpenAI | AI_PROVIDER switch, Azure OpenAI default (drafting works); policy questions on Azure wait for a PDF text library (install blocked, needs owner OK). AI unit 7/7, AI e2e 4/4. |
 | 2026-11-14 | Claude Code | S5-05 careers branding | Company logo upload (PNG/JPEG/WebP, no SVG) shown on the careers page; copyable "Apply online" button for their website (S-032). Unit and careers/accessibility browser tests pass. Stage 5 complete. |

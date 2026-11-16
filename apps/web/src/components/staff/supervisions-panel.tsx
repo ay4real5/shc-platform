@@ -1,5 +1,6 @@
 'use client';
 
+import { AI_NAME } from '@/lib/brand';
 import { SUPERVISION_TYPE_LABELS, SUPERVISION_TYPES } from '@alora/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ClipboardSignature } from 'lucide-react';
@@ -125,7 +126,7 @@ export function SupervisionsPanel({ staffId, isSelf }: { staffId: string; isSelf
               <Field label="Date held" name="heldOn" type="date" max={localToday()} defaultValue={localToday()} required />
               <div className="sm:col-span-2">
                 <TextAreaField label="What was discussed, and the actions agreed" name="notes" required minLength={10} maxLength={10000} rows={5} />
-                <AiAssist kind="supervision_write_up" field="notes" label="Tidy up my notes with AI" />
+                <AiAssist kind="supervision_write_up" field="notes" label={`Tidy up my notes with ${AI_NAME}`} />
               </div>
             </>
           )}
@@ -196,7 +197,7 @@ export function SupervisionsPanel({ staffId, isSelf }: { staffId: string; isSelf
                   <Field label="Date held" name="heldOn" type="date" max={localToday()} defaultValue={localToday()} required />
                   <div className="sm:col-span-2">
                     <TextAreaField label="What was discussed, and the actions agreed" name="notes" required minLength={10} maxLength={10000} rows={5} />
-                <AiAssist kind="supervision_write_up" field="notes" label="Tidy up my notes with AI" />
+                <AiAssist kind="supervision_write_up" field="notes" label={`Tidy up my notes with ${AI_NAME}`} />
                   </div>
                   <div className="flex gap-2 sm:col-span-2">
                     <Button type="submit" disabled={act.isPending}>

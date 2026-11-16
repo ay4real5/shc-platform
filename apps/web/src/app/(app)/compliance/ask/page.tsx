@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, Card } from '@/components/ui/card';
 import { ErrorAlert, PageHeader } from '@/components/ui/data-display';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { AI_NAME } from '@/lib/brand';
 
 interface PolicyAnswer {
   answer: string;
@@ -35,11 +36,11 @@ export default function AskPoliciesPage() {
 
   return (
     <div className="flex max-w-4xl flex-col gap-6">
-      <PageHeader title="Ask our policies" subtitle="Ask a question in plain words. The answer comes only from your own policies, and names the policy it used." />
+      <PageHeader title="Ask our policies" subtitle={`Ask ${AI_NAME}, your AI assistant, a question in plain words. The answer comes only from your own policies, and names the policy it used.`} />
       {!can('ai:use') ? (
-        <Alert tone="info">AI help is for administrators and managers.</Alert>
+        <Alert tone="info">{AI_NAME} (AI help) is for administrators and managers.</Alert>
       ) : !enabled ? (
-        <Alert tone="info">AI help isn&apos;t switched on yet.</Alert>
+        <Alert tone="info">{AI_NAME} (AI help) isn&apos;t switched on yet.</Alert>
       ) : (
         <>
           <Card className="p-5">
@@ -92,7 +93,7 @@ export default function AskPoliciesPage() {
                 </div>
               )}
               <p className="text-xs text-slate-600">
-                Answered by AI from {ask.data.policiesRead} {ask.data.policiesRead === 1 ? 'policy' : 'policies'}. Check the policy itself before acting on anything important.
+                Answered by {AI_NAME} (AI) from {ask.data.policiesRead} {ask.data.policiesRead === 1 ? 'policy' : 'policies'}. Check the policy itself before acting on anything important.
                 {ask.data.skipped.length > 0 && <> Not read (not PDF or too large): {ask.data.skipped.join(', ')}.</>}
               </p>
             </Card>

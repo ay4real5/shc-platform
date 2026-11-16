@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, Card } from '@/components/ui/card';
 import { ErrorAlert } from '@/components/ui/data-display';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { AI_NAME } from '@/lib/brand';
 
 export type DraftKind = 'job_advert' | 'interview_questions' | 'supervision_write_up';
 export interface DraftContext {
@@ -35,10 +36,10 @@ export function useDraft() {
   });
 }
 
-export const AI_CHECK_NOTE = 'Written by AI from your notes. Read it and correct anything before saving.';
+export const AI_CHECK_NOTE = `Written by ${AI_NAME} (AI) from your notes. Read it and correct anything before saving.`;
 
 /**
- * "Tidy up with AI" for a text box in an ordinary form: sends what's typed in the box (the manager's rough notes) and
+ * "Tidy up with Tee" (the AI assistant, S-034) for a text box in an ordinary form: sends what's typed in the box (the manager's rough notes) and
  * offers the draft to replace it. The form itself is untouched until the manager presses "Replace with this".
  */
 export function AiAssist({ kind, field, label, context }: { kind: DraftKind; field: string; label: string; context?: (form: HTMLFormElement) => DraftContext }) {
@@ -82,7 +83,7 @@ export function AiAssist({ kind, field, label, context }: { kind: DraftKind; fie
       {draft.data && (
         <div className="flex flex-col gap-2 rounded-xl border border-accent-200 bg-accent-50/60 p-3">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-900">
-            <Sparkles aria-hidden className="h-3.5 w-3.5 text-brand-600" /> AI draft
+            <Sparkles aria-hidden className="h-3.5 w-3.5 text-brand-600" /> {AI_NAME}&apos;s draft
           </p>
           <div className="max-h-80 overflow-y-auto whitespace-pre-wrap text-sm text-ink">{draft.data}</div>
           <p className="text-xs text-slate-600">{AI_CHECK_NOTE}</p>
@@ -134,7 +135,7 @@ export function InterviewQuestions({ context }: { context: DraftContext }) {
         <div className="flex flex-col gap-2 rounded-xl border border-accent-200 bg-accent-50/60 p-3">
           <div className="whitespace-pre-wrap text-sm text-ink">{draft.data}</div>
           <Alert tone="info" className="text-xs">
-            Suggestions only. Ask every candidate the same core questions, and score answers yourselves: the AI never scores or ranks people.
+            Suggestions only. Ask every candidate the same core questions, and score answers yourselves: {AI_NAME} (AI) never scores or ranks people.
           </Alert>
           <div>
             <Button

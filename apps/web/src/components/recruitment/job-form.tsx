@@ -1,5 +1,6 @@
 'use client';
 
+import { AI_NAME } from '@/lib/brand';
 import { useRegions } from '@/lib/region';
 import { DISCIPLINES, EMPLOYMENT_TYPES } from '@alora/shared';
 import { useState, type FormEvent } from 'react';
@@ -88,7 +89,7 @@ export function JobForm({ job, submitLabel, onSubmit }: { job?: Job; submitLabel
         <AiAssist
           kind="job_advert"
           field="description"
-          label="Write the advert with AI from these notes"
+          label={`Write the advert with ${AI_NAME} from these notes`}
           context={(form) => {
             const f = new FormData(form);
             return { jobTitle: String(f.get('title') ?? '') || undefined, discipline: String(f.get('discipline') ?? '') || undefined, location: String(f.get('location') ?? '') || undefined };

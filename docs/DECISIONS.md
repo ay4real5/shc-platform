@@ -2599,3 +2599,12 @@ JWT/PHI keys — production uses fresh secrets from a secrets manager, never the
   text, never instructions), up to 120k characters each and 450k in all; the reply is strict JSON `{answer, sources}`, and
   sources are kept only if they match a title actually sent. Scanned policies with no text layer are left out; if none
   are readable the manager is told to upload text PDFs. Claude still reads PDFs directly when `AI_PROVIDER=anthropic`.
+
+### S-034 — The AI assistant is called "Tee", always shown as AI
+- **Why:** the owner named it (16 Nov 2026). The floating button says "Ask Tee"; drafting buttons say "…with Tee".
+- **Transparency:** Tee is always labelled as AI so people know who they're talking to: "AI assistant" in the chat
+  header and greeting, "Tee is AI and can make mistakes", "Written by Tee (AI) from your notes", "Answered by Tee (AI)",
+  and "Tee (AI) never scores or ranks people" on interview questions.
+- **One place:** `AI_NAME` in `apps/web/src/lib/brand.ts`. The menu entry "Ask our policies" keeps its name.
+- **Tests:** the AI browser test now works whether AI is on or off. CI switches it on with placeholder Azure settings
+  (an unreachable `.invalid` address; the tests never send anything to the AI), so the drafting buttons are checked there.
